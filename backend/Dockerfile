@@ -11,7 +11,7 @@ FROM debian:bookworm-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive \
     APP_HOME=/app
 
-# 1️⃣ Installation des dépendances build + ca-certificates avant curl
+# Installation des dépendances build + ca-certificates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
@@ -22,18 +22,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 2️⃣ Installation Node.js LTS via NodeSource
+# Installation Node.js LTS via NodeSource
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && node -v && npm -v
 
 WORKDIR $APP_HOME
 
-# 3️⃣ Copie des fichiers de dépendances et installation
+# Copie des fichiers de dépendances et installation
 COPY package*.json ./
 RUN npm install --production
 
-# 4️⃣ Copie du code source
+# Copie du code source
 COPY . .
 
 # --------------------
@@ -45,28 +45,31 @@ ENV APP_HOME=/app \
     NODE_ENV=production \
     PORT=443
 
-# 1️⃣ Installation runtime minimum
+# Installation runtime minimum
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     openssl \
     bash \
     sqlite3 \
+    nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR $APP_HOME
 
-# 2️⃣ Copie depuis le builder
+# Copie depuis le builder
 COPY --from=builder /app /app
 
-# 3️⃣ Certificats HTTPS auto-signés pour dev
+# Certificats HTTPS auto-signés pour dev
 RUN mkdir -p /certs && \
+    [ ! -f /certs/server.key ] && \
     openssl req -x509 -nodes -days 365 \
-    -subj "/C=FR/ST=Paris/L=Paris/O=ft_transcendence/OU=Dev/CN=localhost" \
-    -newkey rsa:2048 -keyout /certs/server.key \
-    -out /certs/server.crt
+        -subj "/C=FR/ST=Paris/L=Paris/O=ft_transcendence/OU=Dev/CN=localhost" \
+        -newkey rsa:2048 \
+        -keyout /certs/server.key \
+        -out /certs/server.crt || echo "Certificat déjà existant"
 
-# 4️⃣ Exposition du port HTTPS/WSS
+# Exposition du port HTTPS/WSS
 EXPOSE $PORT
 
-# 5️⃣ Commande pour démarrer le serveur
-CMD ["node", "src/server.js"]
+# Commande pour démarrer le serveur
+CMD ["node", "srcs/server.js"]
