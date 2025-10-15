@@ -1,0 +1,31 @@
+{
+  "name": "ft_transcendence-backend",
+  "version": "1.0.0",
+  "description": "Backend du projet ft_transcendence - SPA, HTTPS/WSS, Pong, tournois",
+  "main": "srcs/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node srcs/server.js",
+    "dev": "nodemon srcs/server.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.15.0",
+    "sqlite3": "^5.1.6",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "eslint": "^8.48.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "author": "TonNom",
+  "license": "MIT"
+}
