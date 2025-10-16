@@ -1,16 +1,20 @@
-version: "3.8"
+# Étape 1 : choisir une image Node officielle
+FROM node:20-bookworm
 
-services:
-  backend:
-    build: ./backend
-    volumes:
-      - ./backend/data:/app/data
-    ports:
-      - "3000:3000"
+# Étape 2 : définir le dossier de travail dans le conteneur
+WORKDIR /app
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend
+# Étape 3 : copier les fichiers nécessaires
+COPY package*.json ./
+
+# Étape 4 : installer les dépendances
+RUN npm install
+
+# Étape 5 : copier le reste du code
+COPY . .
+
+# Étape 6 : exposer le port du serveur (3000)
+EXPOSE 3000
+
+# Étape 7 : commande par défaut pour lancer ton serveur
+CMD ["node", "server.js"]

@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import { openDb } from './db.js';
+import fastifyCors from '@fastify/cors'
 
 // 1. On crée une instance du serveur
 const app = Fastify({ logger: true });
@@ -31,5 +32,9 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+await app.register(fastifyCors, {
+  origin: '*' // pour le dev, autorise toutes les origines
+});
 
 start();

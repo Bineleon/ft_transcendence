@@ -23,4 +23,15 @@
 
 Donc, une fois qu'on a utilisé fastify pour créer le server, il est temps de créer la DB. Donc on installe SQlite dans le projet, et on ajoute un script [db.js], dans lequel on setup la DB, puis on modifie server.js pour coder le lien entre le serveur et la DB.
 
-[db.js] - Script qui
+[db.js] - Script qui connecte vers la base de données. Dans server.js on appelle la fonction openDB(), définie dans db.js, qui ouvre le fichier database.db. Et ensuite dans notre script server.js on utilise db.exec/db.run etc... pour interagir avec la DB.
+
+
+Pour faire une analogie :
+
+1 - [db.js] --> Le technicien : Il ouvre et configure la connexion à la base SQLite.
+
+2 - [server.js] ---> Le chef d'orchestre : Il écoute les requêtes et demande au technicien d'écrire/lire des données.
+
+3 - [route API] (/api/ping) --> La porte d'entrée que le monde extérieur utilise pour parler au chef d'orchestre.
+
+### Conclusion : [db.js] setup la DB, et [server.js] s'en sert pour interagir avec elle via des [routes API].
