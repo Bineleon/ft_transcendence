@@ -6,6 +6,7 @@ services:
     volumes:
       - ./backend:/app           # code backend
       - db-data:/app/database    # volume pour SQLite
+      - /app/node_modules
     environment:
       NODE_ENV: development
     restart: unless-stopped
@@ -15,8 +16,10 @@ services:
     build: ./frontend
     ports:
       - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     restart: unless-stopped
 
 volumes:

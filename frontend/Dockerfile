@@ -1,13 +1,10 @@
-FROM node:20-bookworm
+FROM node:22-alpine
 
 WORKDIR /app
 
 # Copier seulement package.json pour installer les dépendances
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copier le reste du code
 COPY . .
-
-# Lancer Vite en mode dev
-CMD ["npm", "run", "dev", "--", "--host"]
