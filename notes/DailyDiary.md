@@ -1,4 +1,3 @@
-# 
     Daily Diary
 
 ### I - Setup le backend.
@@ -19,12 +18,9 @@
 
 [SQLite] - Base de donnée ultra légère. Contrairement à MySQL ou PostgreSQL, il ne s'agit pas d'un service séparé, c'est simplement un fichier database.db dans le projet.
 
-
-
 Donc, une fois qu'on a utilisé fastify pour créer le server, il est temps de créer la DB. Donc on installe SQlite dans le projet, et on ajoute un script [db.js], dans lequel on setup la DB, puis on modifie server.js pour coder le lien entre le serveur et la DB.
 
 [db.js] - Script qui connecte vers la base de données. Dans server.js on appelle la fonction openDB(), définie dans db.js, qui ouvre le fichier database.db. Et ensuite dans notre script server.js on utilise db.exec/db.run etc... pour interagir avec la DB.
-
 
 Pour faire une analogie :
 
@@ -35,3 +31,20 @@ Pour faire une analogie :
 3 - [route API] (/api/ping) --> La porte d'entrée que le monde extérieur utilise pour parler au chef d'orchestre.
 
 ### Conclusion : [db.js] setup la DB, et [server.js] s'en sert pour interagir avec elle via des [routes API].
+
+# II - Initialisation du contenu de la DB (SQLite) lors du lancement du projet
+
+1 - Création du fichier backend/schema.sql
+
+- Initialise la DB (création de tables users, matches etc.) au lancement, si la db n'existe pas déja.
+- C'est la structure de la DB, son plan de construction. Grace à ce fichier, SQLite sait quoi stocker et où.
+- Définit les relations entre les différents tableau (Un tableau peut dépendre d'un autre).
+
+
+# III - Fin de journée 17.10
+
+
+- Makefile OK
+- Docker OK
+- DB connectée au back OK
+- Chaque appel à localhost:3000/api/ping stocke bien un "pong" dans la table message de la DB.
