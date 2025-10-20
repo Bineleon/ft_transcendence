@@ -2,12 +2,53 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <link rel="stylesheet" href="/src/css/style.css" />   <!-- Feuille de style principale  -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />  <!-- Configuration pour le responsive design -->
+    <title>The Daily Pong</title>
   </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+  <body class="bg-white">  <!-- Image de fond pour toute la page -->
+    <div class="min-h-screen
+              bg-white
+              bg-[url('/imgs/papier.jpg')]
+              mx-auto
+              bg-cover
+              bg-center
+              min-[900px]:max-w-[90%]
+              shadow-[2px_2px_15px_rgba(0,0,0,0.3)]">
+      <header class="sticky
+                    top-0
+                    z-100
+                    border-b">
+        <div class="grid
+                    grid-cols-[150px_auto_150px]
+                    items-center
+                    py-3
+                    max-w-[auto]
+                    mx-[10px]">
+          <div class="justify-self-right
+                      text-sm
+                      tracking-wide
+                      opacity-100">
+            ft_transcendence
+          </div>
+          <h1 class="justify-self-center
+                    md:text-6xl
+                    font-['Times_New_Roman']
+                    font-bold">
+            THE DAILY PONG
+          </h1>
+          <div id="today" class="justify-self-end
+                                text-sm
+                                opacity-100">
+            20 octobre 2025
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <div id="app"></div>                                    <!-- Point d'entrée pour l'application frontend
+                                                                on charge le contenu ici, pour qu'au demarage de l'application
+                                                                le rendu soit effectué correctement -->
+    <script type="module" src="/src/main.ts"></script>      <!-- Script principal de l'application -->
   </body>
 </html>
