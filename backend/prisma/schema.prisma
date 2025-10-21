@@ -4,17 +4,8 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-// generator client {
-//   provider = "prisma-client-js"
-//   output   = "../generated/prisma"
-// }
-
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
-// }
-
 // prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -135,5 +126,4 @@ model Friend {
   friend    User       @relation("UserFriendOf", fields: [friendId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
   @@id([userId, friendId])
-  @@check(userId <> friendId)
 }
