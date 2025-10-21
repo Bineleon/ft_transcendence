@@ -1,34 +1,26 @@
-version: "3.9"
-
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: ft_transcendence-backend
+    build: ./backend
     ports:
-      - "8080:8080"  # Backend HTTPS
+      - "3000:3000"
     volumes:
-      - ./backend/certs:/app/certs
-      - backend_db:/app/db
+      - ./backend:/app           # code backend
+      - db-data:/app/database    # volume pour SQLite
+      - /app/node_modules
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
     restart: unless-stopped
 
+
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        BACKEND_URL: "https://backend:8080" # Injection de l'URL du backend dans le build
-    container_name: ft_transcendence-frontend
+    build: ./frontend
     ports:
-      - "8081:8081" # Frontend HTTPS
-    depends_on:
-      - backend
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
     volumes:
-      - ./frontend/certs:/app/certs
+      - ./frontend:/app
+      - /app/node_modules
     restart: unless-stopped
 
 volumes:
-  backend_db:
+  db-data:

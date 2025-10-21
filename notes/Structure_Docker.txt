@@ -1,0 +1,27 @@
+                 ┌──────────────────────────┐
+                 │        Navigateur        │
+                 │ http://localhost:5173    │
+                 └─────────────┬────────────┘
+                               │ fetch /api/ping
+                               ▼
+          ┌───────────────────────────────┐
+          │        Conteneur Frontend     │
+          │            Vite               │
+          │  Port exposé: 5173 → hôte     │
+          └─────────────┬─────────────────┘
+                        │ réseau Docker interne
+                        ▼
+          ┌───────────────────────────────┐
+          │        Conteneur Backend      │
+          │          Fastify              │
+          │  Port exposé: 3000 → hôte     │
+          │  Route: /api/ping             │
+          │  Lit/écrit dans SQLite        │
+          └─────────────┬─────────────────┘
+                        │ chemin: /app/database/db.sqlite
+                        ▼
+                  ┌─────────────────┐
+                  │ Volume Docker   │
+                  │ db-data         │
+                  │ Persistant      │
+                  └─────────────────┘

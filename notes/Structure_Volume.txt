@@ -1,0 +1,37 @@
+
+HÔTE (ton ordinateur)
+┌────────────────────┐
+│ ./backend/         │ ← Code backend local
+│   server.js        │
+│   db.js            │
+└────────────────────┘
+┌────────────────────┐
+│ ./frontend/        │ ← Code frontend local
+│   main.ts          │
+│   index.html       │
+└────────────────────┘
+┌───────────────────────────────┐
+│ Volume Docker : db-data       │ ← Persistance DB
+│   database.db                 │
+│   (stocké physiquement dans   │
+│    /var/lib/docker/volumes/…) │
+└───────────────────────────────┘
+
+
+CONTAINER BACKEND
+┌──────────────────────┐
+│ /app                 │ ← Monté depuis ./backend
+│   server.js          │ ← Reflet exact du code local
+│   db.js              │
+└──────────────────────┘
+┌──────────────────────┐
+│ /app/database        │ ← Monté sur volume db-data
+│   database.db        │ ← Persiste même si container supprimé
+└──────────────────────┘
+
+CONTAINER FRONTEND
+┌──────────────────────┐
+│ /app                 │ ← Monté depuis ./frontend
+│   main.ts            │
+│   index.html         │
+└──────────────────────┘

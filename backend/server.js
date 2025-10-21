@@ -1,27 +1,36 @@
 import Fastify from 'fastify';
 import { openDb } from './db.js';
+import fastifyCors from '@fastify/cors';
+import fs from 'fs';
+import path from 'path';
 
-// 1. On crée une instance du serveur
 const app = Fastify({ logger: true });
 
-// 2. On définit une route simple
 app.get('/api/ping', async () => {
   const db = await openDb();
 
-  // Créons une table "messages" si elle n’existe pas encore
-  await db.exec('CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, text TEXT)');
+  // Lis le fichier schema.sql depuis ./backend
+  const schemaPath = path.join(process.cwd(), 'schema.sql');
+  const schema = fs.readFileSync(schemaPath, 'utf8');
 
-  // Ajoutons un message
+  // Exécute le SQL du schema pour créer les tables si elles n'existent pas
+  await db.exec(schema);
+
+  // Exemple simple : table messages
   await db.run('INSERT INTO messages (text) VALUES (?)', ['pong 🏓']);
-
-  // Lisons tous les messages
   const rows = await db.all('SELECT * FROM messages');
 
   return { messages: rows };
 });
 
+await app.register(fastifyCors, {
+  origin: '*' // autorise toutes les origines pour dev
+});
 
-// 3. On démarre le serveur
+app.get('/', async (req, reply) => {
+  return { message: 'Bienvenue sur l’API Transcendance 🚀' };
+});
+
 const start = async () => {
   try {
     await app.listen({ port: 3000, host: '0.0.0.0' });
