@@ -9,6 +9,8 @@ services:
       - /app/node_modules
     environment:
       NODE_ENV: development
+    networks:
+      - app_network
     restart: unless-stopped
 
 
@@ -20,7 +22,29 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app_network
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/defaut.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
     restart: unless-stopped
 
 volumes:
   db-data:
+
+networks:
+  app_network:   # ou app-network, mais assurer le même nom partout
+    driver: bridge
