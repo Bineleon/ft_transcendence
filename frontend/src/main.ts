@@ -1,6 +1,13 @@
-import './css/style.css'
+// src/main.ts
+import { createRouter } from "./router";
+import { Home } from "./pages/home";
+import { Login } from "./pages/login";
+import { Game } from "./pages/game";
 
-fetch('http://localhost:3000/api/ping')
-  .then(res => res.json())
-  .then(data => console.log(data))
-  .catch(err => console.error('Erreur backend:', err));
+const routes = {
+  "/": Home,
+  "/login": Login,
+  "/game": Game,
+};
+
+createRouter("app", routes);  // le router écoute et rend tout seul
