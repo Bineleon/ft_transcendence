@@ -1,15 +1,39 @@
 // src/main.ts
 
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className?: string,
-): HTMLElementTagNameMap[K] {
+/** Fonction ELEMENT (el) **/
+/* elle crée un élément HTML avec une balise et une classe optionnelle */
+/* liste types DOM (Document Object Model)/balise les plus courants :
+    "a" - HTMLAnchorElement (lien)
+    "div" - HTMLDivElement (division de page)
+    "span" - HTMLSpanElement (portion de texte en ligne)
+    "p" - HTMLParagraphElement (paragraphe)
+    "section" - HTMLElement (section de page)
+    "header" - HTMLElement (en-tête)
+    "footer" - HTMLElement (pied de page)
+    "main" - HTMLElement (contenu principal)
+    "img" - HTMLImageElement (image)
+    "button" - HTMLButtonElement (bouton)
+    "input" - HTMLInputElement (champ de saisie)
+    "form" - HTMLFormElement (formulaire)
+    "ul" - HTMLUListElement (liste non ordonnée)
+    "li" - HTMLLIElement (élément de liste)
+    "h1", "h2", "h3", etc. - HTMLHeadingElement (titres)
+    "table" - HTMLTableElement (tableau)
+    "tr" - HTMLTableRowElement (ligne de tableau)
+    "td" - HTMLTableCellElement (cellule de tableau)
+    "canvas" - HTMLCanvasElement (zone de dessin)
+    "video" - HTMLVideoElement (vidéo)
+    "audio" - HTMLAudioElement (audio)
+    "textarea" - HTMLTextAreaElement (zone de texte)
+    etc. (https://developer.mozilla.org/en-US/docs/Web/API/HTMLElementTagNameMap)
+*/
+export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (className) node.className = className;
   return node;
 }
 
-function text(t: string): Text {
+export function text(t: string): Text {
     return document.createTextNode(t);
 }
 
@@ -17,8 +41,9 @@ export function Home(): HTMLElement {
     const main = el("main", "p-4");
     const grid = el("section", "grid grid-cols-1 md:grid-cols-3 gap-6");
 
-    const base = "text-justify text-md font-modern-type";
-    const dropcap = "first-line:tracking-widest first-letter:text-6xl first-letter:font-bold first-letter:text-gray-900 dark:first-letter:text-gray-100 first-letter:me-2 first-letter:float-start";
+    /**** TODO - Mise en place de styles pour paragraophes texte, etc. ****/
+    // const base = "text-justify text-md font-modern-type";
+    // const dropcap = "first-line:tracking-widest first-letter:text-6xl first-letter:font-bold first-letter:text-gray-900 dark:first-letter:text-gray-100 first-letter:me-2 first-letter:float-start";
 
     const aPlay = el("a", "text-black-500 underline decoration-4 hover:bg-black hover:text-white");
     aPlay.href = "#/game";
@@ -27,10 +52,6 @@ export function Home(): HTMLElement {
     const aLogin = el("a", "text-black-500 underline decoration-4 hover:bg-black hover:text-white");
     aLogin.href = "#/login";
     aLogin.append(text("Login"));
-
-    function para(txt: SVGStringList, cls = ""): HTMLParagraphElement {
-        const p = el()
-    }
 
     const p1 = el("p", "first-line:tracking-widest first-letter:text-6xl first-letter:font-bold first-letter:text-gray-900 dark:first-letter:text-gray-100 first-letter:me-2 first-letter:float-start text-justify text-md font-modern-type")
     p1.append(

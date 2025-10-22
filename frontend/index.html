@@ -8,7 +8,7 @@
   </head>
 
   <!-- Fond global blanc, plein écran -->
-  <body class="bg-white min-h-screen">
+  <body class="bg-white min-h-screen [filter:sepia(10%)]">
 
     <!-- ===== FEUILLE CENTRALE (le journal) =====
          - centrée
@@ -22,7 +22,7 @@
                 bg-white/40 bg-blend-overlay">
                 
       <!-- ===== HEADER (dans la feuille) ===== -->
-      <header class="z-[100] p-8">
+      <header class="z-[100] px-16 py-8">
           <!-- Ligne 1 : 3 colonnes (gauche/centre/droite) -->
         <div class="grid grid-cols-3 items-center text-xs md:text-sm font-modern-type">
           <div class="justify-self-start tracking-wide">ft_transcendence</div>
@@ -30,12 +30,12 @@
           <div class="justify-self-end tracking-wide">Chapter 1</div>
         </div>
 
-        <div class="border-y border-black py-2 md:py-4">
+        <div class="border-y-4 border-black py-2 md:py-4">
         <!-- Titre du journal au centre -->
           <h1 class="text-center font-im-great text-4xl
                 md:text-7xl
                 relative translate-y-[-28%] leading-none">
-            The Daily Pong
+                <a href="#/">The Daily Pong</a>
           </h1>
 
         </div>
