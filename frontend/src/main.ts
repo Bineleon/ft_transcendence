@@ -1,12 +1,12 @@
 // src/main.ts
 import { createRouter } from "./router";
 import { Home } from "./pages/home";
-import { Login } from "./pages/login";
+import { LoginPage } from "./pages/login";
 import { Game } from "./pages/game";
 
 const routes = {
   "/": Home,
-  "/login": Login,
+  "/login": LoginPage,
   "/game": Game,
 };
 

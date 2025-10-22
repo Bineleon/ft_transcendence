@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/****** IM Fell Small Caps ******/
 @font-face {
   font-family: "IM_Double_SmallCaps"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -10,6 +11,7 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 }
 
+/****** IM Fell Great Primer ******/
 @font-face {
   font-family: "IM_Great_Primer_SmallCaps"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -20,6 +22,7 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 }
 
+/****** F25 Blackletter ******/
 @font-face {
   font-family: "F25Blackletter"; /* Le nom que TU utiliseras dans tes styles */
   src:
