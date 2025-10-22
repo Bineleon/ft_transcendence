@@ -12,6 +12,7 @@ COPY package*.json ./
 
 # Étape 4 : installer les dépendances
 RUN npm ci
+RUN apk add curl
 
 # Étape 5 : copier le reste du code
 COPY . .
