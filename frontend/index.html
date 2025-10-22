@@ -2,55 +2,198 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/src/css/style.css" />   <!-- Feuille de style principale  -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />  <!-- Configuration pour le responsive design -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Daily Pong</title>
+    <link rel="stylesheet" href="/src/css/style.css" />
   </head>
-  <body class="bg-white 
-              relative min-h-screen
-              mx-auto
-              min-[900px]:max-w-[90%]
-              shadow-[0px_0px_10px_rgba(0,0,0,0.3)]">
-    <!-- Background image layer with opacity -->
-    <div class="absolute
-              inset-0
-              -z-10
-              bg-[url('/imgs/papier.jpg')] bg-cover bg-center
-              opacity-70"></div>
-      <header class="sticky
-                    top-0
-                    z-100
-                    border-b">
-        <div class="grid
-                    grid-cols-[150px_auto_150px]
-                    items-center
-                    py-5
-                    max-w-[auto]
-                    mx-[10px]">
-          <div class="justify-self-right
-                      text-sm
-                      tracking-wide
-                      opacity-100">
-            ft_transcendence
-          </div>
-          <h1 class="justify-self-center
-                    md:text-6xl
-                    font-['Times_New_Roman']
-                    font-bold">
-            THE DAILY PONG
+
+  <!-- Fond global blanc, plein écran -->
+  <body class="bg-white min-h-screen [filter:sepia(10%)]">
+
+    <!-- ===== FEUILLE CENTRALE (le journal) =====
+         - centrée
+         - largeur limitée (90% max sur grand écran, sauf si petit écran < 900px)
+         - ombre
+         - background papier derrière le contenu -->
+    <div class="relative min-[900px]:max-w-[90%] mx-auto
+                min-h-[100dvh] min-h-screen
+                shadow-[0px_0px_10px_rgba(0,0,0,0.3)]
+                bg-[url('/imgs/papier.jpg')] bg-cover bg-center
+                bg-white/40 bg-blend-overlay">
+                
+      <!-- ===== HEADER (dans la feuille) ===== -->
+      <header class="z-[100] px-16 py-8">
+          <!-- Ligne 1 : 3 colonnes (gauche/centre/droite) -->
+        <div class="grid grid-cols-3 items-center text-xs md:text-sm font-modern-type">
+          <div class="justify-self-start tracking-wide">ft_transcendence</div>
+          <div id="today" class="justify-self-center">20 octobre 2025</div>
+          <div class="justify-self-end tracking-wide">Chapter 1</div>
+        </div>
+
+        <div class="border-y-4 border-black py-2 md:py-4">
+        <!-- Titre du journal au centre -->
+          <h1 class="text-center font-im-great text-4xl
+                md:text-7xl
+                relative translate-y-[-28%] leading-none">
+                <a href="#/">The Daily Pong</a>
           </h1>
-          <div id="today" class="justify-self-end
-                                text-sm
-                                opacity-100">
-            20 octobre 2025
-          </div>
+
         </div>
       </header>
+
+      <!-- ===== CONTENU SPA ===== -->
+      <main class="flex-1 px-4 py-4">
+        <div id="app" class="p-8 min-h-[60dvh]"></div>
+      </main>
+
+      <!-- (Optionnel) FOOTER -->
+      <footer class="z-[100] p-8">
+        <div class="border-t px-4 py-4 text-center text-xs justify-self-center font-royalvogue">Copyright © 2025</div>
+      </footer>
     </div>
 
-    <div id="app"></div>                                    <!-- Point d'entrée pour l'application frontend
-                                                                on charge le contenu ici, pour qu'au demarage de l'application
-                                                                le rendu soit effectué correctement -->
-    <script type="module" src="/src/main.ts"></script>      <!-- Script principal de l'application -->
+    <!-- Script principal (Vite charge TS et ton CSS si tu l'importes dans main.ts) -->
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+
+
+
+<!-- ===== MEMO TAILWIND / LAYOUT FEUILLE =====
+  UNITÉS & HAUTEUR
+    - vh : viewport height (selon la fenêtre, SANS gérer la barre d’URL mobile)
+    - dvh : dynamic viewport height (gère mieux mobile)
+      ex: min-h-[100dvh] = couvre 100% de la hauteur visible
+      ex: min-h-screen  ~= min-h-[100vh] (bon sur desktop, moins fiable mobile)
+
+  MARGES & PADDINGS
+    - mx-* : marge horizontale (mx-auto = centrer un bloc avec largeur fixe/max)
+    - my-* : marge verticale
+    - p-*, px-*, py-* : padding interne (px = horizontal, py = vertical)
+
+  POSITIONNEMENT
+    - relative : crée un contexte pour des enfants en absolute (overlays, etc.)
+    - z-[N] : z-index arbitraire (z-[100]) pour superposer/forcer l’ordre
+
+  LARGEUR & CONTENEURS
+    - max-w-* : largeur max (ex: min-[900px]:max-w-[90%] = 90% après 900px)
+    - mx-auto + max-w-* : centre proprement sur grands écrans
+    - min-[900px]:… : breakpoint “arbitraire” (ici 900px)
+
+  FLEX / FOOTER EN BAS
+    - Pour coller un footer en bas même avec peu de contenu :
+        parent : flex flex-col
+        main   : flex-1
+        footer : (rien de spécial) ou mt-auto
+      => sans parent flex, flex-1 sur <main> n’a aucun effet.
+
+  GRILLE (HEADER BANDEAU)
+    - grid grid-cols-3 : 3 colonnes (gauche / centre / droite)
+    - items-center : aligne verticalement au centre
+    - justify-self-start | center | end : aligne HORS de la cellule
+    - tracking-wide : interlettrage élargi (style “presse”)
+    - leading-none : interligne serré (titre compact)
+
+  TYPO & RESPONSIVE
+    - text-xs md:text-sm : change la taille à partir du breakpoint md (>=768px)
+    - text-4xl md:text-7xl : titre très grand sur desktop
+    - (classes perso) font-im-great / font-modern-type / font-royalvogue : 
+      définies dans le projet (tailwind.config / CSS), pour charger tes fontes
+
+  BACKGROUND IMAGE & “INTENSITÉ”
+    - bg-[url('/imgs/papier.jpg')] : image de fond (syntaxe arbitraire)
+    - bg-cover : l’image couvre (peut rogner)
+    - bg-center : centrage du motif
+    - bg-white/40 : couleur de fond BLANCHE à 40% (sous l’image)
+    - bg-blend-overlay (ou multiply/screen/…) : mélange couleur + image
+        * Éclaircir / “délaver” : bg-white/40 + bg-blend-overlay
+        * Assombrir uniforme  : bg-black/30 + bg-blend-multiply
+      NOTE: bg-opacity-* n’affecte que la couleur, pas l’image. D’où blend modes.
+
+  ARBITRARY VALUES (valeurs entre crochets [])
+    - Permet d’injecter une valeur CSS précise :
+        bg-[url(...)]  | shadow-[0_0_10px_rgba(0,0,0,0.3)]
+        translate-y-[-28%] | z-[100] | min-[900px]:max-w-[90%]
+      Utile pour un réglage fin sans créer de classe custom (garder lisible !)
+
+  BREAKPOINTS & PRÉFIXES (rappel)
+    - sm: md: lg: xl: 2xl:       → responsive “par défaut” Tailwind
+    - min-[900px]:               → breakpoint perso (valeur exacte)
+    - hover: focus: active: ...  → états d’interaction
+    - dark:                      → thème sombre (si activé)
+    - group-hover:, peer-focus:  → états liés au parent/peer
+    - supports-[prop]:, aria-*, data-[state=*] → sélecteurs avancés
+
+  ASTUCES PRAGMATIQUES
+    - Choisir 1 seul min-height principal : min-h-[100dvh] (mobile) OU min-h-screen
+    - Éviter overflow-hidden sur le wrapper si on veut du sticky quelque part
+    - Pour un header qui “disparaît” au scroll : pas de fixed/sticky/top-0
+    - Fonds “papier” : régler l’intensité via la paire couleur + bg-blend-*
+
+  TL;DR
+    “Je veux un papier plus clair”  → bg-white/50 bg-blend-overlay
+    “Je veux un papier plus sombre” → bg-black/30 bg-blend-multiply
+    “Footer collé en bas”           → parent flex flex-col + main flex-1
+-->
+
+<!-- ===== MEMO TAILWIND — RESPONSIVE (md:, etc.) =====
+  PRINCIPE GÉNÉRAL
+    - Tailwind est "mobile-first".
+    - Un préfixe responsive (ex: md:) s’applique à partir d’une largeur MINIMALE
+      (= media query min-width). En dessous, on garde les classes "de base".
+    - Les classes sans préfixe = styles par défaut (mobile). Les préfixes
+      viennent les COMPLÉTER/ÉCRASER au-dessus d’un certain seuil.
+
+  BREAKPOINTS PAR DÉFAUT (min-width)
+    - sm  : 640px
+    - md  : 768px
+    - lg  : 1024px
+    - xl  : 1280px
+    - 2xl : 1536px
+
+  BREAKPOINTS PERSONNALISÉS
+    - min-[900px]:...  → breakpoint ARBITRAIRE à 900px
+      (pratique si les paliers par défaut ne collent pas au design)
+
+  EXEMPLES UTILES
+    - text-xs md:text-sm lg:text-base
+        => petit texte sur mobile, légèrement plus grand dès 768px,
+           taille "normale" dès 1024px
+    - p-4 md:p-6 lg:p-8
+        => padding qui augmente avec la largeur
+    - grid-cols-1 md:grid-cols-3
+        => 1 colonne sur mobile, 3 colonnes dès 768px
+    - max-w-full min-[900px]:max-w-[90%]
+        => pleine largeur en dessous de 900px, puis 90% au-dessus
+
+  EMPILAGE & PRIORITÉ
+    - Les règles "plus grandes" écrasent les plus petites si le même utilitaire
+      est re-déclaré. Exemple :
+        text-2xl md:text-4xl lg:text-6xl
+      À 1200px, c’est lg:text-6xl qui gagne (logique : 1200 >= 1024).
+    - Ordre conseillé : base → sm → md → lg → xl → 2xl → (min-[...])
+      (mais Tailwind gère l’ordre automatiquement dans le CSS généré)
+
+  COMBINAISONS FRÉQUENTES
+    - États + responsive :
+        hover:underline md:hover:no-underline
+      (sur mobile/desktop, le hover varie ; à partir de md, on enlève le souligné)
+    - Responsive + arbitrary values :
+        translate-y-[-28%] md:translate-y-[-18%]
+      (règle fine du placement d’un titre selon la largeur)
+
+  ASTUCES PRAGMATIQUES
+    - Commence toujours par les styles "sans préfixe" (mobile), puis
+      rehausse progressivement avec md:, lg:, etc.
+    - Si un composant n’a de sens que sur grand écran (ex: 3 colonnes),
+      pense à la version mobile (1 colonne) *sans préfixe*.
+    - Si un seul seuil te suffit mais il n’existe pas par défaut,
+      utilise un **breakpoint arbitraire** (min-[Npx]:...).
+    - Pour déboguer : rétrécis/élargis la fenêtre et surveille où la classe
+      “bascule”. Les breakpoints de Tailwind sont MIN-width (pas max-width).
+
+  TL;DR
+    - "mobile-first" → styles de base, puis md:… pour “au-dessus de 768px”.
+    - Les préfixes s’additionnent et les plus grands gagnent en cas de conflit.
+    - Besoin d’un seuil précis ? → min-[900px]:... (ou ce que tu veux).
+-->

@@ -1,5 +1,121 @@
 @import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@font-face {
+  font-family: "IM_Double_SmallCaps"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/IM Fell Double Pica/FeDPsc2.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+@font-face {
+  font-family: "IM_Great_Primer_SmallCaps"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/IM Fell Great Primer/FeGPsc2.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+@font-face {
+  font-family: "F25Blackletter"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/F25Blackletter_Type/F25_BlackletterTypewriter.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+/****** JMH Typewriter Sans ******/
+@font-face {
+  font-family: "JMH_Type_Sans";
+  src:
+    url("/fonts/JMH_Type_Sans/JMH_Typewriter_Sans.ttf")
+    format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JMH_Type_Sans";
+  src:
+    url("/fonts/JMH_Type_Sans/JMH_Typewriter_Sans_Italic.ttf")
+    format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JMH_Type_Sans";
+  src:
+    url("/fonts/JMH_Type_Sans/JMH_Typewriter_Sans_Bold.ttf")
+    format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JMH_Type_Sans";
+  src:
+    url("/fonts/JMH_Type_Sans/JMH_Typewriter_Sans_Bold-Italic.ttf")
+    format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+/**********************************/
+
+@font-face {
+  font-family: "Modern_Type"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/Modern_Type/Modern_Typewriter.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+@font-face {
+  font-family: "OceanSide_Type"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/Ocean_Type/Oceanside_Typewriter.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+@font-face {
+  font-family: "RoyalVogue_Type"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/RoyalVogue_Type/zai_RoyalVogueTypewriter1929.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+
+@theme {
+  /* IM Fell (style journal, serif) */
+  --font-im-double: "IM_Double_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-im-great:  "IM_Great_Primer_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Blackletter (ancien journal, gothique → serif fallback) */
+  --font-f25-blackletter: "F25Blackletter", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* JMH Typewriter Sans (sans-serif) */
+  --font-jmh: "JMH_Type_Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+
+  /* Typewriter “machine à écrire” (souvent monospaces) */
+  --font-modern-type: "Modern_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-ocean-type:  "OceanSide_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-royalvogue:  "RoyalVogue_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
