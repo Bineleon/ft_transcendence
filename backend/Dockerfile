@@ -22,37 +22,26 @@
 # # Étape 7 : commande par défaut pour lancer ton serveur
 # CMD ["node", "server.ts"]
 
-# backend/Dockerfile — single-stage, no multi-stage
-FROM node:22-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Outils de build + SQLite (musl)
-RUN apk add --no-cache python3 make g++ pkgconfig sqlite sqlite-dev
-
-# 1) Déclarer d'abord les deps (pour cache)
+# 1) Copier d'abord les manifestes + le schéma Prisma
 COPY package*.json ./
+COPY prisma ./prisma
 
-# ⚠️ Prisma est en devDependencies dans ton package.json.
-# En single-stage simple, on garde les devDeps pour que `postinstall` (prisma generate) passe.
+# 2) Installer (le postinstall "prisma generate" va maintenant réussir)
 RUN npm ci
 
-# 2) Prisma client (sinon erreur au runtime)
-COPY prisma ./prisma
+# 3) Copier le reste du code
+COPY . .
+
+# 4) (optionnel mais recommandé) Générer Prisma à nouveau au cas où
 RUN npx prisma generate
 
-# 3) Code + build TS -> dist/
-COPY . .
-RUN npm run build
-
-# 4) Vars & ports
+# Variables d'env (exemple)
 ENV NODE_ENV=production
-# Chemin SQLite: un fichier dans /app/database
 ENV DATABASE_URL="file:/app/database/app.db"
-RUN mkdir -p /app/database
 
-EXPOSE 3000
-
-# 5) Appliquer les migrations au démarrage puis lancer l'app
-#    (tu peux ajouter un seed si besoin)
-CMD sh -c "npx prisma migrate deploy && node dist/server.js"
+# Démarrage (à adapter : dev/prod)
+CMD ["node", "dist/server.js"]
