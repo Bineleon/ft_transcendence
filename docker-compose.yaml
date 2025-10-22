@@ -1,17 +1,38 @@
 services:
+  services:
   backend:
     build: ./backend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./backend:/app           # code backend
-      - db-data:/app/database    # volume pour SQLite
-      - /app/node_modules
+    ports: ["3000:3000"]
     environment:
       NODE_ENV: development
-    networks:
-      - app_network
-    restart: unless-stopped
+      DATABASE_URL: "file:/app/database/app.db"
+    volumes:
+      - ./backend:/app            # code en live (hot reload)
+      - db-data:/app/database     # persistance SQLite
+      - /app/node_modules         # évite d’écraser node_modules
+    command: npm run dev          # tsx watch server.ts
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 2s
+      retries: 6
+      start_period: 5s
+      networks:
+        - app_network
+
+  # backend:
+  #   build: ./backend
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./backend:/app           # code backend
+  #     - db-data:/app/database    # volume pour SQLite
+  #     - /app/node_modules
+  #   environment:
+  #     NODE_ENV: development
+  #   networks:
+  #     - app_network
+  #   restart: unless-stopped
 
 
   frontend:

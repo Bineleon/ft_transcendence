@@ -13,6 +13,8 @@ app.get('/api/ping', async () => {
 
 app.get('/', async () => ({ message: 'Bienvenue sur l’API Transcendance 🚀' }));
 
+app.get('/health', async () => ({ status: 'ok' }));
+
 const start = async () => {
   await app.listen({ host: '0.0.0.0', port: 3000 });
 };
