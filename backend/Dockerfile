@@ -32,6 +32,7 @@ COPY prisma ./prisma
 
 # 2) Installer (le postinstall "prisma generate" va maintenant réussir)
 RUN npm ci
+RUN apk add curl
 
 # 3) Copier le reste du code
 COPY . .
