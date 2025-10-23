@@ -21,4 +21,4 @@ COPY . .
 EXPOSE 3000
 
 # Étape 7 : commande par défaut pour lancer ton serveur
-CMD ["node", "server.js"]
+CMD ["node", "server.ts"]
