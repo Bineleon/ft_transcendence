@@ -8,25 +8,26 @@ Thumbs.db
 *.swp
 *.swo
 
-# # ─────────────────────────────
-# # Node / TypeScript
-# # ─────────────────────────────
-# node_modules/
-# npm-debug.log*
-# yarn-debug.log*
-# yarn-error.log*
-# pnpm-debug.log*
-# *.tsbuildinfo
+# ─────────────────────────────
+# Node / TypeScript
+# ─────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
 
-# ─────────────────────────────
-# Env & secrets
-# (gardez .env.example versionné)
-# ─────────────────────────────
-# .env
-# .env.*
-# !.env.example
-# secrets/
-# *.key
+─────────────────────────────
+Env & secrets
+(gardez .env.example versionné)
+─────────────────────────────
+backend/.env
+.env
+.env.*
+!.env.example
+secrets/
+*.key
 
 # ─────────────────────────────
 # Frontend (Vite)
@@ -41,16 +42,16 @@ frontend/src/__generated__/
 # Backend (Fastify)
 # # ─────────────────────────────
 
-# backend/public/
-# backend/coverage/
-# backend/logs/
-# backend/*.log
+backend/public/
+backend/coverage/
+backend/logs/
+backend/*.log
 
-# # DB locale (SQLite)
-# backend/**/*.sqlite
-# backend/**/*.sqlite-journal
-# /data/
-# *.db
+# DB locale (SQLite)
+backend/**/*.sqlite
+backend/**/*.sqlite-journal
+/data/
+*.db
 
 # ─────────────────────────────
 # Blockchain (Hardhat / Foundry)
@@ -72,10 +73,10 @@ blockchain/**/keystore/
 # ─────────────────────────────
 # Docker / Compose
 # ─────────────────────────────
-# docker/**/certs/
-# docker/**/data/
-# docker/**/logs/
-# *.pid
+docker/**/certs/
+docker/**/data/
+docker/**/logs/
+*.pid
 
 # ─────────────────────────────
 # Tests / Tools
@@ -94,3 +95,5 @@ coverage/
 *.zip
 *.bak
 *.tmp
+
+.gitignore
