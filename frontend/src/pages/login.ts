@@ -81,7 +81,7 @@ function register(): HTMLElement {
 
         const payload = {
             email: inputEmail.value,
-            login: inputLogin.value,
+            username: inputLogin.value,
             password: inputPassword.value,
         };
 

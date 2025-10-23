@@ -3,10 +3,10 @@ const prisma = new PrismaClient();
 
 async function main() {
   const userCount = await prisma.user.count();
-  if (userCount > 0) {
-    console.log('Seed skipped: DB not empty');
-    return;
-  }
+//   if (userCount > 0) {
+    // console.log('Seed skipped: DB not empty');
+    // return;
+//   }
   // --- SEED ---
   const nelbi = await prisma.user.create({
     data: { username: 'neleon', email: 'neleon@example.com', passwordHash: '...' }

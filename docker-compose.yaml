@@ -3,8 +3,11 @@ services:
     build: ./backend
     ports:
       - "3000:3000"
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app           # code backend
+      # - ./backend/prisma:/app/prisma 
       - db-data:/app/database    # volume pour SQLite
       - /app/node_modules
     environment:
