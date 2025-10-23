@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/****** IM Fell Small Caps ******/
 @font-face {
   font-family: "IM_Double_SmallCaps"; /* Le nom que TU utiliseras dans tes styles */
   src:
