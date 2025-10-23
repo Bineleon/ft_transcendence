@@ -86,9 +86,10 @@ const start = async () => {
   }
 };
 
-// Route pour le register
 app.post('/api/auth/register', async (req, reply) => {
-  const { username, email, password } = req.body;
+  // Accept either "username" or "login" from the frontend
+  const username = req.body.username || req.body.login;
+  const { email, password } = req.body;
 
   // 1️⃣ Vérification des champs
   if (!username || !email || !password) {
@@ -96,20 +97,14 @@ app.post('/api/auth/register', async (req, reply) => {
   }
 
   try {
-    // 2️⃣ Hash du mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 rounds
-
-    // 3️⃣ Insérer dans la DB
+    const hashedPassword = await bcrypt.hash(password, 10);
     const db = await openDb();
     await db.run(
       'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
       [username, email, hashedPassword]
     );
-
-    // 4️⃣ Réponse au front
     return reply.status(201).send({ message: 'Utilisateur créé avec succès' });
   } catch (err) {
-    // Gestion des erreurs (ex: email déjà existant)
     return reply.status(500).send({ error: 'Impossible de créer l’utilisateur', details: err.message });
   }
 });
