@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum TournamentStatus {
+  OPEN
+  RUNNING
+  CLOSED
+}
+
+enum MatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  CLOSED
+  DB_ONLY
+  CONFIRMED
+  FAILED
+}
+
+enum FriendStatus {
+  pending
+  accepted
+  blocked
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  username      String    @unique
+  email         String    @unique
+  passwordHash  String
+  avatarUrl     String?   @map("avatar_url")
+  playerRef     String?   @unique @map("player_ref") // hash/adresse on-chain (nullable au début)
+  twoFASecret   String?   @map("2fa_secret")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  createdTournaments Tournament[] @relation("UserCreatedTournaments")
+  sessions          Session[]
+  matchesAsP1       Match[]       @relation("P1")
+  matchesAsP2       Match[]       @relation("P2")
+  matchesWon        Match[]       @relation("Winner")
+  friends           Friend[]      @relation("UserFriends")
+  friendOf          Friend[]      @relation("UserFriendOf")
+}
+
+model Tournament {
+  id         Int              @id @default(autoincrement())
+  name       String
+  status     TournamentStatus @default(OPEN)
+  createdBy  Int?             @map("created_by")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  creator    User?            @relation("UserCreatedTournaments", fields: [createdBy], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  matches    Match[]
+
+  @@index([status])
+}
+
+model Match {
+  id            Int          @id @default(autoincrement())
+  tournamentId  Int          @map("tournament_id")
+  gameCode      String       @default("pong") @map("game_code")
+  round         Int?
+  gameIndex     Int?         @map("game_index")
+
+  p1UserId      Int          @map("p1_user_id")
+  p1Ref         String?      @map("p1_ref")
+  p1Score       Int?         @map("p1_score")
+
+  p2UserId      Int          @map("p2_user_id")
+  p2Ref         String?      @map("p2_ref")
+  p2Score       Int?         @map("p2_score")
+
+  winnerUserId  Int?         @map("winner_user_id")
+  winnerRef     String?      @map("winner_ref")
+
+  status        MatchStatus  @default(SCHEDULED)
+  txHash        String?      @map("tx_hash")
+  onchainAt     DateTime?    @map("onchain_at")
+  closedAt      DateTime?    @map("closed_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  tournament    Tournament   @relation(fields: [tournamentId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  p1            User         @relation("P1",     fields: [p1UserId],     references: [id], onUpdate: Cascade, onDelete: Restrict)
+  p2            User         @relation("P2",     fields: [p2UserId],     references: [id], onUpdate: Cascade, onDelete: Restrict)
+  winner        User?        @relation("Winner", fields: [winnerUserId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@index([tournamentId])
+  @@index([status])
+  @@unique([tournamentId, round, gameIndex])
+}
+
+model Session {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  tokenHash  String   @unique @map("token_hash")  // stocker un hash, pas un JWT en clair
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Friend {
+  userId    Int        @map("user_id")
+  friendId  Int        @map("friend_id")
+  status    FriendStatus @default(pending)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  user      User       @relation("UserFriends",  fields: [userId],   references: [id], onUpdate: Cascade, onDelete: Cascade)
+  friend    User       @relation("UserFriendOf", fields: [friendId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([userId, friendId])
+}
