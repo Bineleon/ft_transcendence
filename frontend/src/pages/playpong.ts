@@ -1,9 +1,7 @@
-import { el, text } from "./home";
+import { el } from "./home";
+
 export function PlayPong(): HTMLElement {
-    const main = el("main", "relative bg-[url('/public/imgs/trame2.png')] bg-cover bg-center bg-white/40 bg-blend-overlay flex flex-col items-center h-screen justify-center ");
-    const title = el("h1", "text-6xl font-jmh text-white mb-8");
-    title.append(text("Play Pong Game"));
-    main.append(title);
+    const main = el("main", "mx-20 relative h-screen[70%] bg-[url('/public/imgs/trame4.png')] bg-black/40 bg-cover bg-center bg-blend-overlay flex flex-col items-center min-h-[80dvh] justify-center ");
 
     return main;
 } 
