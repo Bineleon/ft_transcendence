@@ -53,6 +53,14 @@ export function Home(): HTMLElement {
     aLogin.href = "#/login";
     aLogin.append(text("Login"));
 
+    const aProfile = el("a", "text-black-500 underline decoration-4 hover:bg-black hover:text-white");
+    aProfile.href = "#/profile";
+    aProfile.append(text("visit your profile"));
+
+    const aGame = el("a", "text-black-500 underline decoration-4 hover:bg-black hover:text-white");
+    aGame.href = "#/game";
+    aGame.append(text("play the game"));
+    
     const p1 = el("p", "first-line:tracking-widest first-letter:text-6xl first-letter:font-bold first-letter:text-gray-900 dark:first-letter:text-gray-100 first-letter:me-2 first-letter:float-start text-justify text-md font-modern-type")
     p1.append(
         text(
@@ -62,7 +70,7 @@ export function Home(): HTMLElement {
 
     const p2 = el("p", "first-line:tracking-widest first-letter:text-6xl first-letter:font-bold first-letter:text-gray-900 dark:first-letter:text-gray-100 first-letter:me-2 first-letter:float-start text-justify text-md font-modern-type")
     p2.append(
-        text("Maecenas vel leo in eros lacinia efficitur. Aenean fermentum laoreet mollis. Praesent commodo nibh vitae eros rhoncus aliquet. Cras ac congue ante, eu ultricies eros. In justo orci, convallis in velit in, semper tempus neque. You must "),
+        text("Saecenas vel leo in eros lacinia efficitur. Aenean fermentum laoreet mollis. Praesent commodo nibh vitae eros rhoncus aliquet. Cras ac congue ante, eu ultricies eros. In justo orci, convallis in velit in, semper tempus neque. You must "),
         aLogin,
         text(" to access your account. And then you may "),
         aPlay,
@@ -72,7 +80,9 @@ export function Home(): HTMLElement {
     const p3 = el("p", "first-line:tracking-widest first-letter:text-6xl first-letter:font-bold first-letter:text-gray-900 dark:first-letter:text-gray-100 first-letter:me-2 first-letter:float-start text-justify text-md font-modern-type")
     p3.append(
         text(
-            "Duis bibendum nunc eget enim ornare, non posuere elit blandit. Pellentesque fermentum dui ut magna ultricies, eu congue sapien convallis. Curabitur mollis malesuada ante et hendrerit. Maecenas ullamcorper odio nulla, sit amet ornare ipsum egestas vel. Nullam ex tortor, sollicitudin id diam id, efficitur sagittis justo. Aenean fermentum sapien sit amet laoreet mollis. Praesent commodo nibh vitae eros rhoncus aliquet. Nulla facilisi. Cras ac congue ante, eu ultricies eros. In justo orci, convallis in velit in, semper tempus neque. Ut pellentesque elit sit amet nisi porttitor pretium. Sed pretium a neque accumsan condimentum. Fusce nibh turpis, facilisis ut lectus vitae, dapibus pharetra nisl. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean sagittis risus felis, id ornare tellus iaculis ut. Aenean vitae placerat nulla, congue interdum nisl. Maecenas sit amet lobortis diam."
+            "Duis bibendum nunc eget enim ornare, non posuere elit blandit. Pellentesque fermentum dui ut magna ultricies, eu congue sapien convallis. "),
+            aProfile,
+            text(" Curabitur mollis malesuada ante et hendrerit. Maecenas ullamcorper odio nulla, sit amet ornare ipsum egestas vel. Nullam ex tortor, sollicitudin id diam id, efficitur sagittis justo. Aenean fermentum sapien sit amet laoreet mollis. Praesent commodo nibh vitae eros rhoncus aliquet. Nulla facilisi. Cras ac congue ante, eu ultricies eros. In justo orci, convallis in velit in, semper tempus neque. Ut pellentesque elit sit amet nisi porttitor pretium. Sed pretium a neque accumsan condimentum. Fusce nibh turpis, facilisis ut lectus vitae, dapibus pharetra nisl. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean sagittis risus felis, id ornare tellus iaculis ut. Aenean vitae placerat nulla, congue interdum nisl. Maecenas sit amet lobortis diam."
         )
     );
 

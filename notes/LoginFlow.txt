@@ -1,0 +1,109 @@
+          ┌───────────────┐
+          │   Navigateur  │
+          │   (SPA JS)    │
+          └───────┬───────┘
+                  │ 1️⃣ Tape https://localhost:8443
+                  ▼
+          ┌───────────────┐
+          │    Nginx      │
+          │  (Reverse     │
+          │   Proxy / SSL)│
+          └───────┬───────┘
+                  │ 2️⃣ Handshake TLS / SSL avec le navigateur
+                  │    (certificat self-signed)
+                  ▼
+          ┌───────────────┐
+          │   Frontend    │
+          │  SPA (HTML+JS)│
+          └───────┬───────┘
+                  │ 3️⃣ Nginx sert le fichier index.html + JS/CSS
+                  ▼
+          ┌───────────────┐
+          │ Navigateur    │
+          │ Affiche SPA   │
+          └───────┬───────┘
+                  │ 4️⃣ L’utilisateur clique sur /#/login
+                  ▼
+          ┌───────────────┐
+          │ Navigateur    │
+          │ SPA JS        │
+          └───────┬───────┘
+                  │ 5️⃣ fetch('/api/auth/login', { email, password })
+                  ▼
+          ┌───────────────┐
+          │    Nginx      │
+          │(Reverse Proxy)│
+          └───────┬───────┘
+                  │ 6️⃣ Transmet la requête POST vers le backend Fastify
+                  ▼
+          ┌───────────────┐
+          │  Backend      │
+          │  Fastify      │
+          └───────┬───────┘
+                  │ 7️⃣ Vérifie email/password via Prisma
+                  ▼
+          ┌───────────────┐
+          │   Prisma ORM  │
+          └───────┬───────┘
+                  │ 8️⃣ Convertit JS en SQL
+                  ▼
+          ┌───────────────┐
+          │   SQLite DB   │
+          └───────┬───────┘
+                  │ 9️⃣ Renvoie résultat utilisateur à Prisma
+                  ▼
+          ┌───────────────┐
+          │  Backend      │
+          │  Fastify      │
+          └───────┬───────┘
+                  │ 🔟 Crée JWT (payload={username/email}) si OK
+                  ▼
+          ┌───────────────┐
+          │  Nginx        │
+          │ Reverse Proxy │
+          └───────┬───────┘
+                  │ 1️⃣ Renvoie token JSON au front
+                  ▼
+          ┌───────────────┐
+          │  Front SPA    │
+          │  Stocke JWT   │
+          └───────┬───────┘
+                  │ 2️⃣ Utilise JWT pour fetch('/api/protected', { headers: { Authorization: "Bearer <token>" } })
+                  ▼
+          ┌───────────────┐
+          │  Nginx        │
+          │ Reverse Proxy │
+          └───────┬───────┘
+                  │ 3️⃣ Transmet la requête au backend
+                  ▼
+          ┌───────────────┐
+          │Backend Fastify│
+          │ Vérifie JWT   │
+          └───────────────┘
+
+
+Points clés à retenir
+
+Le front SPA gère l’affichage et les interactions utilisateur, sans recharger la page.
+
+Les calls API (fetch('/api/...')) sont ce qui communique avec le backend.
+
+Le backend valide les infos, interagit avec la DB via Prisma, puis génère le JWT.
+
+Le JWT est stocké sur le front et sert de "passeport" pour accéder aux routes protégées.
+
+La DB ne connaît pas le JWT, elle sert juste à vérifier/consulter les infos utilisateur.
+
+Rôles de Nginx dans ce flux
+
+SSL / HTTPS : il gère le certificat TLS et chiffre toutes les communications entre le navigateur et le serveur.
+
+Reverse Proxy : il reçoit toutes les requêtes (front et API), et redirige :
+
+/ ou /index.html → frontend (fichiers statiques)
+
+/api/... → backend (Fastify)
+
+CORS / Headers : il peut ajouter des headers de sécurité ou autoriser certaines origines si nécessaire.
+
+💡 Concrètement, le front et le back ne sont jamais exposés directement au navigateur : Nginx joue le rôle d’intermédiaire et de filtre.

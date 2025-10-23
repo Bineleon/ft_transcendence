@@ -51,14 +51,13 @@ Pour faire une analogie :
 
 Pourquoi utiliser Nginx ?
 
-
 - On masque le backend. Le client (navigateur) ne parle jamais directement au backend (adresse, port, etc.). Nginx agit comme un intermédiaire qui centralise toutes les requêtes venant de l'extérieur.
 - Nginx peut gérer tout la partie HTTPS (certifs, cryptages), et communique avec le backend en HTTP. De sorte à ce que le backend n'est pas à s'en occuper.
 - On peut rajouter des couches de sécurité directement à ce niveau, avant que la requête n'atteigne le backend. (Bloquer certaines IP, vérifier des headers, limiter le nombre de requêtesm valider JWT).
 - Le proxy peut réecrire des URLs.
 - Il peut également mettre en cache certaines réponses, en compresser d'autres, loguer toutes les requêtes etc...
 
-  En conclusion : Le proxy contrôle, sécurise et simplifie la comm entre le front et le back. Le backend ne voit qu'un client immuable (le proxy), pas tout les clients direct.
+  En conclusion : Le proxy contrôle, sécurise et simplifie la comm entre le front et le back. Le backend ne voit qu'un client immuable (le proxy), pas tout les cQuand on reçoit les infos du client, on crée le JWT token, et on lui renvoie. Et à chaque nouvelle requête du navigateur, on revérifie ce token pour voir s'il a bien notre signature.lients direct.
 
 Pour Nginx, c'est en trois étapes :
 
