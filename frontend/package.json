@@ -15,8 +15,5 @@
     "tailwindcss": "^4.1.14",
     "typescript": "~5.9.3",
     "vite": "^7.1.7"
-  },
-  "dependencies": {
-    "@fastify/jwt": "^10.0.0"
   }
 }
