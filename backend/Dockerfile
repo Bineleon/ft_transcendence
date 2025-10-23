@@ -4,6 +4,8 @@ FROM node:22-alpine
 # Étape 2 : définir le dossier de travail dans le conteneur
 WORKDIR /app
 
+COPY . .
+
 # Deps pour node-gyp + SQLite (musl)
 RUN apk add --no-cache python3 make g++ pkgconfig sqlite sqlite-dev
 
@@ -15,7 +17,8 @@ RUN npm ci
 RUN apk add curl
 
 # Étape 5 : copier le reste du code
-COPY . .
+RUN npm install -g ts-node typescript
+RUN npx prisma generate
 
 # Étape 6 : exposer le port du serveur (3000)
 EXPOSE 3000
