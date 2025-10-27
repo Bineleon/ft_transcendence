@@ -1,10 +1,10 @@
 // src/main.ts
 import { createRouter } from "./router";
-import { Home } from "./pong/home";
-import { LoginPage } from "./pong/login";
-import { Game } from "./pong/game";
-import { PlayPong } from "./pong/playpong";
-import { Profile } from "./pong/profile";
+import { Home } from "./content/home";
+import { LoginPage } from "./content/login";
+import { Game } from "./content/game";
+import { PlayPong } from "./content/pong/playpong";
+import { Profile } from "./content/profile";
 
 
 // Structure des routes de l'application
