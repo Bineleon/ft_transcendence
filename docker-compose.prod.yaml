@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - db-data:/app/database
+    environment:
+      NODE_ENV: production
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app_network
+    restart: unless-stopped
+
+volumes:
+  db-data:
+
+networks:
+  app_network:
+    driver: bridge
