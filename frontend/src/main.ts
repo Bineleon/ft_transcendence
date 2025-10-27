@@ -1,11 +1,13 @@
 // src/main.ts
 import { createRouter } from "./router";
-import { Home } from "./pages/home";
-import { LoginPage } from "./pages/login";
-import { Game } from "./pages/game";
-import { PlayPong } from "./pages/playpong";
-import { Profile } from "./pages/profile";
+import { Home } from "./pong/home";
+import { LoginPage } from "./pong/login";
+import { Game } from "./pong/game";
+import { PlayPong } from "./pong/playpong";
+import { Profile } from "./pong/profile";
 
+
+// Structure des routes de l'application
 const routes = {
   "/": Home,
   "/login": LoginPage,
@@ -14,4 +16,5 @@ const routes = {
   "/gameon": PlayPong,
 };
 
+// 
 createRouter("app", routes);  // le router écoute et rend tout seul
