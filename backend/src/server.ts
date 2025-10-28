@@ -37,7 +37,7 @@ app.post<{ Body: RegisterRequest }>('/api/auth/register', async (req: FastifyReq
     throw new ValidationError('Email, username and password are required');
   }
 
-  if (password.length < 8) {
+  if (password.length < 4) {
     throw new ValidationError('Password must be at least 8 characters long');
   }
 
@@ -139,9 +139,9 @@ app.get('/api/me', async (req: FastifyRequest, reply: FastifyReply) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { sub: string; username: string };
-    
+    const userId = parseInt(decoded.sub, 10);
     const me = await prisma.user.findUnique({
-      where: { id: decoded.sub },
+      where: { id: userId },
       select: { id: true, email: true, username: true, createdAt: true }
     });
 
