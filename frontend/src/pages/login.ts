@@ -48,7 +48,8 @@ function login(): HTMLElement {
             const response = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload) // <-- texte JSON, pas un fichier
+                body: JSON.stringify(payload), // <-- texte JSON, pas un fichier
+				credentials: "include" // indispensable pour envoyer les cookies
             });
 
             /* Si c'est ok, on renvoi vers le profil */
@@ -136,7 +137,8 @@ function register(): HTMLElement {
             const response = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload) // <-- texte JSON, pas un fichier
+                body: JSON.stringify(payload), // <-- texte JSON, pas un fichier
+				credentials: "include" // indispensable pour envoyer les cookies
             });
 
             /* Si c'est ok, on renvoi vers le profil */
