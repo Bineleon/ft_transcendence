@@ -25,3 +25,4 @@ stop:
 clean:
 	docker system prune -af
 	docker volume rm ft_transcendence_db-data || true
+	docker system prune -a --volumes

@@ -15,7 +15,9 @@ RUN npm ci
 
 # Copier le reste du code et générer le client Prisma
 COPY . .
+RUN mkdir -p database && chown -R node:node database
 RUN npx prisma generate
+
 
 # Compiler le TypeScript
 RUN npm run build
@@ -42,4 +44,5 @@ COPY --from=build /app/prisma ./prisma
 EXPOSE 3000
 
 # Lancer le serveur compilé
-CMD ["npm", "run", "start"]
+# CMD ["npm", "run", "start", "npx prisma db push"]
+CMD ["sh", "-c", "npx prisma db push && npm run start"]
