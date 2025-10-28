@@ -13,9 +13,14 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 // 1) Plugins d'abord
-await app.register(cors,   { origin: true, credentials: true });
+await app.register(cors, {
+  origin: 'https://localhost:8443', // ou ton vrai domaine de prod
+  credentials: true,                // autorise l’envoi des cookies
+});
+
 await app.register(cookie, { secret: 'cookies-are-signed' });
 await app.register(helmet, { contentSecurityPolicy: false });
+
 
 // (optionnel) ping/health
 app.get('/api/ping', async () => ({ pong: true }));
@@ -45,13 +50,15 @@ app.post('/api/auth/register', async (req, reply) => {
 
 // B) LOGIN
 app.post('/api/auth/login', async (req, reply) => {
-  const { username, password } = req.body as any;
-  const user = await prisma.user.findFirst({ 
-    where: { 
+  const { email, username, password } = req.body as any;
+  const identifier = email ?? username;
+
+  const user = await prisma.user.findFirst({
+    where: {
       OR: [
-        { email: username }, 
-        { username: username }
-      ] 
+        { email: identifier },
+        { username: identifier }
+      ]
     }
   });
   if (!user) return reply.code(401).send({ error: 'Invalid credentials' });
@@ -60,9 +67,20 @@ app.post('/api/auth/login', async (req, reply) => {
   if (!ok) return reply.code(401).send({ error: 'Invalid credentials' });
 
   const token = jwt.sign({ sub: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
-  reply.setCookie('access_token', token, { httpOnly: true, secure: false, sameSite: 'lax', path: '/' });
-  return reply.send({ ok: true });
+
+  reply.setCookie('access_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // 🔒 true sous HTTPS
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
 });
+
+
+  return reply.send({
+    user: { id: user.id, username: user.username, email: user.email }
+  });
+});
+
 
 // C) ME
 app.get('/api/me', async (req, reply) => {
