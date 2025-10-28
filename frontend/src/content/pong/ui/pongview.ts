@@ -68,15 +68,17 @@ export interface GameViewWindow {
 
 export function createGameViewWindow(): GameViewWindow {
     // 1) main layout: 2 colonnes
-    const main = el("div", "grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_320px] gap-4 p-2" +
-         "h-[400px] sm:h-[540px] xxl:h-[900px]"
+    const main = el("div", "grid grid-cols-1 grid-cols-[auto_auto] gap-4 p-2 " +
+        "justify-center items-center" +
+         "h-[300px] lg:h-[400px] xl:h-[540px] xxl:h-[900px]"
     );
 
     // 2) Stage = conteneur relatif
-    const stage = el("div", "relative " +
-        "w-[600px] h-[400px] " +
-        "sm:w-[900px] sm:h-[540px] " +
-        "xxl:w-[1500px] xxl:h-[900px] "
+    const stage = el("div", "relative h-full w-full" +
+        "w-[400px] h-[300px] " +
+        "lg:w-[600px] lg:h-[400px] " +
+        "xl:w-[900px] xl:h-[540px] " +
+        "xxl:w-[1500px] xxl:h-[900px]"
     );
     // Le canvas de jeu
     const canvas = el("canvas", "absolute block bg-black/5 border-9" +
@@ -159,7 +161,12 @@ export function createGameViewWindow(): GameViewWindow {
     stage.append(canvas, overlayRoot);
 
     // 4) Terminal = zone de droite
-    const terminal = el("div", "relative aspect-[9/16] text-white bg-black h-full w-full");
+    const terminal = el("div", "text-white bg-black h-full w-full min-w-0" +
+        "relative" +
+        "w-[200px] h-[300px] " +
+        "lg:w-[300px] lg:h-[400px] " +
+        "xl:w-[350px] xl:h-[540px] " +
+        "xxl:w-[450px] xxl:h-[900px] ");
     terminal.append(text("Terminal…"));
 
     // 5) Assemble
@@ -181,3 +188,4 @@ export function createGameViewWindow(): GameViewWindow {
         terminal,
     };
 }
+ 
