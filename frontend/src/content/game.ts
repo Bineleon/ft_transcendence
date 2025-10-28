@@ -1,5 +1,4 @@
-import { el } from "./home";
-import { text } from "./home";
+import { el, text } from "./home";
 
 // src/pages/game.ts
 export function Game(): HTMLElement {
@@ -96,7 +95,7 @@ export function Game(): HTMLElement {
   centerBottom.append(centerBottomTitle, centerBottomContent);
 
   const nextTournament = el(
-    "section", "bg-[url('/public/imgs/trame2.png')] bg-cover bg-center bg-white/40 bg-blend-overlay text-white font-im-double uppercase text-center text-4xl"
+    "section", "bg-[url('/public/imgs/trame2.png')] bg-cover bg-center text-white font-im-double uppercase text-center text-4xl"
   );
   nextTournament.append(
     text("Next tournament starts"),

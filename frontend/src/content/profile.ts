@@ -1,5 +1,4 @@
-import { el } from "./home";
-import { text } from "./home";
+import { el, text } from "./home";
 
 const pictureUrl = "/public/imgs/fcoullou.jpg";
 const testLogin = "Chatou";

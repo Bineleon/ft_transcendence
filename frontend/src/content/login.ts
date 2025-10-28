@@ -1,5 +1,4 @@
-import { el } from "./home";
-import { text } from "./home";
+import { el, text } from "./home";
 
 function login(): HTMLElement {
     const panel = el("div", "bg-black mix-blend-multiply text-white border-4 border-dotted border-black px-8 py-12");
