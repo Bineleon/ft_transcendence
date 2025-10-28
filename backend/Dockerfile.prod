@@ -1,0 +1,45 @@
+# Étape 1 : Build — compiler le TypeScript et générer Prisma
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+# Dépendances système pour Prisma + SQLite
+RUN apk add --no-cache python3 make g++ pkgconfig sqlite sqlite-dev
+
+# Copier uniquement package.json + prisma pour installer deps
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Installer toutes les dépendances (dev + prod) pour compiler
+RUN npm ci
+
+# Copier le reste du code et générer le client Prisma
+COPY . .
+RUN npx prisma generate
+
+# Compiler le TypeScript
+RUN npm run build
+
+
+# Étape 2 : Runtime — exécuter uniquement le JS compilé
+FROM node:22-alpine AS runtime
+
+WORKDIR /app
+
+# Dépendances système nécessaires à l’exécution
+RUN apk add --no-cache sqlite sqlite-dev
+
+# Copier uniquement les dépendances de prod
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copier le build compilé et Prisma généré depuis l’étape build
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/prisma ./prisma
+
+# Exposer le port HTTP
+EXPOSE 3000
+
+# Lancer le serveur compilé
+CMD ["npm", "run", "start"]
