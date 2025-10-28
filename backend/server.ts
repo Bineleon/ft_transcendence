@@ -44,8 +44,15 @@ app.post('/api/auth/register', async (req, reply) => {
 
 // B) LOGIN
 app.post('/api/auth/login', async (req, reply) => {
-  const { login, password } = req.body as any; // login = email OU username
-  const user = await prisma.user.findFirst({ where: { OR: [{ email: login }, { username: login }] }});
+  const { username, password } = req.body as any;
+  const user = await prisma.user.findFirst({ 
+    where: { 
+      OR: [
+        { email: username }, 
+        { username: username }
+      ] 
+    }
+  });
   if (!user) return reply.code(401).send({ error: 'Invalid credentials' });
 
   const ok = await bcrypt.compare(password, user.passwordHash);
