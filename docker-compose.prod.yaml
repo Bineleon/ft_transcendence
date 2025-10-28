@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   backend:
     build:
@@ -19,6 +21,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
+    volumes:
+      - frontend-dist:/app/dist
     networks:
       - app_network
     restart: unless-stopped
@@ -27,6 +31,8 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.prod
+    volumes:
+      - frontend-dist:/usr/share/nginx/html:ro
     ports:
       - "8080:80"
       - "8443:443"
@@ -39,6 +45,7 @@ services:
 
 volumes:
   db-data:
+  frontend-dist:
 
 networks:
   app_network:
