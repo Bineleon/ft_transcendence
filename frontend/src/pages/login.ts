@@ -23,6 +23,51 @@ function login(): HTMLElement {
     inputSubmit.type = "submit";
     inputSubmit.textContent = "Log In";
 
+    form.addEventListener("input", () => {
+        inputSubmit.disabled = !form.checkValidity();
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Empêche le rechargement de la page
+        /* Basic checks */
+        if (!inputLogin.value || !inputPassword.value) {
+            alert("Please fill in all fields.");
+            return;
+        }
+        /* on evite les soumissions multiples */
+        inputSubmit.disabled = true;
+
+        const payload = {
+            username: inputLogin.value,
+            password: inputPassword.value,
+        };
+
+        /****** POST ******/
+        /* On envoie les données au backend */
+        try {
+            const response = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload) // <-- texte JSON, pas un fichier
+            });
+
+            /* Si c'est ok, on renvoi vers le profil */
+            if (response.ok) {
+                alert("Login successful!");
+                window.location.hash = "#/profile";
+            }
+            else {
+                const errorData = await response.json();
+                alert(`Login failed: ${errorData.error || errorData.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            alert(`An error occurred: ${error}`);
+        } finally {
+            inputSubmit.disabled = false; // Réactive le bouton après la tentative
+        }
+    });
+
+
     form.append(inputLogin, inputPassword, inputSubmit);
     panel.append(loginBox, subTitle, form);
     return panel;

@@ -8,3 +8,6 @@ RUN npm ci
 
 # Copier le reste du code
 COPY . .
+
+CMD ["npm", "run", "dev"]
+
