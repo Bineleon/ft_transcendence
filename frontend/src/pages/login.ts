@@ -52,19 +52,22 @@ function login(): HTMLElement {
             });
 
             /* Si c'est ok, on renvoi vers le profil */
+            const data = await response.json();
+
             if (response.ok) {
                 alert("Login successful!");
                 window.location.hash = "#/profile";
+            } else {
+                // ✅ Afficher le message d'erreur du backend
+                const errorMessage = data.error?.message || data.message || 'Unknown error';
+                alert(`Login failed: ${errorMessage}`);
             }
-            else {
-                const errorData = await response.json();
-                alert(`Login failed: ${errorData.error || errorData.message || 'Unknown error'}`);
+            } catch (error) {
+                console.error("Login error:", error);
+                alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            } finally {
+                inputSubmit.disabled = false;
             }
-        } catch (error) {
-            alert(`An error occurred: ${error}`);
-        } finally {
-            inputSubmit.disabled = false; // Réactive le bouton après la tentative
-        }
     });
 
 
@@ -116,6 +119,11 @@ function register(): HTMLElement {
     form.addEventListener("submit", async (event) => {
         event.preventDefault(); // Empêche le rechargement de la page
         /* Basic checks */
+
+        if (!inputEmail.value || !inputLogin.value || !inputPassword.value) {
+            alert("Please fill in all fields.");
+            return;
+        }
         if (inputPassword.value !== confirmPassword.value) {
             alert("Passwords do not match!");
             return;
@@ -140,18 +148,21 @@ function register(): HTMLElement {
             });
 
             /* Si c'est ok, on renvoi vers le profil */
+            const data = await response.json();
+
             if (response.ok) {
                 alert("Registration successful! You can now log in.");
                 window.location.hash = "#/profile";
             }
             else {
-                const errorData = await response.json();
-                alert(`Registration failed: ${errorData.message || 'Unknown error'}`);
+                const errorMessage = data.error?.message || data.message || 'Unknown error';
+                alert(`Registration failed: ${errorMessage}`);
             }
         } catch (error) {
-            alert(`An error occurred: ${error}`);
+            console.error("Registration error:", error);
+            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
         } finally {
-            submit.disabled = false; // Réactive le bouton après la tentative
+            submit.disabled = false;
         }
     });
 
