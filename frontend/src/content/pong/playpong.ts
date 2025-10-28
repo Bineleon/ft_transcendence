@@ -18,6 +18,8 @@ export function PlayPong(): HTMLElement {
         overlay: view.overlay,
     });
 
+    controller.boot();
+
     return view.main;
 }
 

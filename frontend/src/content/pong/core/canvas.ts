@@ -1,3 +1,4 @@
+import type { GamePhase } from "../game/types";
 
 export function setupCanvas(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
     const ctx = canvas.getContext("2d");
@@ -5,6 +6,8 @@ export function setupCanvas(canvas: HTMLCanvasElement): CanvasRenderingContext2D
         console.error("Unable to get canvas context");
         return null as unknown as CanvasRenderingContext2D;
     }
+
+    canvas.dataset.phase = "START" as GamePhase
 
     function resize() {
         const parent = canvas.parentElement as HTMLElement | null;

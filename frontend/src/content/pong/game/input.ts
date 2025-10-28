@@ -4,16 +4,17 @@ export function attachGameInputs(state: GameState, opts: { root: HTMLElement;
                                                         onBothReady: () => void;
                                                         onPause: () => void;
                                                         onResume: () => void;
+                                                        onReadyChange?: () => void;
                                                     }) {
     function handleKeyDown(event: KeyboardEvent) {
         const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;      // normaliser les touches  
         
         if (state.phase === 'WAITING') {
-            if (key === state.controls.p1Ready) state.ready.p1 = true;
-            if (key === state.controls.p2Ready) state.ready.p2 = true;
-            if (state.ready.p1 && state.ready.p2) {
-                opts.onBothReady();                                         // COUNTDOWN a mettre en place
-            }
+            let changed = false;
+            if (key === state.controls.p1Ready) state.ready.p1 = true; changed = true;
+            if (key === state.controls.p2Ready) state.ready.p2 = true; changed = true;
+            if (changed) { opts.onReadyChange?.(); }
+            if (state.ready.p1 && state.ready.p2) { opts.onBothReady(); }
         }
 
         if (key === state.controls.pause) {

@@ -1,65 +1,103 @@
-import type { GameViewWindow }      from "./ui/pongview";
+import type { GameViewWindow}       from "./ui/pongview";
 import { gameLoop }                 from "./core/loop";
 import { createState }              from "./game/state";
 import { update }                   from "./game/update";
 import { render }                   from "./game/render";
 import { attachGameInputs }         from "./game/input";
-import type { GameState, GamePhase }           from "./game/types";
+import type { GameState, GamePhase } from "./game/types";
+
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
-
 export class GameController {
+    private root: HTMLElement;
+    private context: CanvasRenderingContext2D;
+    private overlay: GameViewWindow["overlay"];
     private state: GameState;
     private loopCtrl: { stop: () => void } | null = null;
     private detachInputs: (() => void) | null = null;
-    private context: CanvasRenderingContext2D;
-    private overlay: GameViewWindow["overlay"];
-    private root: HTMLElement;
+    private countdownTimer: number | null = null;
 
     constructor(opts: { context: CanvasRenderingContext2D; overlay: GameViewWindow["overlay"]; root: HTMLElement }) {
         this.context = opts.context;
         this.overlay = opts.overlay;
         this.root = opts.root;
         this.state = createState();
-        this.overlay.setOverlayMode(this.state.phase);
     }
 
     private setPhase(phase: GamePhase) {
+        // Timer Reset si on quitte le COUNTDOWN
+        if (phase !== "COUNTDOWN" && this.countdownTimer !== null) {
+            window.clearTimeout(this.countdownTimer);
+            this.countdownTimer = null;
+        }
+        
         this.state.phase = phase;
 
         switch (phase) {
             case "START":
-                this.overlay.setOverlayMode("START");
-                this.overlay.setCursorHidden(false);
                 this.stopLoopInputs();
+                this.overlay.applyOverlay({
+                    phase,
+                    cursorHidden: false,
+                    showStart: true,
+                    showPause: false,
+                });
                 break;
+                
             case "WAITING":
-                this.overlay.setOverlayMode("WAITING");
-                this.overlay.setCursorHidden(true);
-                this.state.ready.p1 = false;
-                this.state.ready.p2 = false;
+                this.stopLoopInputs();
+                this.overlay.applyOverlay({
+                    phase,
+                    cursorHidden: true,
+                    showStart: false,
+                    showPause: false,
+                    p1Ready: this.state.ready.p1,
+                    p2Ready: this.state.ready.p2,
+                });
                 this.attachInputs();
                 break;
+                
             case "COUNTDOWN":
-                this.overlay.setOverlayMode("COUNTDOWN");
-                this.overlay.setCursorHidden(true);
-                this.overlay.countdown(3, () => this.setPhase("PLAYING"));
-                break;
-            case "PLAYING":
-                this.overlay.setOverlayMode("PLAYING");
-                this.overlay.setCursorHidden(true);
-                this.startLoop();
-                break;
-            case "PAUSED":
-                this.overlay.setOverlayMode("PAUSED");
-                this.overlay.setCursorHidden(false);
-                this.stopLoopOnly();
-                break;
-            case "GAMEOVER":
-                this.overlay.setOverlayMode("GAMEOVER");
-                this.overlay.setCursorHidden(false);
                 this.stopLoopInputs();
+                this.overlay.applyOverlay({
+                    phase,
+                    cursorHidden: true,
+                    showStart: false,
+                    showPause: false,
+                    countdown: { secondsLeft: 3 },
+                });
+                this.attachInputs();
+                break;
+                
+            case "PLAYING":
+                this.startLoop();
+                this.overlay.applyOverlay({
+                    phase,
+                    cursorHidden: true,
+                    showStart: false,
+                    showPause: true,
+                });
+                break;
+                
+            case "PAUSED":
+                this.stopLoopOnly();
+                this.overlay.applyOverlay({
+                    phase,
+                    cursorHidden: false,
+                    showStart: false,
+                    showPause: true,
+                });
+                break;
+                
+            case "GAMEOVER":
+                this.stopLoopInputs();
+                this.overlay.applyOverlay({
+                    phase,
+                    cursorHidden: false,
+                    showStart: false,
+                    showPause: false,
+                });
                 break;
         }
 
@@ -71,18 +109,48 @@ export class GameController {
     }
 
     private wireView() {
-        this.overlay.onPlay(() => this.start());
-        this.overlay.onPauseClick(() => {
-            if (this.state.phase === "PLAYING") {
-                this.pause();
-            } else if (this.state.phase === "PAUSED") {
+        this.overlay.onPlay(() => {
+            if (this.state.phase === "PAUSED") {
                 this.resume();
+            } else {
+                this.start();
             }
+        });
+        this.overlay.onPause(() => {
+            if (this.state.phase === "PLAYING") this.pause();
+            else if (this.state.phase === "PAUSED") this.resume();
         });
     }
 
     start()       { this.setPhase("WAITING"); }
-    countdown()   { this.setPhase("COUNTDOWN"); }
+
+    countdown()   {
+        const total = 3;
+        let remaining = total;
+        this.setPhase("COUNTDOWN");
+        // met à jour immédiatement l'affichage (setPhase a déjà mis 3)
+        // démarre interval
+        if (this.countdownTimer !== null) window.clearInterval(this.countdownTimer);
+        this.countdownTimer = window.setInterval(() => {
+            remaining -= 1;
+            if (remaining >= 0) {
+                this.overlay.applyOverlay({
+                    phase: "COUNTDOWN",
+                    countdown: { secondsLeft: remaining }
+                });
+            }
+            if (remaining <= 0) {
+                // clear et lancer le jeu
+                if (this.countdownTimer !== null) {
+                    window.clearInterval(this.countdownTimer);
+                    this.countdownTimer = null;
+                }
+                this.play();
+            }
+        }, 1000);
+    }
+
+
     play()        { this.setPhase("PLAYING"); }
     pause()       { this.setPhase("PAUSED"); }
     resume()      { this.countdown(); } // ou direct PLAYING si tu veux instantané
@@ -95,6 +163,16 @@ export class GameController {
         onBothReady: () => this.countdown(),
         onPause: () => this.pause(),
         onResume: () => this.resume(),
+        onReadyChange: () => {
+            // redraw waiting overlay with current ready flags
+            if (this.state.phase === "WAITING") {
+                this.overlay.applyOverlay({
+                    phase: "WAITING",
+                    p1Ready: this.state.ready.p1,
+                    p2Ready: this.state.ready.p2,
+                });
+            }
+        }
     });
     }
 
@@ -115,7 +193,6 @@ export class GameController {
     this.stopLoopOnly();
     if (this.detachInputs) { this.detachInputs(); this.detachInputs = null; }
     }
-
 
     getState() {
         return this.state;
