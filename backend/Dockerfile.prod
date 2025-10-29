@@ -3,19 +3,24 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
+ENV NODE_ENV=production
+
 # Dépendances système pour Prisma + SQLite
 RUN apk add --no-cache python3 make g++ pkgconfig sqlite sqlite-dev
 
 # Copier uniquement package.json + prisma pour installer deps
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY tsconfig.json ./
 
 # Installer toutes les dépendances (dev + prod) pour compiler
 RUN npm ci
 
 # Copier le reste du code et générer le client Prisma
 COPY . .
+RUN mkdir -p database && chown -R node:node database
 RUN npx prisma generate
+
 
 # Compiler le TypeScript
 RUN npm run build
@@ -42,4 +47,5 @@ COPY --from=build /app/prisma ./prisma
 EXPOSE 3000
 
 # Lancer le serveur compilé
-CMD ["npm", "run", "start"]
+# CMD ["npm", "run", "start", "npx prisma db push"]
+CMD ["sh", "-c", "npx prisma db push && npm run start"]

@@ -1,5 +1,5 @@
 import { FastifyError, FastifyReply, FastifyRequest, FastifyInstance } from 'fastify';
-import { AppError, formatError } from './errors';
+import { AppError, formatError } from './errors.js';
 import { Prisma } from '@prisma/client';
 
 export function setupErrorHandler(app: FastifyInstance): void {
