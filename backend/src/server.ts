@@ -5,13 +5,13 @@ import helmet from '@fastify/helmet';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import { setupErrorHandler } from './utils/errorHandler';
+import { setupErrorHandler } from './utils/errorHandler.js';
 import { 
   ValidationError, 
   AuthError, 
   ConflictError 
-} from './utils/errors';
-import type { RegisterRequest, LoginRequest } from './types/auth';
+} from './utils/errors.js';
+import type { RegisterRequest, LoginRequest } from './types/auth.js';
 
 const app = Fastify({ logger: true });
 const prisma = new PrismaClient();
