@@ -1,3 +1,10 @@
+/**
+ * Models pour le module Auth
+ */
+
+import type { User } from '@prisma/client';
+
+// Requêtes
 export interface RegisterRequest {
   email: string;
   username: string;
@@ -9,14 +16,24 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface UserResponse {
+// Réponses
+export interface FormattedUser {
   id: string;
   email: string;
   username: string;
-  createdAt: Date;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicUser {
+  id: string;
+  username: string;
 }
 
 export interface AuthResponse {
-  success: boolean;
-  user: UserResponse;
+  user: FormattedUser;
+  token: string;
 }
+
+// Utilitaires
+export type UserWithoutPassword = Omit<User, 'password'>;

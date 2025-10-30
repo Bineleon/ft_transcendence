@@ -1,3 +1,7 @@
+### Pour Yoann
+- J ai cree le fichier backend/src/utils/jwt.ts car necessaire pour mon fichier
+backend/src/middleware/authentication.ts mais tu peux verif de ton cote si ca semble logique
+
 Modif 30 oct 
 
 - Creation de backend/src
@@ -14,8 +18,8 @@ Modif package.json :
 ### TODO  
 - cd backend; npm install
 - npm install pino-pretty --save-dev // ?
-- sharede/middleware/
-
+- include FormattedUser in formatters.ts
+- modules/users/users.service.ts
 
 ### refacto project-strucutre
 
@@ -25,7 +29,7 @@ backend/
 ├── src/
 │   ├── app.ts                      # Configuration de l'app Fastify
 │   ├── server.ts                   # Point d'entrée (lance le serveur)
-│   │
+│   ├── fastify.d.ts 
 │   ├── modules/                    # Modules métier (feature-based)
 │   │   ├── auth/
 │   │   │   ├── auth.controller.ts  # Routes & handlers
@@ -72,7 +76,7 @@ backend/
 │   │   │
 │   │   └── types/
 │   │       ├── common.ts           # Types partagés
-│   │       └── fastify.d.ts        # Extensions TypeScript Fastify
+│   │       └──        # Extensions TypeScript Fastify
 │   │
 │   └── plugins/                    # Plugins Fastify personnalisés
 │       ├── cors.ts
