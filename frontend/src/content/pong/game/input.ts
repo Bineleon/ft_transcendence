@@ -1,36 +1,48 @@
-import type { GameState } from "./types";
+import type { GameController } from "../controller";
 
-export function attachGameInputs(state: GameState, opts: { root: HTMLElement;
-                                                        onBothReady: () => void;
-                                                        onPause: () => void;
-                                                        onResume: () => void;
-                                                        onReadyChange?: () => void;
-                                                    }) {
+export function attachGameInputs(gameController: GameController): () => void {
     function handleKeyDown(event: KeyboardEvent) {
-        const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;      // normaliser les touches  
-        
-        if (state.phase === 'WAITING') {
-            let changed = false;
-            if (key === state.controls.p1Ready) state.ready.p1 = true; changed = true;
-            if (key === state.controls.p2Ready) state.ready.p2 = true; changed = true;
-            if (changed) { opts.onReadyChange?.(); }
-            if (state.ready.p1 && state.ready.p2) { opts.onBothReady(); }
-        }
+        const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;      // normaliser les touches
+        const phase = gameController.state.phase;
 
-        if (key === state.controls.pause) {
-            if (state.phase === 'PLAYING') {
-                state.phase = 'PAUSED';
-                opts.onPause();
-            } else if (state.phase === 'PAUSED') {
-                state.phase = 'PLAYING';
-                opts.onResume();
-            }
+        switch (phase) {
+            case 'WAITING':
+                if (key === gameController.state.controls.p1Ready) {
+                    gameController.state.ready.p1 = true;
+                    gameController.view.overlay.replaceChildren(gameController.domOverlay.bindHTMLElement("WAITING", gameController.state));
+                }
+                if (key === gameController.state.controls.p2Ready) {
+                    gameController.state.ready.p2 = true;
+                    gameController.view.overlay.replaceChildren(gameController.domOverlay.bindHTMLElement("WAITING", gameController.state));
+                }
+                if (gameController.state.ready.p1 && gameController.state.ready.p2) {
+                    gameController.setPhase("COUNTDOWN");
+                }
+                return; // sortie immédiate
+
+            case 'PLAYING':
+                if (key === gameController.state.controls.pause) {
+                    gameController.state.ready.paused = true;
+                    gameController.setPhase("PAUSED");
+                }
+                return;
+
+            case 'PAUSED':
+                if (key === gameController.state.controls.pause) {
+                    gameController.state.ready.paused = false;
+                    gameController.setPhase("COUNTDOWN");
+                }
+                return;
+
+            default:
+                return;
         }
     }
     window.addEventListener('keydown', handleKeyDown);
-
+    
     return () => {
         window.removeEventListener('keydown', handleKeyDown);
     };
 }
+
 

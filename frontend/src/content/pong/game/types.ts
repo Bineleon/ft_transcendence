@@ -1,6 +1,6 @@
 // Un peu comme des structures en C
 
-export type GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED";
+export type GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART";
 
 export interface Vec2 {
     x: number;
@@ -25,6 +25,7 @@ export interface Paddle {
 export interface Ready {
     p1: boolean;
     p2: boolean;
+    paused: boolean;
 }
 
 export interface Controls {
