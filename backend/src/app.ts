@@ -7,7 +7,7 @@ import helmet from '@fastify/helmet';
 import { env } from './shared/config/environment.js';
 
 // Middleware
-import { setupErrorHandler } from './shared/middleware/errorHandler.js';
+import { setupErrorHandler } from './shared/middleware/index.js'; 
 
 // Database
 import { getPrismaClient } from './shared/database/prisma.js';
