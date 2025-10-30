@@ -1,6 +1,6 @@
 import type { GameState } from "./types";
 
-export function createState(): GameState {
+export function initState(): GameState {
   return {
     world: { w: 1300, h: 800 }, // logique, pas pixels
     ball: {
@@ -19,11 +19,11 @@ export function createState(): GameState {
         speed: 300
     },
     phase: "START",
-    ready: { p1: false, p2: false },
+    ready: { p1: false, p2: false, paused: false },
     controls: {
         p1Ready: "w",
         p2Ready: "ArrowUp",
-        pause: "Space"
+        pause: " "
     },
   } as GameState;
 }

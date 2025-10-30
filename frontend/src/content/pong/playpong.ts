@@ -13,9 +13,8 @@ export function PlayPong(): HTMLElement {
 
     // Configuration de l'overlay
     const controller = new GameController({ 
-        root: view.main,
         context: context,
-        overlay: view.overlay,
+        view: view,
     });
 
     controller.boot();

@@ -3,7 +3,7 @@ import { el, text } from "./home";
 // src/pages/game.ts
 export function Game(): HTMLElement {
   const main = el(
-    "main", "max-w mx-auto px-6 py-8"
+    "main", "max-w mx-auto px-6 py-8 pointer-events-auto"
   );
   const grid = el(
     "div",

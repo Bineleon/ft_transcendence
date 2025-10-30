@@ -1,200 +1,140 @@
-import type { GameViewWindow}       from "./ui/pongview";
-import { gameLoop }                 from "./core/loop";
-import { createState }              from "./game/state";
-import { update }                   from "./game/update";
-import { render }                   from "./game/render";
-import { attachGameInputs }         from "./game/input";
-import type { GameState, GamePhase } from "./game/types";
-
+import type { GameViewWindow}           from "./ui/pongview";
+import { GameLoop }                     from "./core/loop";
+import { initState }                    from "./game/state";
+import { update }                       from "./game/update";
+import { render }                       from "./game/render";
+import { attachGameInputs }             from "./game/input";
+import type { GamePhase, GameState }    from "./game/types";
+import { domOverlayManager }            from "./ui/overlay";
+import { setupCanvas }                  from "./core/canvas";
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
 export class GameController {
-    private root: HTMLElement;
-    private context: CanvasRenderingContext2D;
-    private overlay: GameViewWindow["overlay"];
-    private state: GameState;
-    private loopCtrl: { stop: () => void } | null = null;
-    private detachInputs: (() => void) | null = null;
-    private countdownTimer: number | null = null;
+    public view: GameViewWindow;
+    public context: CanvasRenderingContext2D;
+    public state: GameState;
+    public domOverlay: domOverlayManager;
+    private loopCtrl: ReturnType<typeof GameLoop> | null = null;
 
-    constructor(opts: { context: CanvasRenderingContext2D; overlay: GameViewWindow["overlay"]; root: HTMLElement }) {
+    constructor(opts: { context: CanvasRenderingContext2D; view: GameViewWindow }) {
         this.context = opts.context;
-        this.overlay = opts.overlay;
-        this.root = opts.root;
-        this.state = createState();
+        this.view = opts.view;
+        this.state = initState();
+        this.domOverlay = new domOverlayManager(this);
     }
 
-    private setPhase(phase: GamePhase) {
-        // Timer Reset si on quitte le COUNTDOWN
-        if (phase !== "COUNTDOWN" && this.countdownTimer !== null) {
-            window.clearTimeout(this.countdownTimer);
-            this.countdownTimer = null;
-        }
-        
+    public setPhase(phase: GamePhase) {
         this.state.phase = phase;
-
         switch (phase) {
             case "START":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: false,
-                    showStart: true,
-                    showPause: false,
-                });
+                this.resetGame();
+                this.domOverlay.setCursorHidden(false);
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
+                break;
+
+            case "RESTART":
+                this.resetGame();
+                this.domOverlay.setCursorHidden(true);
+                this.attachKeyboardInputs();
+                this.setPhase("WAITING");
                 break;
                 
             case "WAITING":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: true,
-                    showStart: false,
-                    showPause: false,
-                    p1Ready: this.state.ready.p1,
-                    p2Ready: this.state.ready.p2,
-                });
-                this.attachInputs();
+                this.domOverlay.setCursorHidden(true);
+                this.attachKeyboardInputs();
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
-                
+
             case "COUNTDOWN":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: true,
-                    showStart: false,
-                    showPause: false,
-                    countdown: { secondsLeft: 3 },
-                });
-                this.attachInputs();
+                this.domOverlay.setCursorHidden(true);
+                this.startCountdown();
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
-                
+
             case "PLAYING":
-                this.startLoop();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: true,
-                    showStart: false,
-                    showPause: true,
-                });
+                this.domOverlay.setCursorHidden(true);
+                this.startPlaying();
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
-                
+
             case "PAUSED":
-                this.stopLoopOnly();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: false,
-                    showStart: false,
-                    showPause: true,
-                });
+                this.pausePlaying();
+                this.domOverlay.setCursorHidden(false);
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
-                
+
             case "GAMEOVER":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: false,
-                    showStart: false,
-                    showPause: false,
-                });
+                this.resetGame();
+                this.domOverlay.setCursorHidden(false);
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
         }
-
     }
 
-    boot()        {
-        this.setPhase("START");
-        this.wireView();
+    private startPlaying() {
+        if (!this.loopCtrl) {
+            this.loopCtrl = GameLoop(
+                (delta) => update(this.state, delta),
+                (acc) => render(this.context, this.state, acc),
+                60,
+                true
+            );
+        }
+        if (!this.loopCtrl.running) {
+            this.loopCtrl.start();
+        }
     }
 
-    private wireView() {
-        this.overlay.onPlay(() => {
-            if (this.state.phase === "PAUSED") {
-                this.resume();
-            } else {
-                this.start();
-            }
-        });
-        this.overlay.onPause(() => {
-            if (this.state.phase === "PLAYING") this.pause();
-            else if (this.state.phase === "PAUSED") this.resume();
-        });
+    private pausePlaying() {
+        if (this.loopCtrl && this.loopCtrl.running) {
+            this.loopCtrl.stop();
+        }
     }
 
-    start()       { this.setPhase("WAITING"); }
 
-    countdown()   {
-        const total = 3;
-        let remaining = total;
-        this.setPhase("COUNTDOWN");
-        // met à jour immédiatement l'affichage (setPhase a déjà mis 3)
-        // démarre interval
-        if (this.countdownTimer !== null) window.clearInterval(this.countdownTimer);
-        this.countdownTimer = window.setInterval(() => {
-            remaining -= 1;
-            if (remaining >= 0) {
-                this.overlay.applyOverlay({
-                    phase: "COUNTDOWN",
-                    countdown: { secondsLeft: remaining }
-                });
-            }
-            if (remaining <= 0) {
-                // clear et lancer le jeu
-                if (this.countdownTimer !== null) {
-                    window.clearInterval(this.countdownTimer);
-                    this.countdownTimer = null;
+    private startCountdown() {
+        let secsLeft = 3;
+
+
+        if (this.domOverlay.countdownTimerId !== null) {
+            window.clearInterval(this.domOverlay.countdownTimerId);
+        }
+
+        this.domOverlay.countdownLeft = secsLeft;
+        this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("COUNTDOWN", this.state));
+
+        this.domOverlay.countdownTimerId = window.setInterval(() => {
+            secsLeft -= 1;
+            if (secsLeft <= 0) {
+                if (this.domOverlay.countdownTimerId !== null) {
+                    window.clearInterval(this.domOverlay.countdownTimerId);
+                    this.domOverlay.countdownTimerId = null;
                 }
-                this.play();
+                this.setPhase("PLAYING");
+                return;
             }
+
+            this.domOverlay.countdownLeft = secsLeft;
+            this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("COUNTDOWN", this.state));
         }, 1000);
     }
 
+    public attachKeyboardInputs() {
+        attachGameInputs(this);
+    }
 
-    play()        { this.setPhase("PLAYING"); }
-    pause()       { this.setPhase("PAUSED"); }
-    resume()      { this.countdown(); } // ou direct PLAYING si tu veux instantané
-    gameOver()    { this.setPhase("GAMEOVER"); }
-
-
-    private attachInputs() {
-    this.detachInputs = attachGameInputs(this.state, {
-        root: this.root,
-        onBothReady: () => this.countdown(),
-        onPause: () => this.pause(),
-        onResume: () => this.resume(),
-        onReadyChange: () => {
-            // redraw waiting overlay with current ready flags
-            if (this.state.phase === "WAITING") {
-                this.overlay.applyOverlay({
-                    phase: "WAITING",
-                    p1Ready: this.state.ready.p1,
-                    p2Ready: this.state.ready.p2,
-                });
-            }
+    private resetGame() {
+        if (this.loopCtrl) {
+            this.loopCtrl.stop();
+            this.loopCtrl = null;
         }
-    });
+        this.state = initState();
+        this.context = setupCanvas(this.view.canvas);
     }
 
-    private startLoop() {
-    if (this.loopCtrl) return;
-    this.loopCtrl = gameLoop(
-        (dt)   => update(this.state, dt),
-        (acc)  => render(this.context, this.state, acc),
-        60
-    );
-    }
-
-    private stopLoopOnly() {
-    if (this.loopCtrl) { this.loopCtrl.stop(); this.loopCtrl = null; }
-    }
-
-    private stopLoopInputs() {
-    this.stopLoopOnly();
-    if (this.detachInputs) { this.detachInputs(); this.detachInputs = null; }
-    }
-
-    getState() {
-        return this.state;
+    public boot() {
+        this.setPhase("START");
     }
 }
+
