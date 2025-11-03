@@ -1,8 +1,6 @@
-import { createGameViewWindow }     from "./ui/pongview";
+import { createGameViewWindow }     from "./ui/view";
 import { setupCanvas }              from "./core/canvas";
 import { GameController }           from "./controller";
-
-
 
 export function PlayPong(): HTMLElement {
     // Création de la fenêtre de jeu
@@ -12,10 +10,7 @@ export function PlayPong(): HTMLElement {
     const context = setupCanvas(view.canvas);
 
     // Configuration de l'overlay
-    const controller = new GameController({ 
-        context: context,
-        view: view,
-    });
+    const controller = new GameController({ context, view });
 
     controller.boot();
 

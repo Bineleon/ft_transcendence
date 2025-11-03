@@ -132,3 +132,8 @@
   --breakpoint-xl: 100rem;   /* 1280px */
   --breakpoint-xxl: 140rem;  /* 1920px */
 }
+
+@layer utilities {
+  .no-scroll { overflow: hidden;}     /* Empêche le scroll de la page */
+  .hide-cursor { cursor: none; }        /* Cache le curseur */
+}
