@@ -22,7 +22,10 @@ stop:
 	$(DC) -f docker-compose.prod.yaml down || true
 
 # Nettoyer (dangereux, supprime les volumes aussi)
+# Nettoyer (dangereux, supprime les volumes aussi)
 clean:
-	docker system prune -af
-	docker volume rm ft_transcendence_db-data || true
-	docker system prune -a --volumes
+	docker compose -f docker-compose.dev.yaml down -v || true
+	docker compose -f docker-compose.prod.yaml down -v || true
+	docker system prune -af || true
+	docker volume rm ft_transcendence_db-data ft_transcendence_frontend-dist || true
+	docker system prune -a --volumes || true

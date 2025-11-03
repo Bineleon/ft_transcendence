@@ -4,9 +4,8 @@ import { z } from "zod";
 const strongPassword = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$");
 
 export const userSchema = z.object({
-  email: z.string()
-    .email({ message: "Email invalide" })
-    .max(255, "Email trop long"),
+  email: z.email({ message: "Email invalide" }).max(255, "Email trop long"),
+
 
   username: z.string()
     .min(3, "Nom d'utilisateur trop court")

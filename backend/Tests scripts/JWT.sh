@@ -2,7 +2,7 @@
 
 BASE_URL="https://localhost:8443"
 USERNAME="Yoh"
-PASSWORD="prout"
+PASSWORD="Prout123"
 
 echo "🔑 Tentative de login via Nginx reverse-proxy..."
 
