@@ -1,4 +1,5 @@
-import { el, text }         from "../../home";
+import { el }         from "../../home";
+import { createPongStatsPanel } from "./terminal";
 
 //// Structure DOM minimale (fini les “multi-boîtes”)
 //  root (grid 2 colonnes, 1 colonne sur fenetre etroite)
@@ -72,8 +73,10 @@ export function createGameViewWindow(): GameViewWindow {
         "lg:w-[210px] lg:h-[420px] " +
         "xl:w-[324px] xl:h-[648px] " +
         "xxl:w-[450px] xxl:h-[900px] ");
-    terminal.append(text("Terminal…"));
-
+    
+    const pongStatsPanel = createPongStatsPanel();
+    terminal.append(pongStatsPanel);
+    
     // 5) Assemble
     main.append(stage, terminal);
 

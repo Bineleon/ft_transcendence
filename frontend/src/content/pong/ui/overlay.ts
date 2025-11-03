@@ -61,55 +61,109 @@ export class domOverlayManager {
                 return wrap;
             }
             case "GAMEOVER": {
+                const wrap = el("div", "text-center");
+                const score = el("div", "text-9xl mb-2");
+                score.append(
+                    text(`${state.stats.p1Score} - ${state.stats.p2Score}`)
+                );
                 const b = el("button", "px-4 py-2 border pointer-events-auto hover:bg-white/100");
                 b.textContent = "RESTART";
                 b.addEventListener("click", (e) => {
                     e.stopPropagation();
                     this.gameController.setPhase("RESTART");
                 });
-                return b;
+                wrap.append(score, b);
+                return wrap;
+            }
+            case "SCORED": {
+                const wrap = el("div", "text-center");
+                const score = el("div", "text-9xl mb-2");
+                score.append(
+                    text(`${state.stats.p1Score} - ${state.stats.p2Score}`)
+                );
+
+                wrap.append(score);
+                return wrap;
             }
         }
         return el("div");
     }
 
+    public gamingOverlayMode(canvas: HTMLCanvasElement, phase: GamePhase) {
+        // Desactiver souris / clavier lors du jeu
+        const isGameActive = (phase === "PLAYING" || phase === "COUNTDOWN");
+        
+        canvas.style.cursor = isGameActive ? "none" : "default";
+        canvas.style.touchAction = isGameActive ? "none" : "auto";
+    }
+
     public setCursorHidden(hidden: boolean): void {
         if (hidden) {
-            document.body.style.cursor = 'none';
+            document.body.classList.add("hide-cursor");
         }
         else {
-            document.body.style.cursor = 'default';
+            document.body.classList.remove("hide-cursor");
         }
     }
 }
 
-// Functions architecture :
-// interface GameViewWindow------ main: HTMLElement;
-//                              - stage: HTMLElement;
-//                              - canvas: HTMLCanvasElement;
-//                              - terminal: HTMLElement;
-//                              - overlay: OverlayManager---- bindHTMLElement(phase, state): HTMLElement
-//                                                          - setCursorHidden(hidden): void
-//                                                          - showStartButton(show): void
-//                                                          - showPauseButton(show): void
-//                                                          - showRestartButton(show): void
-//                                                          - onPlay(callback): void
-//                                                          - onPause(callback): void
-//                                                          - secsLeft: number | null
-//                                                                    |           
-// class GameController     - root: HTMLElement                       |
-//                          - context: CanvasRenderingContext2D       |
-//                          - overlay: OverlayManager------------------
-//                          - state: GameState--------------- world
-//                                                          - ball
-//                                                          - paddles
-//                                                          - phase
-//                                                          - ready
-//                                                          - controls
-//                          - setPhase(phase: GamePhase): void
-//                          - attachKeyboardInputs(): void
-//                          - startCountdown(): void
-//                          - restartGame(): void
+// Diagramme d’architecture des fonctions :  //
+// interface    GameViewWindow------- main: HTMLElement;
+//                                  - stage: HTMLElement;
+//                                  - canvas: HTMLCanvasElement;
+//                                  - terminal: HTMLElement;
+//                                  - overlay: HTMLElement
+//
+// Class        domOverlayManager-------- private gameController: GameController
+//  constructor                         - public countdownTimerId: number | null
+//  domOverlayManager(GameController)   - public countdownLeft: number
+//                                      - public bindHTMLElement(phase: GamePhase, state: GameState): HTMLElement
+//                                      - public setCursorHidden(hidden: boolean): void
+//
+// Class        GameController------------------- public view: GameViewWindow
+//  constructor                                 - public context: CanvasRenderingContext2D
+//  GameController(opts: {                      - public state: GameState
+//      context: CanvasRenderingContext2D;      - public domOverlay: domOverlayManager
+//      view: GameViewWindow; })                - private loopCtrl: ReturnType<typeof GameLoop> | null
+//                                              - public setPhase(phase: GamePhase): void
+//                                              - private startPlaying(): void
+//                                              - private pausePlaying(): void
+//                                              - private startCountdown(): void
+//                                              - private resetGame(): void
+//                                              - private attachKeyboardInputs(): void
+//                                              - public boot()
+//
+// Type Gamestate---------------- world:
+//                              - ball
+//                              - paddles
+//                              - phase
+//                              - ready
+//                              - controls
+//
+// Type GamePhase = 'START' | 'WAITING' | 'COUNTDOWN' | 'PLAYING' | 'PAUSED' | 'GAMEOVER' | 'RESTART'
+//
+//
+//
+// Fonctionnement Global :
+// createGameViewWindow()       Retourne une interface GameViewWindow qui contient les éléments HTML nécessaires pour le jeu.
+// setupCanvas(view.canvas)     Il prend l'element HTMLCanvasElement et configure son contexte de rendu 2D, il retourne un CanvasRenderingContext2D. (le 'context')
+// new GameController({         Crée une instance de GameController en lui passant le 'context' (CanvasRenderingContext2D) et la 'view' (GameViewWindow).
+//     context: context,
+//     view: view });
+//
+// Dans le Gamecontroller :     À la construction, il associe à ses propriétés, le contexte de rendu et la vue. Il initialise l'état du jeu, et crée un new domOverlayManager,
+//                              qui prend une référence au GameController. Il cree egalement un loopCtrl, qui est un ReturnType de la fonction GameLoop ()
+//
+// La GameLoop() :              Elle est appellee une seule fois, via la fonction startPlaying() du GameController, qui est elle-même appelée lorsque le jeu passe en phase 'PLAYING'.
+//                              Elle retourne une fonction "callback", definie dans le return de GameLoop(), qui est stockée dans la propriété loopCtrl du GameController.
+//
+// Dans le domOverlayManager :  La méthode bindHTMLElement(phase: GamePhase, state: GameState) retourne un élément HTML différent en fonction de la phase actuelle du jeu.
+//                              C'est lui aussi qui "ecoute" les clics bouttons, et change la phase via setPhase() du GameController.
+
+
+
+
+
 
 
 
