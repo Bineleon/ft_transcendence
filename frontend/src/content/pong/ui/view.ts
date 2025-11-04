@@ -1,5 +1,4 @@
 import { el }         from "../../home";
-import { createPongStatsPanel } from "./terminal";
 
 //// Structure DOM minimale (fini les “multi-boîtes”)
 //  root (grid 2 colonnes, 1 colonne sur fenetre etroite)
@@ -38,7 +37,7 @@ export interface GameViewWindow {
     stage: HTMLElement;         // conteneur relatif (canvas + overlay)
     canvas: HTMLCanvasElement;  // canvas de jeu (zone de dessin)
     overlay: HTMLElement;    // gestion de l'overlay
-    terminal: HTMLElement;      // zone de droite (terminal)
+    terminal: HTMLDivElement;      // zone de droite (terminal)
 }
 
 export function createGameViewWindow(): GameViewWindow {
@@ -73,10 +72,7 @@ export function createGameViewWindow(): GameViewWindow {
         "lg:w-[210px] lg:h-[420px] " +
         "xl:w-[324px] xl:h-[648px] " +
         "xxl:w-[450px] xxl:h-[900px] ");
-    
-    const pongStatsPanel = createPongStatsPanel();
-    terminal.append(pongStatsPanel);
-    
+        
     // 5) Assemble
     main.append(stage, terminal);
 

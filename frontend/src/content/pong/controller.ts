@@ -8,6 +8,7 @@ import { domOverlayManager }            from "./ui/overlay";
 import { setupCanvas }                  from "./core/canvas";
 import type { GameGuards }              from "./game/guards";
 import { createGameGuards }             from "./game/guards";
+import { createPongStatsPanel }         from "./ui/terminal";
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
@@ -19,6 +20,7 @@ export class GameController {
     public domOverlay: domOverlayManager;
     private loopCtrl: ReturnType<typeof GameLoop> | null = null;
     private gameGuards: GameGuards;
+    public terminal: HTMLElement;
     public pongControls: Controls = {
         p1Up:   { code: "KeyW",         down: false },
         p1Down: { code: "KeyS",         down: false },
@@ -32,6 +34,7 @@ export class GameController {
     constructor(opts: { context: CanvasRenderingContext2D; view: GameViewWindow }) {
         this.context = opts.context;
         this.view = opts.view;
+        this.terminal = this.view.terminal;
         this.state = initState();
         this.domOverlay = new domOverlayManager(this);
         this.gameGuards = createGameGuards(this.view.canvas);
@@ -43,9 +46,6 @@ export class GameController {
         // if (e.repeat) return;
         const { code } = e;
         const c = this.pongControls;
-
-        console.log(`paddle1 pos y: ${this.state.paddle1.pos.y}`);
-        console.log(`paddle2 pos y: ${this.state.paddle2.pos.y}`);
 
         if (code === c.p1Up.code)   c.p1Up.down = true;
         if (code === c.p1Down.code) c.p1Down.down = true;
@@ -116,6 +116,7 @@ export class GameController {
 // -----  Gestion des Phases de Jeu  ----- //
     public setPhase(phase: GamePhase) {
         this.state.phase = phase;
+        this.terminal.replaceChildren(createPongStatsPanel(this.state));
 
         if (phase === "PLAYING" || phase === "COUNTDOWN" || phase === "SCORED") {
             this.gameGuards.enable();
@@ -156,6 +157,7 @@ export class GameController {
                 break;
 
             case "PLAYING":
+                initBoard(this.state);
                 this.wireControls();
                 this.startPlaying();
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
