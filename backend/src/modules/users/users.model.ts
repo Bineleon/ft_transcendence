@@ -29,7 +29,7 @@ export interface UpdateProfileRequest {
   email?: string;
   username?: string;
   password?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 }
 
 export interface ChangePasswordRequest {
@@ -46,7 +46,7 @@ export interface UserProfile {
   id: string;
   email: string;
   username: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,14 +54,14 @@ export interface UserProfile {
 export interface PublicUserProfile {
   id: string;
   username: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   createdAt: string;
 }
 
 export interface UserListItem {
   id: string;
   username: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
 }
 
 // Utilitaires
