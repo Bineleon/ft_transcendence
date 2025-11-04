@@ -1,8 +1,9 @@
 import type { GameState } from "./types";
 import { GameController } from "../controller";
+import { createPongStatsPanel } from "../ui/terminal";
 
 
-export function collision(state: GameState) {
+export function collision(state: GameState, gameController: GameController) {
     const { ball, world, paddle1: p1, paddle2: p2 } = state;
     const bN = ball.pos.y - ball.r;
     const bS = ball.pos.y + ball.r;
@@ -27,6 +28,7 @@ export function collision(state: GameState) {
             bS >= p1yN) {
             ball.dir.x *= -1;
             state.stats.bounces++;
+            moreVelocity(state, gameController);
         }
     }
     else if (ball.dir.x > 0) { // balle va à droite
@@ -39,6 +41,7 @@ export function collision(state: GameState) {
             bS >= p2yN) {
             ball.dir.x *= -1;
             state.stats.bounces++;
+            moreVelocity(state, gameController);
         }
     }
 }
@@ -61,17 +64,34 @@ export function score(state: GameState): boolean {
     return false;
 }
 
-export function moreVelocity(state: GameState) {
-    const speedIncrement = 2;
+export function moreVelocity(state: GameState, gameController: GameController) {
+    let speedIncrement_x = 20;
+    let speedIncrement_y = 20;
     const maxSpeed = 1500;
     let bounces = state.stats.bounces;
+
+    console.log(`p1Up: ${gameController.pongControls.p1Up.down}, p1Down: ${gameController.pongControls.p1Down.down}, p2Up: ${gameController.pongControls.p2Up.down}, p2Down: ${gameController.pongControls.p2Down.down}`);
+    if ((gameController.pongControls.p1Up.down && state.ball.pos.x < 750) || 
+        (gameController.pongControls.p2Up.down && state.ball.pos.x >= 750)) {
+        speedIncrement_y -= 30;
+        console.log(`Increased ball speed to ${state.ball.vel.y}`);
+    }
+    if (gameController.pongControls.p1Down.down && state.ball.pos.x < 750 || 
+        (gameController.pongControls.p2Down.down && state.ball.pos.x >= 750)) {
+        state.ball.vel.y += 30;
+        console.log(`Increased ball speed to ${state.ball.vel.y}`);
+    }
+    
     if (bounces % 4 === 0 && bounces !== 0) {
         if (state.ball.vel.x < maxSpeed) {
-            state.ball.vel.x += speedIncrement;
+            state.ball.vel.x += speedIncrement_x;
         }
         if (state.ball.vel.y < maxSpeed) {
-            state.ball.vel.y += speedIncrement;
+            state.ball.vel.y += speedIncrement_y;
         }
+        speedIncrement_x += 30;
+        speedIncrement_y += 30;
+        state.stats.bounces++;
     }
 }
 
@@ -81,13 +101,13 @@ export function update(gameController: GameController, delta: number) {
     const state = gameController.state;
     const controls = gameController.pongControls;
 
-    collision(state);
+    collision(state, gameController);
     if (score(state) && (state.stats.p1Score < 3 || state.stats.p2Score < 3)) gameController.setPhase("SCORED");
     if (state.stats.p1Score >= 3 || state.stats.p2Score >= 3) {
         gameController.setPhase("GAMEOVER");
     }
 
-    moreVelocity(state);
+    gameController.terminal.replaceChildren(createPongStatsPanel(state));
 
     const ball = state.ball;
     ball.pos.x += ball.vel.x * ball.dir.x * delta;

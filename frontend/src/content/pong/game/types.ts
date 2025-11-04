@@ -18,7 +18,7 @@ export interface PlayersStats {
     bounces: number;
 }
 
-export type GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART" | "SCORED";
+export type  GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART" | "SCORED";
 
 export interface Vec2 { x: number; y: number; }
 
