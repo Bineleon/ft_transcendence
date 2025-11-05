@@ -9,6 +9,7 @@ import { setupErrorHandler } from "./utils/errorHandler.js";
 import { ValidationError, AuthError, ConflictError } from "./utils/errors.js";
 import { validateUserData } from "./utils/registration_policies.js";
 import type { RegisterRequest, LoginRequest } from "./types/auth.js";
+import { send2FACode, verify2FACode } from "./utils/twoFactor.js";
 
 const app = Fastify({ logger: true });
 const prisma = new PrismaClient();
@@ -29,34 +30,23 @@ app.get("/api/ping", async () => ({ pong: true }));
 app.post<{ Body: RegisterRequest }>(
   "/api/auth/register",
   async (req: FastifyRequest<{ Body: RegisterRequest }>, reply: FastifyReply) => {
-    // Validation via Zod centralisée
     const validated = await validateUserData(req, reply);
-    if (!validated) return; // si la validation échoue, on stoppe ici
+    if (!validated) return;
 
     const { email, username, password } = validated;
 
-    // Vérifie unicité email/username
     const exists = await prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
     });
-    if (exists) {
-      throw new ConflictError("Email or username already in use");
-    }
+    if (exists) throw new ConflictError("Email or username already in use");
 
-    // Hash + création
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
       data: { email, username, passwordHash },
       select: { id: true, email: true, username: true, createdAt: true },
     });
 
-    // Génère et set le JWT
-    const token = jwt.sign(
-      { sub: user.id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
+    const token = jwt.sign({ sub: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
     reply.setCookie("access_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -68,77 +58,63 @@ app.post<{ Body: RegisterRequest }>(
   }
 );
 
-// --- LOGIN ---
-app.post<{ Body: LoginRequest }>(
-  "/api/auth/login",
-  async (req: FastifyRequest<{ Body: LoginRequest }>, reply: FastifyReply) => {
-    const { username, password } = req.body;
+// --- LOGIN (étape 1 : mot de passe) ---
+app.post<{ Body: LoginRequest }>("/api/auth/login", async (req, reply) => {
+  const { username, password } = req.body;
+  if (!username || !password) throw new ValidationError("Username and password are required");
 
-    if (!username || !password) {
-      throw new ValidationError("Username and password are required");
-    }
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ email: username }, { username }] },
+  });
+  if (!user) throw new AuthError("Invalid credentials");
 
-    // On permet login par email ou username
-    const user = await prisma.user.findFirst({
-      where: { OR: [{ email: username }, { username }] },
-    });
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) throw new AuthError("Invalid credentials");
 
-    if (!user) {
-      throw new AuthError("Invalid credentials");
-    }
+  // --- Générer et envoyer le code 2FA par email ---
+  await send2FACode(user.id, user.email);
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) {
-      throw new AuthError("Invalid credentials");
-    }
+  return reply.send({ success: true, requires2FA: true, userId: user.id });
+});
 
-    const token = jwt.sign(
-      { sub: user.id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+// --- LOGIN (étape 2 : validation du code 2FA) ---
+app.post<{ Body: { userId: number; code: string } }>("/api/auth/2fa", async (req, reply) => {
+  const { userId, code } = req.body;
 
-    reply.setCookie("access_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, username: true, email: true },
+  });
+  if (!user) throw new AuthError("Utilisateur introuvable");
 
-    return reply.send({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
-    });
-  }
-);
+  const valid = await verify2FACode(userId, code);
+  if (!valid) throw new AuthError("Code invalide ou expiré");
+
+  const token = jwt.sign({ sub: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
+  reply.setCookie("access_token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  return reply.send({ success: true, user });
+});
 
 // --- ME (vérifie la session via JWT) ---
 app.get("/api/me", async (req: FastifyRequest, reply: FastifyReply) => {
   const token = (req.cookies as any)?.access_token;
-
-  if (!token) {
-    throw new AuthError("No session", "NO_SESSION");
-  }
+  if (!token) throw new AuthError("No session", "NO_SESSION");
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      sub: string;
-      username: string;
-    };
+    const decoded = jwt.verify(token, JWT_SECRET) as { sub: string; username: string };
     const userId = parseInt(decoded.sub, 10);
 
     const me = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, username: true, createdAt: true },
     });
-
-    if (!me) {
-      throw new AuthError("Invalid session", "INVALID_SESSION");
-    }
+    if (!me) throw new AuthError("Invalid session", "INVALID_SESSION");
 
     return reply.send({ success: true, user: me });
   } catch {

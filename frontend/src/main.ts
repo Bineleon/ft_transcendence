@@ -6,7 +6,6 @@ import { Game } from "./content/game";
 import { PlayPong } from "./content/pong/playpong";
 import { Profile } from "./content/profile";
 
-
 // Structure des routes de l'application
 const routes = {
   "/": Home,
@@ -16,5 +15,5 @@ const routes = {
   "/gameon": PlayPong,
 };
 
-// 
-createRouter("app", routes);  // le router écoute et rend tout seul
+// Initialise le router et écoute automatiquement les changements
+createRouter("app", routes);
