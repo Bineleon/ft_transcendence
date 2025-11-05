@@ -6,6 +6,7 @@ import { env } from '../config/environment.js';
  */
 export interface JwtPayload {
   userId: string;
+  email: string;
 }
 
 /**

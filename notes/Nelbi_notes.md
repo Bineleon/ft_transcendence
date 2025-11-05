@@ -17,9 +17,7 @@ Modif package.json :
 
 ### TODO  
 - cd backend; npm install
-- npm install pino-pretty --save-dev // ?
 - include FormattedUser in formatters.ts
-- modules/users/users.controller.ts
 
 ### refacto project-strucutre
 

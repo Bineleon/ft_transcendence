@@ -13,8 +13,7 @@ import { setupErrorHandler } from './shared/middleware/index.js';
 import { getPrismaClient } from './shared/database/prisma.js';
 
 // Modules
-import { authController } from './modules/auth/index.js';
-import { AuthService } from './modules/auth/index.js';
+import { setupAuthModule } from './modules/auth/index.js';
 
 /**
  * Créer et configurer l'application Fastify
@@ -69,19 +68,13 @@ export function createApp() {
   const prisma = getPrismaClient();
 
   // ==========================================
-  // 5️⃣ SERVICES (Logique métier)
+  // 5️⃣ MODULES (Services + Routes)
   // ==========================================
   
-  const authService = new AuthService(prisma);
+  setupAuthModule(app, prisma);
 
   // ==========================================
-  // 6️⃣ ROUTES (Controllers)
-  // ==========================================
-  
-  authController(app, authService);
-
-  // ==========================================
-  // 7️⃣ ROUTE DE SANTÉ (Health check)
+  // 6️⃣ ROUTE DE SANTÉ (Health check)
   // ==========================================
   
   app.get('/health', async () => {
@@ -94,7 +87,7 @@ export function createApp() {
   });
 
   // ==========================================
-  // 8️⃣ RETOURNER L'APP
+  // 7️⃣ RETOURNER L'APP
   // ==========================================
   
   return app;

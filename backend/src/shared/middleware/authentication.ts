@@ -15,11 +15,8 @@ declare module 'fastify' {
  * Middleware : Vérifier que l'utilisateur est authentifié
  * Lance une erreur 401 si pas de token valide
  */
-export async function authenticate(
-  request: FastifyRequest,
-  _reply: FastifyReply
-): Promise<void> {
-  
+export async function authenticate( request: FastifyRequest, _reply: FastifyReply ): Promise<void> {
+
   const token = request.cookies.token;
   
   if (!token) {
@@ -38,11 +35,8 @@ export async function authenticate(
  * Middleware : Vérifier que l'utilisateur accède à sa propre ressource
  * Doit être utilisé APRÈS authenticate
  */
-export async function requireOwner(
-  request: FastifyRequest<{ Params: { id: string } }>,
-  _reply: FastifyReply
-): Promise<void> {
-  
+export async function requireOwner( request: FastifyRequest<{ Params: { id: string } }>, _reply: FastifyReply ): Promise<void> {
+
   if (!request.user) {
     throw new AuthError('Authentication required');
   }
