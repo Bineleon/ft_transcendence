@@ -16,9 +16,10 @@ export interface RegisterRequest {
  * Requête pour se connecter
  */
 export interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
+
 
 /**
  * Réponse après une inscription ou connexion réussie
@@ -80,3 +81,4 @@ export interface TwoFASetupResponse {
   secret: string;
   qrCode: string;  // Base64 image du QR code
 }
+

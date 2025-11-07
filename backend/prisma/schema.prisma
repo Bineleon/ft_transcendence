@@ -37,7 +37,7 @@ model User {
   passwordHash       String
   avatarUrl          String?      @map("avatar_url")
   playerRef          String?      @unique @map("player_ref")
-  twoFASecret        String?      @map("2fa_secret")
+  TwoFactors		 TwoFactor[]
   createdAt          DateTime     @default(now()) @map("created_at")
   updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at")
   friendOf           Friend[]     @relation("UserFriendOf")
@@ -47,6 +47,7 @@ model User {
   matchesAsP1        Match[]      @relation("P1")
   sessions           Session[]
   createdTournaments Tournament[] @relation("UserCreatedTournaments")
+
 }
 
 model Tournament {
@@ -109,4 +110,14 @@ model Friend {
   user      User         @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, friendId])
+}
+
+model TwoFactor {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
