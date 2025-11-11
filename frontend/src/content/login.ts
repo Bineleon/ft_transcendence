@@ -10,15 +10,15 @@ function login(): HTMLElement {
 
     const form = el("form", "flex flex-col gap-4");
     
-    const inputLogin = el("input", "border-2 border-white/20 p-2 text-md font-modern-type");
+    const inputLogin = el("input", "btn-input");
     inputLogin.type = "text";
     inputLogin.placeholder = "Login"; 
     
-    const inputPassword = el("input", "border-2 border-white/20 p-2 text-md font-modern-type");
+    const inputPassword = el("input", "btn-input");
     inputPassword.type = "password";
     inputPassword.placeholder = "Password";
 
-    const inputSubmit = el("button", "bg-white text-black p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer");
+    const inputSubmit = el("button", "btn-click-dark");
     inputSubmit.type = "submit";
     inputSubmit.textContent = "Log In";
 
@@ -74,7 +74,7 @@ function login(): HTMLElement {
 }
 
 function register(): HTMLElement {
-    const panel = el("div", "border-4 border-dashed border-black p-8");
+    const panel = el("div", "mix-blend-multiply border-4 border-dashed border-black p-8");
     const title = el("h1", "font-modern-type text-6xl text-justify tracking-widest font-bold mb-2");
     title.append(text("SUBSCRIBE TODAY !!!"));
     
@@ -83,28 +83,28 @@ function register(): HTMLElement {
 
     const form = el("form", "flex flex-col gap-4");
     
-    const inputEmail = el("input", "border-2 border-black p-2 text-md font-modern-type");
+    const inputEmail = el("input", "btn-input");
     inputEmail.type = "email";
     inputEmail.placeholder = "Email Address";
     inputEmail.required = true;
 
-    const inputLogin = el("input", "border-2 border-black p-2 text-md font-modern-type");
+    const inputLogin = el("input", "btn-input");
     inputLogin.type = "text";
     inputLogin.placeholder = "Login";
     inputLogin.required = true;
     
-    const inputPassword = el("input", "border-2 border-black p-2 text-md font-modern-type");
+    const inputPassword = el("input", "btn-input");
     inputPassword.type = "password";
     inputPassword.placeholder = "Password";
     inputPassword.required = true;
 
-    const confirmPassword = el("input", "border-2 border-black p-2 text-md font-modern-type");
+    const confirmPassword = el("input", "btn-input");
     confirmPassword.type = "password";
     confirmPassword.placeholder = "Confirm Password";
     confirmPassword.required = true;
 
 
-    const submit = el("button", "bg-black text-white p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer");
+    const submit = el("button", "btn-click");
     submit.type = "submit";
     submit.textContent = "Submit";
 

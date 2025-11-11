@@ -107,23 +107,20 @@
 
 
 @theme {
+/**************** FONTS ****************/
   /* IM Fell (style journal, serif) */
   --font-im-double: "IM_Double_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-im-great:  "IM_Great_Primer_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-
   /* Blackletter (ancien journal, gothique → serif fallback) */
   --font-f25-blackletter: "F25Blackletter", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-
   /* JMH Typewriter Sans (sans-serif) */
   --font-jmh: "JMH_Type_Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-
   /* Typewriter “machine à écrire” (souvent monospaces) */
   --font-modern-type: "Modern_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-ocean-type:  "OceanSide_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-royalvogue:  "RoyalVogue_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
 
-@theme {
+/**************** BREAKPOINTS ****************/
   /* Remets les valeurs qui te conviennent (en rem = tri fiable) */
   --breakpoint-xs: 30rem;   /* 480px */
   --breakpoint-sm: 36rem;   /* 576px */
@@ -131,9 +128,186 @@
   --breakpoint-lg: 64rem;   /* 1024px */
   --breakpoint-xl: 100rem;   /* 1280px */
   --breakpoint-xxl: 140rem;  /* 1920px */
+
+/**************** TEXT SIZES ****************/
+  /* Tailles de texte personnalisées */
+  --text-hed-md: 2.488rem;   /* ~39.8px */
+  --text-hed-lg: 2.074rem;   /* ~33.2px */
+  --text-hed-xl: 1.728rem;   /* ~27.6px */
+  --text-hed-xxl: 1.44rem;    /* ~23.0px */
+
+  /* === articles === */
+  --text-article-xs: clamp(0.6rem, 1vw + 0.4rem, 0.7rem);
+  --text-article-sm: clamp(0.7rem, 1vw + 0.5rem, 0.8rem);
+  --text-article-md: clamp(0.8rem, 1vw + 0.6rem, 0.9rem);
+  --text-article-lg: clamp(0.9rem, 1vw + 0.7rem, 1rem);
+  --text-article-xl: clamp(1rem, 1.2vw + 0.7rem, 1.15rem);
+  --text-article-xxl: clamp(1.15rem, 1.5vw + 0.8rem, 1.3rem);
+
+  --text-article-xs--line-height: 1.4;
+  --text-article-sm--line-height: 1.45;
+  --text-article-md--line-height: 1.5;
+  --text-article-lg--line-height: 1.6;
+  --text-article-xl--line-height: 1.65;
+  --text-article-xxl--line-height: 1.7;
+}
+
+@layer base {
+  input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: black !important;
+  }
 }
 
 @layer utilities {
   .no-scroll { overflow: hidden;}     /* Empêche le scroll de la page */
   .hide-cursor { cursor: none; }        /* Cache le curseur */
 }
+
+@layer components {
+/**************** TEXT STYLES ****************/
+  .article-base {
+    @apply font-modern-type text-justify leading-relaxed
+           text-article-md text-article-md--line-height
+           lg:text-article-lg lg:text-article-lg--line-height
+           xl:text-article-xl xl:text-article-xl--line-height
+           xxl:text-article-xxl xxl:text-article-xxl--line-height;
+  }
+  .article-sm {
+    @apply font-modern-type text-justify leading-relaxed
+           text-article-sm text-article-sm--line-height
+           lg:text-article-md lg:text-article-md--line-height
+           xl:text-article-lg xl:text-article-lg--line-height
+           xxl:text-article-xl xxl:text-article-xl--line-height;
+  }
+  .article-xs {
+    @apply font-modern-type text-justify leading-relaxed
+           text-article-xs text-article-xs--line-height 
+           lg:text-article-sm lg:text-article-sm--line-height
+           xl:text-article-md xl:text-article-md--line-height
+           xxl:text-article-lg xxl:text-article-lg--line-height;
+  }
+  .dropcap {
+    @apply first-line:tracking-widest 
+           first-letter:text-6xl first-letter:font-bold 
+           first-letter:text-stone-900 dark:first-letter:text-stone-100 
+           first-letter:me-2 first-letter:float-start;
+  }
+  .article-link {
+    @apply text-black underline decoration-4 hover:bg-black hover:text-white;
+  }
+
+  .in-dark-box {
+    @apply  text-white text-4xl 
+           font-im-double uppercase text-center;
+  }
+
+/**************** IMG STYLES ****************/
+  .img-newspaper {
+    @apply mix-blend-multiply mx-auto grayscale contrast-200 hover:contrast-170
+           transition-all duration-300 ease-in-out
+           [mask-image:url('/imgs/trames/trame5.png')] [mask-repeat:no-repeat]
+           [mask-size:100%_100%] [mask-position:center] [mask-origin:content-box]
+           [-webkit-mask-image:url('/imgs/trames/trame5.png')] [-webkit-mask-size:100%_100%]
+           [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center];
+  }
+
+/**************** BUTTON STYLES ****************/
+  .btn-input {
+    @apply border-t-1 border-l-1 border-r-2 border-b-2
+           font-modern-type border-black p-2 
+           focus:border-r-4 focus:border-b-4 focus:border-t-0 focus:border-l-0
+           focus:outline-none focus:border-stone-700
+           transition-all
+           text-base lg:text-lg xl:text-xl xxl:text-2xl;
+  }
+  .btn-click {
+    @apply bg-black text-white p-2 font-modern-type
+           hover:bg-stone-700 cursor-pointer
+           transition-all duration-300 ease-in-out;
+  }
+  .btn-click-dark {
+    @apply bg-white text-black p-2 font-modern-type
+           hover:bg-stone-300 cursor-pointer
+           transition-all duration-300 ease-in-out;
+  }
+
+/**************** BOX STYLES ****************/
+  .box-dark {
+    @apply mix-blend-multiply
+           bg-[url('/imgs/trame2.png')] bg-center bg-cover
+           p-7;
+  }
+
+  /* bg-[url('/imgs/trame2.png')] bg-cover bg-center text-white font-im-double uppercase text-center text-4xl */
+
+/****************** BORDER STYLES ******************/
+  .border-movie {
+    position: relative;
+    z-index: 0; 
+  }
+  .border-movie::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border: 100px solid transparent;
+    border-image: url("/imgs/borders/b-film2.svg") 400 round stretch;
+    pointer-events: none;     /* Permet de cliquer à travers la bordure */
+    z-index: 0;
+  }
+
+  .frame-photo {
+    @apply relative inline-block overflow-hidden;  
+  }
+  .frame-photo::before {
+    content: "";
+    @apply absolute inset-0 pointer-events-none;
+    background-image: url('/imgs/borders/frame.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    mix-blend-mode: normal;
+    z-index: 10;
+  }
+  .frame-photo-img {
+    @apply w-full h-full;
+  }
+}
+
+/*---------------------------------------------------------
+ 🧠 MÉMO — FONCTION CSS clamp()
+
+ clamp(MIN, PREF, MAX)
+
+ 👉 Sert à créer une valeur *fluide* entre un minimum et un maximum.
+    Très pratique pour rendre les tailles de texte, marges ou espacements
+    réactifs sans breakpoints.
+
+ ▸ MIN  → la plus petite valeur possible (quand l’écran est étroit)
+ ▸ PREF → la valeur "idéale", souvent dépendante du viewport (ex: 1vw + 0.6rem)
+ ▸ MAX  → la plus grande valeur possible (quand l’écran est large)
+
+ ⚙️  Exemple concret :
+      clamp(0.8rem, 1vw + 0.6rem, 0.9rem);
+
+    • 0.8rem = plancher : le texte ne descend jamais en dessous.
+    • 1vw + 0.6rem = formule fluide :
+        - 1vw = 1% de la largeur de la fenêtre
+        - donc la taille augmente légèrement avec la largeur du viewport
+        - le "+ 0.6rem" garde une base lisible sur mobile
+    • 0.9rem = plafond : au-delà, la taille reste fixe.
+
+ 📈  Résultat :
+    - le texte grandit doucement entre 0.8rem et 0.9rem,
+      sans saut ni breakpoint.
+    - très utile pour une mise en page plus organique et lisible.
+
+ 🧩  Bon usage :
+    - Utiliser clamp() pour les tailles de texte, marges, paddings…
+    - Garder les breakpoints (`sm:`, `md:`...) pour les changements
+      structurels (grilles, colonnes, affichage conditionnel, etc.)
+
+ 💬  Astuce :
+    clamp() fonctionne parfaitement avec tes breakpoints personnalisés :
+    entre deux paliers, la valeur reste fluide !
+----------------------------------------------------------*/
