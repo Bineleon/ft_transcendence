@@ -1,38 +1,41 @@
-/* On definit ici les types pour les composants et les routes */
+/* router.ts */
+
 /* Component est une fonction qui retourne un HTMLElement */
 export type Component = () => HTMLElement;
+
 /* Route est un objet qui mappe des chemins (string) à des composants */
-/* Record<string, Component> est un type utilitaire de TS qui crée un objet
-avec ces deux contraintes (un peu comme une Map<string, Component>) */
 export type Routes = Record<string, Component>;
 
+/* Récupère le chemin depuis le hash et retourne la route correspondante */
 function getPathFromHash(routes: Routes): string {
   const hash = window.location.hash || "#/";
-  const path = hash.slice(1); // On enlève le '#'
-  return routes[path] ? path : "/"; // Si la route n'existe pas, on retourne la route par défaut
+  const path = hash.slice(1); // Supprime le '#'
+  return routes[path] ? path : "/"; // Route par défaut si non trouvée
 }
 
-/* La fonction createRouter initialise le routeur */
-export function createRouter(rootId: string, routes:Routes) {
-  const el = document.getElementById(rootId);
-  if (!el) {
+/* Initialise le routeur */
+export function createRouter(rootId: string, routes: Routes) {
+ const root = document.getElementById(rootId);
+   if (!root) {
     throw new Error(`#${rootId} not found.`);
+}
+
+// root est forcément non null ici
+function render(): void {
+  const path = getPathFromHash(routes);
+  const node = routes[path]();
+  root!.replaceChildren(node);
+}
+
+
+  /* Fonction pour naviguer programmatique */
+  function navigate(path: string): void {
+    window.location.hash = path;
   }
 
-  const root: HTMLElement = el;
-
-  function render(): void {
-    const path = getPathFromHash(routes);
-    const node = routes[path]();
-    root.replaceChildren(node);
-  }
-
-  function navigate(path:string): void {
-      window.location.hash = path;
-  }
-
+  /* Écoute les changements de hash et le DOMContentLoaded */
   window.addEventListener("hashchange", render);
   window.addEventListener("DOMContentLoaded", render);
 
   return { navigate };
-} 
+}

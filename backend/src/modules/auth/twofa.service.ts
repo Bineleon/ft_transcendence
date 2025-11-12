@@ -1,9 +1,9 @@
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcrypt';
-import { getPrismaClient } from '../../shared/database/prisma.js';
-const prisma = getPrismaClient();
+import type { PrismaClient } from '@prisma/client';
 
-export async function generate2FACode(userId: string) {
+// twofa.service.ts
+export async function generate2FACode(prisma: PrismaClient, userId: string) {
   const code = (Math.floor(100000 + Math.random() * 900000)).toString();
   const hashedCode = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -14,6 +14,7 @@ export async function generate2FACode(userId: string) {
 
   return code;
 }
+
 
 export async function send2FACode(email: string, code: string) {
   const transporter = nodemailer.createTransport({
