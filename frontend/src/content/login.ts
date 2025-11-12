@@ -1,5 +1,6 @@
 import { el, text } from "./home";
 
+/* Fonction Login */
 function login(): HTMLElement {
     const panel = el("div", "bg-black mix-blend-multiply text-white border-4 border-dotted border-black px-8 py-12");
     const loginBox = el("h1", "font-jmh text-6xl text-center tracking-widest font-bold mb-4");
@@ -9,153 +10,149 @@ function login(): HTMLElement {
     subTitle.append(text("Please login to access the game and continue your adventure! We missed you !"));
 
     const form = el("form", "flex flex-col gap-4");
-    
-    const inputLogin = el("input", "border-2 border-white/20 p-2 text-md font-modern-type");
+
+    // --- Inputs login / password ---
+    const inputLogin = el("input", "border-2 border-white/20 p-2 text-md font-modern-type") as HTMLInputElement;
     inputLogin.type = "text";
-    inputLogin.placeholder = "Login"; 
-    
-    const inputPassword = el("input", "border-2 border-white/20 p-2 text-md font-modern-type");
+    inputLogin.placeholder = "Login";
+
+    const inputPassword = el("input", "border-2 border-white/20 p-2 text-md font-modern-type") as HTMLInputElement;
     inputPassword.type = "password";
     inputPassword.placeholder = "Password";
 
-    const inputSubmit = el("button", "bg-white text-black p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer");
+    const inputSubmit = el("button", "bg-white text-black p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer") as HTMLButtonElement;
     inputSubmit.type = "submit";
     inputSubmit.textContent = "Log In";
+
+    // --- Input pour 2FA (hidden au début) ---
+    const input2FA = el("input", "border-2 border-white/20 p-2 text-md font-modern-type hidden") as HTMLInputElement;
+    input2FA.type = "text";
+    input2FA.placeholder = "Enter 2FA code";
 
     form.addEventListener("input", () => {
         inputSubmit.disabled = !form.checkValidity();
     });
 
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Empêche le rechargement de la page
-        /* Basic checks */
-        if (!inputLogin.value || !inputPassword.value) {
-            alert("Please fill in all fields.");
-            return;
-        }
-        /* on evite les soumissions multiples */
+        event.preventDefault();
         inputSubmit.disabled = true;
 
-        const payload = {
-            username: inputLogin.value,
-            password: inputPassword.value,
-        };
-
-        /****** POST ******/
-        /* On envoie les données au backend */
         try {
+            // --- Phase 2: envoi du code 2FA ---
+            if (!input2FA.classList.contains("hidden")) {
+                const code = input2FA.value;
+                const response = await fetch("/api/auth/verify-2fa", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: input2FA.dataset.userId, code }),
+                    credentials: "include"
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("2FA verified! Login successful.");
+                    window.location.hash = "#/profile";
+                } else {
+                    const errorMessage = data.error?.message || data.message || 'Invalid 2FA code';
+                    alert(`2FA verification failed: ${errorMessage}`);
+                    inputSubmit.disabled = false;
+                }
+                return;
+            }
+
+            // --- Phase login classique ---
+            if (!inputLogin.value || !inputPassword.value) {
+                alert("Please fill in all fields.");
+                inputSubmit.disabled = false;
+                return;
+            }
+
+            const payload = { username: inputLogin.value, password: inputPassword.value };
             const response = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload), // <-- texte JSON, pas un fichier
-				credentials: "include" // indispensable pour envoyer les cookies
+                body: JSON.stringify(payload),
+                credentials: "include"
             });
-
-            /* Si c'est ok, on renvoi vers le profil */
             const data = await response.json();
 
             if (response.ok) {
-                alert("Login successful!");
-                window.location.hash = "#/profile";
+                input2FA.classList.remove("hidden");
+                input2FA.dataset.userId = data.data.userId;
+                input2FA.focus();
+                alert("Login successful! Please enter your 2FA code sent by email.");
             } else {
-                // ✅ Afficher le message d'erreur du backend
-                const errorMessage = data.error?.message || data.message || 'Unknown error';
+                const errorMessage = data.error?.message || data.message || 'Login failed';
                 alert(`Login failed: ${errorMessage}`);
-            }
-            } catch (error) {
-                console.error("Login error:", error);
-                alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
-            } finally {
                 inputSubmit.disabled = false;
             }
+
+        } catch (error) {
+            console.error("Login error:", error);
+            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            inputSubmit.disabled = false;
+        }
     });
 
-
-    form.append(inputLogin, inputPassword, inputSubmit);
+    form.append(inputLogin, inputPassword, input2FA, inputSubmit);
     panel.append(loginBox, subTitle, form);
     return panel;
 }
 
+/* Fonction Register */
 function register(): HTMLElement {
     const panel = el("div", "border-4 border-dashed border-black p-8");
     const title = el("h1", "font-modern-type text-6xl text-justify tracking-widest font-bold mb-2");
     title.append(text("SUBSCRIBE TODAY !!!"));
-    
+
     const subTitle = el("h3", "font-modern-type text-2xl text-justify mb-6");
-    subTitle.append(text("and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks! And maybe you'll enven find some easter eggs along the way..."));
+    subTitle.append(text("and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"));
 
     const form = el("form", "flex flex-col gap-4");
-    
-    const inputEmail = el("input", "border-2 border-black p-2 text-md font-modern-type");
-    inputEmail.type = "email";
-    inputEmail.placeholder = "Email Address";
-    inputEmail.required = true;
 
-    const inputLogin = el("input", "border-2 border-black p-2 text-md font-modern-type");
-    inputLogin.type = "text";
-    inputLogin.placeholder = "Login";
-    inputLogin.required = true;
-    
-    const inputPassword = el("input", "border-2 border-black p-2 text-md font-modern-type");
-    inputPassword.type = "password";
-    inputPassword.placeholder = "Password";
-    inputPassword.required = true;
+    const inputEmail = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
+    inputEmail.type = "email"; inputEmail.placeholder = "Email Address"; inputEmail.required = true;
 
-    const confirmPassword = el("input", "border-2 border-black p-2 text-md font-modern-type");
-    confirmPassword.type = "password";
-    confirmPassword.placeholder = "Confirm Password";
-    confirmPassword.required = true;
+    const inputLogin = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
+    inputLogin.type = "text"; inputLogin.placeholder = "Login"; inputLogin.required = true;
 
+    const inputPassword = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
+    inputPassword.type = "password"; inputPassword.placeholder = "Password"; inputPassword.required = true;
 
-    const submit = el("button", "bg-black text-white p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer");
-    submit.type = "submit";
-    submit.textContent = "Submit";
+    const confirmPassword = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
+    confirmPassword.type = "password"; confirmPassword.placeholder = "Confirm Password"; confirmPassword.required = true;
 
-    form.addEventListener("input", () => {
-        submit.disabled = !form.checkValidity();
-    });
+    const submit = el("button", "bg-black text-white p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer") as HTMLButtonElement;
+    submit.type = "submit"; submit.textContent = "Submit";
 
-    /* On clique sur submit */
+    form.addEventListener("input", () => submit.disabled = !form.checkValidity());
+
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Empêche le rechargement de la page
-        /* Basic checks */
+        event.preventDefault();
 
         if (!inputEmail.value || !inputLogin.value || !inputPassword.value) {
-            alert("Please fill in all fields.");
-            return;
+            alert("Please fill in all fields."); return;
         }
         if (inputPassword.value !== confirmPassword.value) {
-            alert("Passwords do not match!");
-            return;
+            alert("Passwords do not match!"); return;
         }
 
-        /* on evite les soumissions multiples */
         submit.disabled = true;
+        const payload = { email: inputEmail.value, username: inputLogin.value, password: inputPassword.value };
 
-        const payload = {
-            email: inputEmail.value,
-            username: inputLogin.value,
-            password: inputPassword.value,
-        };
-
-        /****** POST ******/
-        /* On envoie les données au backend */
         try {
             const response = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload), // <-- texte JSON, pas un fichier
-				credentials: "include" // indispensable pour envoyer les cookies
+                body: JSON.stringify(payload),
+                credentials: "include"
             });
-
-            /* Si c'est ok, on renvoi vers le profil */
             const data = await response.json();
 
             if (response.ok) {
                 alert("Registration successful! You can now log in.");
                 window.location.hash = "#/profile";
-            }
-            else {
+            } else {
                 const errorMessage = data.error?.message || data.message || 'Unknown error';
                 alert(`Registration failed: ${errorMessage}`);
             }
@@ -172,22 +169,13 @@ function register(): HTMLElement {
     return panel;
 }
 
+/* Page complète LoginPage */
 export function LoginPage(): HTMLElement {
     const main = el("main", "p-4");
     const grid = el("section", "grid grid-cols-[30%_68%] gap-6");
 
-    const p1 = login();
-    const p2 = register();
-
-    grid.append(p1, p2);
+    // ✅ On utilise directement login() et register() ici
+    grid.append(login(), register());
     main.append(grid);
     return main;
 }
-
-/****** MEMO ******
- * console vs alert vs throw new Error vs catch :
-    * - console.log / console.warn / console.error : pour le débogage, affiche des messages dans la console du navigateur sans interrompre le flux.
-    * - alert() : affiche une boîte de dialogue modale à l'utilisateur, interrompant le flux jusqu'à ce que l'utilisateur interagisse avec elle. Utile pour des messages critiques ou des confirmations.
-    * - throw new Error() : interrompt immédiatement l'exécution du code en lançant une exception. Utile pour signaler des erreurs graves qui doivent être gérées par un bloc try/catch.
-    * - try/catch : permet de gérer les exceptions lancées dans le bloc try. Utile pour capturer et traiter les erreurs sans interrompre complètement le flux du programme.
-*/

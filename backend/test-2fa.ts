@@ -1,48 +1,60 @@
-import { AuthService } from './src/modules/auth/auth.service.js';
-import { PrismaClient } from '@prisma/client';
 import readline from 'readline';
+import { PrismaClient } from '@prisma/client';
+import { AuthService } from './src/modules/auth/auth.service.js';
 
-// Initialisation Prisma et AuthService
 const prisma = new PrismaClient();
 const authService = new AuthService(prisma);
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-function question(query: string): Promise<string> {
-  return new Promise(resolve => rl.question(query, resolve));
+async function ask(question: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise(resolve => rl.question(question, ans => {
+    rl.close();
+    resolve(ans);
+  }));
 }
 
 async function main() {
-  try {
-    console.log('--- Test 2FA ---');
+  console.log('--- Test 2FA ---');
 
-    // 1️⃣ Enregistrement d'un nouvel utilisateur
-    const email = await question('Email: ');
-    const username = await question('Username: ');
-    const password = await question('Password: ');
+  const email = 'yoann.lenoel@gmail.com';
+  const username = 'Yoh';
+  const password = 'Prout123!';
 
-    const registerRes = await authService.register({ email, username, password });
-    console.log('REGISTER:', registerRes);
+  // --- REGISTER ---
+  const registerResult = await authService.register({ email, username, password });
+  console.log('REGISTER:', registerResult);
 
-    // 2️⃣ Login (envoi du code 2FA)
-    const loginRes = await authService.login({ username, password });
-    console.log('LOGIN:', loginRes);
+  // --- LOGIN ---
+  const loginResult = await authService.login({ username, password });
+  console.log('LOGIN:', loginResult);
 
-    // 3️⃣ Vérification du code 2FA
-    const code = await question('Enter the 2FA code you received by email: ');
+  // --- Récupérer le dernier code 2FA stocké dans la DB ---
+  const twoFactorRecord = await prisma.twoFactor.findFirst({
+    where: { userId: loginResult.userId, used: false },
+    orderBy: { expiresAt: 'desc' }
+  });
 
-    const verifyRes = await authService.verify2FA(email, code);
-    console.log('2FA VERIFIED, JWT token:', verifyRes.token);
-
-  } catch (err) {
-    console.error('Error:', err);
-  } finally {
-    rl.close();
-    await prisma.$disconnect();
+  if (!twoFactorRecord) {
+    console.error('Aucun code 2FA trouvé pour cet utilisateur !');
+    process.exit(1);
   }
+
+  console.log('Code 2FA généré (pour test uniquement) :', twoFactorRecord.code);
+
+  // --- Demander le code à l’utilisateur ---
+  const inputCode = await ask('Enter the 2FA code you received by email: ');
+
+  try {
+    const verifyResult = await authService.verify2FA(loginResult.userId, inputCode);
+    console.log('VERIFIED:', verifyResult);
+  } catch (err: any) {
+    console.error('Erreur lors de la vérification 2FA:', err.message);
+  }
+
+  await prisma.$disconnect();
 }
 
 main();
