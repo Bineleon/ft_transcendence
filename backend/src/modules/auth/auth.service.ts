@@ -86,6 +86,14 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * Générer un JWT pour un userId (utile pour refresh tokens)
+   */
+  generateTokenForUser(userId: string): string {
+    // Payload minimal
+    return generateToken({ userId });
+  }
+
   private validateRegisterData(data: RegisterRequest): void {
     if (!data.email || typeof data.email !== 'string') throw new ValidationError('Email is required');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

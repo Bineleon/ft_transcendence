@@ -1,178 +1,92 @@
-/**
- * Controller pour les routes d'authentification
- */
 import { formatSuccess } from '../../shared/utils/formatters.js';
-import { authenticate } from '../../shared/middleware/index.js';
-/**
- * Enregistrer toutes les routes d'authentification
- *
- * @param app - Instance Fastify
- * @param authService - Service d'authentification
- * @param userService - Service utilisateur  ← Ajouter
- */
-export function authController(app, authService, userService // ← Ajouter ce paramètre
+import { authenticate } from '../../shared/middleware/authentication.js';
+import { validateUserData } from './auth.policies.js';
+// import { PrismaClient } from '@prisma/client';
+export function authController(app, authService, userService, refreshService // <- ajouté
 ) {
-    /**
-     * POST /api/auth/register
-     * Inscription d'un nouvel utilisateur
-     *
-     * @body RegisterRequest { email, username, password }
-     *
-     * @returns AuthResponse { user, token }
-     *
-     * @throws ValidationError si les données sont invalides
-     * @throws ConflictError si l'email ou username existe déjà
-     *
-     * @example
-     * POST /api/auth/register
-     * Body:
-     * {
-     *   "email": "user@example.com",
-     *   "username": "johndoe",
-     *   "password": "SecurePassword123"
-     * }
-     *
-     * Response:
-     * {
-     *   "success": true,
-     *   "message": "Registration successful",
-     *   "data": {
-     *     "user": {
-     *       "id": "cm2xj5k8p0000uxvw9c1a2b3c",
-     *       "email": "user@example.com",
-     *       "username": "johndoe",
-     *       "avatarUrl": null,
-     *       "createdAt": "2024-11-05T14:30:00.000Z"
-     *     },
-     *     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-     *   }
-     * }
-     *
-     * + Cookie: token=eyJhbG... (httpOnly, secure)
-     */
     app.post('/api/auth/register', async (request, reply) => {
-        // Appeler le service pour créer l'utilisateur
-        const result = await authService.register(request.body);
-        // Définir le cookie JWT
+        const validated = await validateUserData(request, reply);
+        if (!validated)
+            return;
+        const result = await authService.register(validated);
+        const refreshToken = await refreshService.createRefreshToken(result.user.id);
         reply.setCookie('token', result.token, {
-            path: '/',
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 24 * 60 * 60 // 24 heures
+            maxAge: 15 * 60,
+            path: '/',
         });
-        // Retourner la réponse
+        reply.setCookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60,
+            path: '/',
+        });
         return formatSuccess(result, 'Registration successful');
     });
-    /**
-     * POST /api/auth/login
-     * Connexion d'un utilisateur existant
-     *
-     * @body LoginRequest { email, password }
-     *
-     * @returns AuthResponse { user, token }
-     *
-     * @throws ValidationError si les données sont invalides
-     * @throws AuthError si l'email ou password est incorrect
-     *
-     * @example
-     * POST /api/auth/login
-     * Body:
-     * {
-     *   "email": "user@example.com",
-     *   "password": "SecurePassword123"
-     * }
-     *
-     * Response:
-     * {
-     *   "success": true,
-     *   "message": "Login successful",
-     *   "data": {
-     *     "user": {
-     *       "id": "cm2xj5k8p0000uxvw9c1a2b3c",
-     *       "email": "user@example.com",
-     *       "username": "johndoe",
-     *       "avatarUrl": null,
-     *       "createdAt": "2024-11-05T14:30:00.000Z"
-     *     },
-     *     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-     *   }
-     * }
-     *
-     * + Cookie: token=eyJhbG... (httpOnly, secure)
-     */
     app.post('/api/auth/login', async (request, reply) => {
-        // Appeler le service pour connecter l'utilisateur
-        const result = await authService.login(request.body);
-        // Définir le cookie JWT
-        reply.setCookie('token', result.token, {
-            path: '/',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 // 24 heures
-        });
-        // Retourner la réponse
-        return formatSuccess(result, 'Login successful');
+        try {
+            const validated = request.body;
+            const result = await authService.login(validated);
+            const refreshToken = await refreshService.createRefreshToken(result.user.id);
+            reply.setCookie('token', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 15 * 60,
+                path: '/',
+            });
+            reply.setCookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60,
+                path: '/',
+            });
+            return formatSuccess(result, 'Login successful');
+        }
+        catch (err) {
+            return reply.code(401).send({
+                error: {
+                    code: 'AUTH_ERROR',
+                    message: err instanceof Error ? err.message : 'Unknown error',
+                    statusCode: 401,
+                    timestamp: new Date().toISOString(),
+                    path: request.url,
+                },
+            });
+        }
     });
-    /**
-     * POST /api/auth/logout
-     * Déconnexion de l'utilisateur
-     *
-     * @requires Authentication
-     *
-     * @example
-     * POST /api/auth/logout
-     *
-     * Response:
-     * {
-     *   "success": true,
-     *   "message": "Logout successful"
-     * }
-     *
-     * + Cookie supprimé
-     */
-    app.post('/api/auth/logout', { preHandler: authenticate }, async (_request, reply) => {
-        // Supprimer le cookie JWT
-        reply.clearCookie('token', {
-            path: '/',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
-        });
-        // Retourner la réponse
+    app.post('/api/auth/refresh', async (request, reply) => {
+        try {
+            const refreshToken = request.cookies.refreshToken;
+            if (!refreshToken) {
+                return reply.code(401).send({
+                    error: { code: 'NO_REFRESH_TOKEN', message: 'Missing refresh token', statusCode: 401 },
+                });
+            }
+            const tokens = await refreshService.rotateRefreshToken(refreshToken);
+            reply.setCookie('token', tokens.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60, path: '/' });
+            reply.setCookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60, path: '/' });
+            return formatSuccess(tokens, 'Token refreshed successfully');
+        }
+        catch (error) {
+            return reply.code(401).send({
+                error: { code: 'REFRESH_ERROR', message: error instanceof Error ? error.message : 'Token refresh failed', statusCode: 401 },
+            });
+        }
+    });
+    app.post('/api/auth/logout', { preHandler: authenticate }, async (request, reply) => {
+        await refreshService.revokeRefreshToken(request.user.userId);
+        reply.clearCookie('token');
+        reply.clearCookie('refreshToken');
         return formatSuccess(undefined, 'Logout successful');
     });
-    /**
-     * GET /api/auth/me
-     * Récupérer l'utilisateur connecté
-     *
-     * @requires Authentication
-     *
-     * @returns User connecté
-     *
-     * @example
-     * GET /api/auth/me
-     *
-     * Response:
-     * {
-     *   "success": true,
-     *   "data": {
-     *     "user": {
-     *       "id": "cm2xj5k8p0000uxvw9c1a2b3c",
-     *       "email": "user@example.com",
-     *       "username": "johndoe",
-     *       "avatarUrl": null,
-     *       "createdAt": "2024-11-05T14:30:00.000Z"
-     *     }
-     *   }
-     * }
-     */
     app.get('/api/auth/me', { preHandler: authenticate }, async (request) => {
         const userId = request.user.userId;
-        // ✅ Utiliser UserService au lieu d'accéder directement à prisma
         const profile = await userService.getOwnProfile(userId);
-        // Retourner l'utilisateur
         return formatSuccess({ user: profile });
     });
 }
