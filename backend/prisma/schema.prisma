@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 enum TournamentStatus {
   OPEN
   RUNNING
@@ -29,25 +28,24 @@ enum FriendStatus {
   blocked
 }
 
-
 model User {
-  id                 String       @id @default(cuid())
-  username           String       @unique
-  email              String       @unique
+  id                 String         @id @default(cuid())
+  username           String         @unique
+  email              String         @unique
   passwordHash       String
-  avatarUrl          String?      @map("avatar_url")
-  playerRef          String?      @unique @map("player_ref")
-  TwoFactors		 TwoFactor[]
-  createdAt          DateTime     @default(now()) @map("created_at")
-  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at")
-  friendOf           Friend[]     @relation("UserFriendOf")
-  friends            Friend[]     @relation("UserFriends")
-  matchesWon         Match[]      @relation("Winner")
-  matchesAsP2        Match[]      @relation("P2")
-  matchesAsP1        Match[]      @relation("P1")
+  avatarUrl          String?        @map("avatar_url")
+  playerRef          String?        @unique @map("player_ref")
+  TwoFactors         TwoFactor[]
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at")
+  friendOf           Friend[]       @relation("UserFriendOf")
+  friends            Friend[]       @relation("UserFriends")
+  matchesWon         Match[]        @relation("Winner")
+  matchesAsP2        Match[]        @relation("P2")
+  matchesAsP1        Match[]        @relation("P1")
   sessions           Session[]
-  createdTournaments Tournament[] @relation("UserCreatedTournaments")
-
+  createdTournaments Tournament[]   @relation("UserCreatedTournaments")
+  refreshTokens      RefreshToken[]
 }
 
 model Tournament {
@@ -120,4 +118,13 @@ model TwoFactor {
   used      Boolean  @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
 }

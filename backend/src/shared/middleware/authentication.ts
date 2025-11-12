@@ -1,50 +1,56 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+// src/middleware/authentication.ts
+
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import { verifyToken } from '../utils/jwt.js';
 import { AuthError, ForbiddenError } from '../errors/index.js';
-import { verifyToken, type JwtPayload } from '../utils/jwt.js';
 
 /**
- * Déclaration TypeScript pour ajouter 'user' à FastifyRequest
+ * Middleware : Vérifie que l'utilisateur est authentifié via JWT
  */
-declare module 'fastify' {
-  interface FastifyRequest {
-    user?: JwtPayload;
-  }
-}
+export async function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  const token =
+    request.cookies.token ||
+    (request.headers.authorization?.startsWith('Bearer ')
+      ? request.headers.authorization.split(' ')[1]
+      : null);
 
-/**
- * Middleware : Vérifier que l'utilisateur est authentifié
- * Lance une erreur 401 si pas de token valide
- */
-export async function authenticate( request: FastifyRequest, _reply: FastifyReply ): Promise<void> {
-
-  const token = request.cookies.token;
-  
   if (!token) {
-    throw new AuthError('Authentication required');
+    return reply.status(401).send({
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Missing authentication token',
+        statusCode: 401,
+        timestamp: new Date().toISOString(),
+        path: request.url,
+      },
+    });
   }
 
   try {
     const decoded = verifyToken(token);
-    request.user = decoded;
-  } catch (error) {
-    throw new AuthError('Invalid or expired token');
+    request.user = decoded; // typé grâce à fastify.d.ts
+  } catch {
+    return reply.status(401).send({
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Invalid or expired token',
+        statusCode: 401,
+        timestamp: new Date().toISOString(),
+        path: request.url,
+      },
+    });
   }
 }
 
 /**
- * Middleware : Vérifier que l'utilisateur accède à sa propre ressource
- * Doit être utilisé APRÈS authenticate
+ * Middleware : Vérifie que l'utilisateur accède à sa propre ressource
  */
-export async function requireOwner( request: FastifyRequest<{ Params: { id: string } }>, _reply: FastifyReply ): Promise<void> {
-
+export async function requireOwner(request: FastifyRequest<{ Params: { id: string } }>): Promise<void> {
   if (!request.user) {
     throw new AuthError('Authentication required');
   }
 
-  const resourceId = request.params.id;
-  const userId = request.user.userId;
-
-  if (resourceId !== userId) {
+  if (request.params.id !== request.user.userId) {
     throw new ForbiddenError('Access denied');
   }
 }

@@ -6,14 +6,21 @@ import { env } from '../config/environment.js';
  */
 export interface JwtPayload {
   userId: string;
-  email: string;
+  email?: string;
 }
 
 /**
  * Générer un token JWT
  */
-export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: '7d' });
+export function generateToken(payload: JwtPayload, expiresIn: string = env.JWT_EXPIRES_IN): string {
+  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] });
+}
+
+/**
+ * Générer un refresh token JWT
+ */
+export function generateRefreshToken(payload: JwtPayload, expiresIn: string = env.REFRESH_TOKEN_EXPIRES_IN): string {
+  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] });
 }
 
 /**

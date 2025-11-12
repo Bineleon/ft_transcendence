@@ -1,33 +1,49 @@
-import { AuthError, ForbiddenError } from '../errors/index.js';
+// src/middleware/authentication.ts
 import { verifyToken } from '../utils/jwt.js';
+import { AuthError, ForbiddenError } from '../errors/index.js';
 /**
- * Middleware : Vérifier que l'utilisateur est authentifié
- * Lance une erreur 401 si pas de token valide
+ * Middleware : Vérifie que l'utilisateur est authentifié via JWT
  */
-export async function authenticate(request, _reply) {
-    const token = request.cookies.token;
+export async function authenticate(request, reply) {
+    const token = request.cookies.token ||
+        (request.headers.authorization?.startsWith('Bearer ')
+            ? request.headers.authorization.split(' ')[1]
+            : null);
     if (!token) {
-        throw new AuthError('Authentication required');
+        return reply.status(401).send({
+            error: {
+                code: 'UNAUTHORIZED',
+                message: 'Missing authentication token',
+                statusCode: 401,
+                timestamp: new Date().toISOString(),
+                path: request.url,
+            },
+        });
     }
     try {
         const decoded = verifyToken(token);
-        request.user = decoded;
+        request.user = decoded; // typé grâce à fastify.d.ts
     }
-    catch (error) {
-        throw new AuthError('Invalid or expired token');
+    catch {
+        return reply.status(401).send({
+            error: {
+                code: 'UNAUTHORIZED',
+                message: 'Invalid or expired token',
+                statusCode: 401,
+                timestamp: new Date().toISOString(),
+                path: request.url,
+            },
+        });
     }
 }
 /**
- * Middleware : Vérifier que l'utilisateur accède à sa propre ressource
- * Doit être utilisé APRÈS authenticate
+ * Middleware : Vérifie que l'utilisateur accède à sa propre ressource
  */
-export async function requireOwner(request, _reply) {
+export async function requireOwner(request) {
     if (!request.user) {
         throw new AuthError('Authentication required');
     }
-    const resourceId = request.params.id;
-    const userId = request.user.userId;
-    if (resourceId !== userId) {
+    if (request.params.id !== request.user.userId) {
         throw new ForbiddenError('Access denied');
     }
 }
