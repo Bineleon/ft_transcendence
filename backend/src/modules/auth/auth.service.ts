@@ -21,6 +21,7 @@ export class AuthService {
    * Enregistrement d’un nouvel utilisateur.
    * Crée le user et lui envoie un code 2FA obligatoire par email.
    */
+
   async register(data: RegisterRequest): Promise<{ userId: string; message: string }> {
     this.validateRegisterData(data);
 
@@ -35,15 +36,6 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: { email: data.email, username: data.username, passwordHash }
     });
-
-    // Nettoyage des anciens codes expirés
-    await this.prisma.twoFactor.deleteMany({ where: { expiresAt: { lt: new Date() } } });
-
-    // Génération + stockage du code 2FA
-    const code = await this.generateAndStore2FACode(user.id);
-
-    // Envoi par email via MailService
-    await this.mailService.send2FACode(user.email, code);
 
     return {
       userId: user.id,
