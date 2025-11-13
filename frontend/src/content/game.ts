@@ -3,7 +3,7 @@ import { el, text } from "./home";
 // src/pages/game.ts
 export function Game(): HTMLElement {
   const main = el(
-    "main", "max-w mx-auto px-6 py-8"
+    "main", "max-w mx-auto p-auto pointer-events-auto"
   );
   const grid = el(
     "div",
@@ -15,7 +15,7 @@ export function Game(): HTMLElement {
 
   /*** ENCART DE GAUCHE ***/
   const left = el(
-    "aside", "p-4 row-span-2 border-4 border border-black"
+    "aside", "px-8 pt-8 row-span-2 border-movie"
   );
 
   const category = el(
@@ -26,7 +26,7 @@ export function Game(): HTMLElement {
   );
   left.append(category);
   const leftTitle = el(
-    "h3", "border-4 font-jmh uppercase text-2xl mb-4"
+    "h3", "items-center border-4 font-jmh uppercase text-xl mb-4"
   );
   leftTitle.append(text("Breaking News !"));
 
@@ -35,7 +35,6 @@ export function Game(): HTMLElement {
   );
   leftContent.append(
     text("After the incredible success of the story behind the Tetris game, a new movie is in the works, exploring the origins of the legendary game developer Alexey Pajitnov..."),
-    el("br"),
     el("br"),
     text("Soon in theaters near you!")
   );
@@ -57,7 +56,7 @@ export function Game(): HTMLElement {
   );
 
   const centerTopContent = el(
-    "p", "font-modern-type text-md"
+    "p", "article-base"
   );
   centerTopContent.append(
     text("In 1972, Atari revolutionized the gaming world with the release of Pong, the first commercially successful video game. Created by Nolan Bushnell and Al Alcorn, Pong was a simple yet addictive table tennis simulation that captivated players worldwide. Its success laid the foundation for the video game industry, leading to the development of countless games and consoles that followed. Pong's legacy continues to influence modern gaming, reminding us of the humble beginnings of an industry that has become a global phenomenon.")
@@ -94,45 +93,36 @@ export function Game(): HTMLElement {
 
   centerBottom.append(centerBottomTitle, centerBottomContent);
 
-  const nextTournament = el(
-    "section", "bg-[url('/public/imgs/trame2.png')] bg-cover bg-center text-white font-im-double uppercase text-center text-4xl"
-  );
-  nextTournament.append(
+  const tournament = el(
+    "a", "box-dark in-dark-box"
+  ) as HTMLAnchorElement;
+  tournament.href = "#/tournament";
+  tournament.setAttribute("aria-label", "Tournament Details");
+  tournament.append(
     text("Next tournament starts"),
     el("br"), // une ligne vide si besoin mettre deux <br>
     text("July 15, 2024")
   );
-  bottomDivider.append(centerBottom, nextTournament);
+  bottomDivider.append(centerBottom, tournament);
   //////////////////////////////////////////////////////
 
   /*** ENCART DE DROITE ***/
   const right = el(
-    "aside", "p-4 row-span-2 flex flex-col items-center border-8 border border-black"
+    "div", "p-4 row-span-2 flex flex-col items-center border-8 border border-black"
   );
   const photoTitle = el(
     "h3", "font-jmh text-2xl text-center mb-4"
   );
   photoTitle.append(text("Vertical -Pong- Limit"));
-  const photo = el(
-    "img", `
-    mix-blend-multiply mx-auto grayscale contrast-150 hover:contrast-100
-    transition-all duration-500 backdrop-blur-xs block
-    [mask-image:url('/public/imgs/trame2.png')]
-    [-webkit-mask-image:url('/public/imgs/trame2.png')]
-    [mask-repeat:no-repeat] [-webkit-mask-repeat:no-repeat]
-    [mask-size:cover]      [-webkit-mask-size:cover]
-    [mask-position:center] [-webkit-mask-position:center]
-    `
-  ) as HTMLImageElement;
-  photo.src = "/public/imgs/pong_ia.png";
-  photo.alt = "Pong Phone Game Photo";
+  const photoFrame = el("div", "") as HTMLDivElement;
+  const photo = el("img", "img-newspaper contrast-150 hover:contrast-120") as HTMLImageElement;
+  photo.src = "/imgs/pong_ia.png";
+  photoFrame.append(photo);
 
-  const playButton = el(
-    "a", "mt-6 bg-black text-white px-6 py-3 font-modern-type text-xl hover:bg-gray-800"
-  ) as HTMLAnchorElement;
+  const playButton = el("a", "btn-click mt-6") as HTMLAnchorElement;
   playButton.href = "#/gameon";
   playButton.append(text("Play Pong"));
-  right.append(photoTitle, photo, playButton);
+  right.append(photoTitle, photoFrame, playButton);
   ////////////////////////////////////////////////
 
   /*** ASSEMBLAGE ***/

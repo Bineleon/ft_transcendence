@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer';
 import bcrypt from 'bcrypt';
 import type { PrismaClient } from '@prisma/client';
 
@@ -16,20 +16,20 @@ export async function generate2FACode(prisma: PrismaClient, userId: string) {
 }
 
 
-export async function send2FACode(email: string, code: string) {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+// export async function send2FACode(email: string, code: string) {
+//   const transporter = nodemailer.createTransport({
+//     host: process.env.SMTP_HOST,
+//     port: Number(process.env.SMTP_PORT),
+//     auth: {
+//       user: process.env.SMTP_USER,
+//       pass: process.env.SMTP_PASS,
+//     },
+//   });
 
-  await transporter.sendMail({
-    from: '"ft_transcendance" <no-reply@ft_transcendance.com>',
-    to: email,
-    subject: 'Your 2FA verification code',
-    text: `Your 2FA code is: ${code}. It expires in 5 minutes.`,
-  });
-}
+//   await transporter.sendMail({
+//     from: '"ft_transcendance" <no-reply@ft_transcendance.com>',
+//     to: email,
+//     subject: 'Your 2FA verification code',
+//     text: `Your 2FA code is: ${code}. It expires in 5 minutes.`,
+//   });
+// }

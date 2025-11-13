@@ -8,26 +8,20 @@ export function Profile(): HTMLElement {
     const main = el("main", "p-4");
     const section = el("section", "grid grid-cols-1 grid-rows-1 md:grid-cols-2 grid-rows-2 gap-6");
 
-    const picture = el("img", `
-    mix-blend-multiply mx-auto grayscale contrast-250 hover:contrast-170
-    transition-all duration-500 backdrop-blur-xs block
-    [mask-image:url('/public/imgs/trame2.png')]
-    [-webkit-mask-image:url('/public/imgs/trame2.png')]
-    [mask-repeat:no-repeat] [-webkit-mask-repeat:no-repeat]
-    [mask-size:cover]      [-webkit-mask-size:cover]
-    [mask-position:center] [-webkit-mask-position:center]
-    `);
+    const picframe = el("div", "frame-photo");
+    const picture = el("img", "frame-photo-img img-newspaper");
     picture.src = pictureUrl;
-    picture.alt = "Profile Picture";
+    picframe.append(picture);
 
-    const infoBox = el("div", "border-y-2 border-x-4 border-black/50 p-8 flex flex-col");
-    const loginLabel = el("h1", "font-jmh w-full w-full text-8xl mb-4");
+    const infoBox = el("div", "frame-photo p-9 flex flex-col");
+    const loginLabel = el("h1", "p-4 font-jmh w-full w-full text-8xl mb-4");
     loginLabel.append(text(`${testLogin}`));
-    const emailLabel = el("h2", "font-modern-type text-3xl");
+    const emailLabel = el("h2", "p-4 font-modern-type text-3xl");
     emailLabel.append(text(`${testEmail}`));
     infoBox.append(loginLabel, emailLabel);
 
-    const stats = el("textarea", "mt-8 p-4 border-2 border-black/50 mix-blend-multiply bg-white/70 resize-none h-48 font-ocean-type text-md");
+    const stats = el("textarea", `p-4 m-4 border-2 border-black/50 mix-blend-multiply
+        bg-white/70 resize-none h-full font-ocean-type text-md`);
     stats.readOnly = true;
     stats.value = "Game Statistics:\t\n\n" +
                   "Games Played:\t 42\n" +
@@ -44,7 +38,7 @@ export function Profile(): HTMLElement {
                   "- Played against ProGamer - Won";
     infoBox.append(stats); 
 
-    section.append(picture, infoBox);
+    section.append(picframe, infoBox);
     main.append(section);
     return main;
 }
