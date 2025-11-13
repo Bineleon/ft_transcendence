@@ -12,20 +12,20 @@ function login(): HTMLElement {
     const form = el("form", "flex flex-col gap-4");
 
     // --- Inputs login / password ---
-    const inputLogin = el("input", "border-2 border-white/20 p-2 text-md font-modern-type") as HTMLInputElement;
+    const inputLogin = el("input", "btn-input") as HTMLInputElement;
     inputLogin.type = "text";
     inputLogin.placeholder = "Login";
 
-    const inputPassword = el("input", "border-2 border-white/20 p-2 text-md font-modern-type") as HTMLInputElement;
+    const inputPassword = el("input", "btn-input") as HTMLInputElement;
     inputPassword.type = "password";
     inputPassword.placeholder = "Password";
 
-    const inputSubmit = el("button", "bg-white text-black p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer") as HTMLButtonElement;
+    const inputSubmit = el("button", "btn-click") as HTMLButtonElement;
     inputSubmit.type = "submit";
     inputSubmit.textContent = "Log In";
 
     // --- Input pour 2FA (hidden au début) ---
-    const input2FA = el("input", "border-2 border-white/20 p-2 text-md font-modern-type hidden") as HTMLInputElement;
+    const input2FA = el("input", "btn-input hidden") as HTMLInputElement;
     input2FA.type = "text";
     input2FA.placeholder = "Enter 2FA code";
 
@@ -101,7 +101,7 @@ function login(): HTMLElement {
 
 /* Fonction Register */
 function register(): HTMLElement {
-    const panel = el("div", "border-4 border-dashed border-black p-8");
+    const panel = el("div", "mix-blend-multiply border-4 border-dashed border-black p-8");
     const title = el("h1", "font-modern-type text-6xl text-justify tracking-widest font-bold mb-2");
     title.append(text("SUBSCRIBE TODAY !!!"));
 
@@ -110,20 +110,29 @@ function register(): HTMLElement {
 
     const form = el("form", "flex flex-col gap-4");
 
-    const inputEmail = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
-    inputEmail.type = "email"; inputEmail.placeholder = "Email Address"; inputEmail.required = true;
+    const inputEmail = el("input", "btn-input") as HTMLInputElement;
+    inputEmail.type = "email";
+    inputEmail.placeholder = "Email Address";
+    inputEmail.required = true;
 
-    const inputLogin = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
-    inputLogin.type = "text"; inputLogin.placeholder = "Login"; inputLogin.required = true;
+    const inputLogin = el("input", "btn-input") as HTMLInputElement;
+    inputLogin.type = "text";
+    inputLogin.placeholder = "Login";
+    inputLogin.required = true;
 
-    const inputPassword = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
-    inputPassword.type = "password"; inputPassword.placeholder = "Password"; inputPassword.required = true;
+    const inputPassword = el("input", "btn-input") as HTMLInputElement;
+    inputPassword.type = "password";
+    inputPassword.placeholder = "Password";
+    inputPassword.required = true;
 
-    const confirmPassword = el("input", "border-2 border-black p-2 text-md font-modern-type") as HTMLInputElement;
-    confirmPassword.type = "password"; confirmPassword.placeholder = "Confirm Password"; confirmPassword.required = true;
+    const confirmPassword = el("input", "btn-input") as HTMLInputElement;
+    confirmPassword.type = "password";
+    confirmPassword.placeholder = "Confirm Password";
+    confirmPassword.required = true;
 
-    const submit = el("button", "bg-black text-white p-2 text-md font-modern-type hover:bg-gray-800 cursor-pointer") as HTMLButtonElement;
-    submit.type = "submit"; submit.textContent = "Submit";
+    const submit = el("button", "btn-click") as HTMLButtonElement;
+    submit.type = "submit";
+    submit.textContent = "Submit";
 
     form.addEventListener("input", () => submit.disabled = !form.checkValidity());
 
@@ -174,7 +183,6 @@ export function LoginPage(): HTMLElement {
     const main = el("main", "p-4");
     const grid = el("section", "grid grid-cols-[30%_68%] gap-6");
 
-    // ✅ On utilise directement login() et register() ici
     grid.append(login(), register());
     main.append(grid);
     return main;

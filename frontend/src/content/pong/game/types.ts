@@ -1,17 +1,31 @@
 // Un peu comme des structures en C
 
-export type GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED";
+export interface KeyFlag { code: string; down: boolean; }
 
-export interface Vec2 {
-    x: number;
-    y: number;
+export interface Controls {
+    p1Up: KeyFlag;
+    p1Down: KeyFlag;
+    p2Up: KeyFlag;
+    p2Down: KeyFlag;
+    pause: KeyFlag;
+    escape: KeyFlag;
 }
 
+export interface PlayersStats {
+    p1Score: number;
+    p2Score: number;
+    lastScorer?: 1 | 2;
+    bounces: number;
+}
+
+export type  GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART" | "SCORED";
+
+export interface Vec2 { x: number; y: number; }
+
 export interface Ball {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
+    pos: Vec2;
+    vel: Vec2;
+    dir: Vec2;
     r: number;
 }
 
@@ -21,28 +35,13 @@ export interface Paddle {
     speed: number;
 }
 
-
-export interface Ready {
-    p1: boolean;
-    p2: boolean;
-}
-
-export interface Controls {
-    p1Ready: string; // ex: "KeyW"
-    p2Ready: string; // ex: "ArrowUp"
-    pause: string;  // ex: "Escape"
-}
-
 export interface GameState {
+    world: { w: number; h: number; };
     ball: Ball;
     paddle1: Paddle;
     paddle2: Paddle;
-    world: {
-        w: number;
-        h: number;
-    };
-    phase: GamePhase
-    ready: Ready;
-    controls: Controls;
+    phase: GamePhase;
+    ready: { p1: boolean; p2: boolean };
+    stats: PlayersStats;
 }
 

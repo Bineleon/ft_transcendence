@@ -8,10 +8,14 @@ import { hashPassword, comparePassword } from '../../shared/utils/password.js';
 import { generateToken } from '../../shared/utils/jwt.js';
 import { ValidationError, ConflictError, AuthError } from '../../shared/errors/index.js';
 import bcrypt from 'bcrypt';
-import nodemailer from 'nodemailer';
+import { MailService } from '../../shared/services/mail.service.js';
 
 export class AuthService {
-  constructor(private prisma: PrismaClient) {}
+  private mailService: MailService;
+
+  constructor(private prisma: PrismaClient) {
+    this.mailService = new MailService();
+  }
 
   /**
    * Enregistrement d’un nouvel utilisateur.
@@ -38,8 +42,8 @@ export class AuthService {
     // Génération + stockage du code 2FA
     const code = await this.generateAndStore2FACode(user.id);
 
-    // Envoi par email
-    await this.send2FACode(user.email, code);
+    // Envoi par email via MailService
+    await this.mailService.send2FACode(user.email, code);
 
     return {
       userId: user.id,
@@ -65,8 +69,8 @@ export class AuthService {
     // Génération + stockage du code 2FA
     const code = await this.generateAndStore2FACode(user.id);
 
-    // Envoi par email
-    await this.send2FACode(user.email, code);
+    // Envoi par email via MailService
+    await this.mailService.send2FACode(user.email, code);
 
     return {
       userId: user.id,
@@ -121,24 +125,6 @@ export class AuthService {
     });
 
     return code;
-  }
-
-  /**
-   * Envoi du code 2FA par email
-   */
-  private async send2FACode(email: string, code: string) {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-
-    await transporter.sendMail({
-      from: process.env.MAIL_FROM || '"ft_transcendance" <no-reply@ft_transcendance.com>',
-      to: email,
-      subject: 'Your 2FA verification code',
-      text: `Your 2FA code is: ${code}. It expires in 10 minutes.`,
-    });
   }
 
   /**
