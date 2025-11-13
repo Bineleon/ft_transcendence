@@ -1,4 +1,7 @@
 services:
+  # ========================
+  # Backend
+  # ========================
   backend:
     build:
       context: ./backend
@@ -7,43 +10,32 @@ services:
       - "3000:3000"
     env_file:
       - ./backend/.env
-    volumes:
-      - db-data:/app/database
     environment:
       NODE_ENV: production
-    networks:
-      - app_network
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
     volumes:
-      - frontend-dist:/app/dist
+      - db-data:/app/database
     networks:
       - app_network
     restart: unless-stopped
 
+  # ========================
+  # Frontend + Nginx
+  # ========================
   nginx:
     build:
-      context: ./nginx
-      dockerfile: Dockerfile.prod
-    volumes:
-      - frontend-dist:/usr/share/nginx/html:ro
+      context: .
+      dockerfile: ./nginx/Dockerfile.prod
     ports:
       - "8080:80"
       - "8443:443"
     depends_on:
       - backend
-      - frontend
     networks:
       - app_network
     restart: unless-stopped
 
 volumes:
   db-data:
-  frontend-dist:
 
 networks:
   app_network:
