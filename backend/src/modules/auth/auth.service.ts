@@ -9,6 +9,8 @@ import { generateToken } from '../../shared/utils/jwt.js';
 import { ValidationError, ConflictError, AuthError } from '../../shared/errors/index.js';
 import bcrypt from 'bcrypt';
 import { MailService } from '../../shared/services/mail.service.js';
+import { validateLoginFields } from './auth.validation.js';
+
 
 export class AuthService {
   private mailService: MailService;
@@ -23,7 +25,6 @@ export class AuthService {
    */
 
   async register(data: RegisterRequest): Promise<{ userId: string; message: string }> {
-    this.validateRegisterData(data);
 
     const existingEmail = await this.prisma.user.findUnique({ where: { email: data.email } });
     if (existingEmail) throw new ConflictError('Email already in use');
@@ -47,13 +48,19 @@ export class AuthService {
    * Login avec vérification du mot de passe.
    */
   async login(data: LoginRequest): Promise<{ userId: string; message: string }> {
-    this.validateLoginData(data);
+    const errors = validateLoginFields(data);
 
-    const user = await this.prisma.user.findUnique({ where: { username: data.username } });
-    if (!user) throw new AuthError('Invalid username or password');
+  if (errors.length > 0) {
+    // on reste cohérent avec le reste : ValidationError + handler global
+    throw new ValidationError(errors.join(" | "));
+  }
 
-    const isPasswordValid = await comparePassword(data.password, user.passwordHash);
-    if (!isPasswordValid) throw new AuthError('Invalid username or password');
+  const user = await this.prisma.user.findUnique({ where: { username: data.username } });
+  if (!user) throw new AuthError('Invalid username or password');
+
+  const isPasswordValid = await comparePassword(data.password, user.passwordHash);
+  if (!isPasswordValid) throw new AuthError('Invalid username or password');
+
 
     // Nettoyage anciens codes expirés
     await this.prisma.twoFactor.deleteMany({ where: { expiresAt: { lt: new Date() } } });
@@ -117,25 +124,5 @@ export class AuthService {
     });
 
     return code;
-  }
-
-  /**
-   * Validation des données
-   */
-  private validateRegisterData(data: RegisterRequest): void {
-    if (!data.email || typeof data.email !== 'string') throw new ValidationError('Email is required');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) throw new ValidationError('Invalid email format');
-
-    if (!data.username || typeof data.username !== 'string') throw new ValidationError('Username is required');
-    if (data.username.length < 3 || data.username.length > 20) throw new ValidationError('Username must be between 3 and 20 characters');
-    if (!/^[a-zA-Z0-9_-]+$/.test(data.username)) throw new ValidationError('Username can only contain letters, numbers, underscores and hyphens');
-
-    if (!data.password || typeof data.password !== 'string') throw new ValidationError('Password is required');
-    if (data.password.length < 8) throw new ValidationError('Password must be at least 8 characters long');
-  }
-
-  private validateLoginData(data: LoginRequest): void {
-    if (!data.username || typeof data.username !== 'string') throw new ValidationError('Username is required');
-    if (!data.password || typeof data.password !== 'string') throw new ValidationError('Password is required');
   }
 }
