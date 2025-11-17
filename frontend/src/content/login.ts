@@ -108,7 +108,8 @@ function register(): HTMLElement {
     const subTitle = el("h3", "font-modern-type text-2xl text-justify mb-6");
     subTitle.append(text("and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"));
 
-    const form = el("form", "flex flex-col gap-4");
+    const form = el("form", "flex flex-col gap-4") as HTMLFormElement;
+    form.noValidate = true; // ⬅️ ajout pour ne plus bloquer le submit par la validation HTML5
 
     const inputEmail = el("input", "btn-input") as HTMLInputElement;
     inputEmail.type = "email";
@@ -162,8 +163,13 @@ function register(): HTMLElement {
                 alert("Registration successful! You can now log in.");
                 window.location.hash = "#/profile";
             } else {
-                const errorMessage = data.error?.message || data.message || 'Unknown error';
-                alert(`Registration failed: ${errorMessage}`);
+                const errorMessage =
+                    (Array.isArray(data?.error?.messages) && data.error.messages.join('\n')) ||
+                    data?.error?.message ||
+                    data?.message ||
+                    'Unknown error';
+
+                alert(`Registration failed:\n${errorMessage}`);
             }
         } catch (error) {
             console.error("Registration error:", error);
