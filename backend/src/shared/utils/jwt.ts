@@ -7,7 +7,12 @@ import { env } from '../config/environment.js';
 export interface JwtPayload {
   userId: string;
   email?: string;
+
+  // Champs ajoutés par le JWT lui-même (décodage)
+  iat?: number;
+  exp?: number;
 }
+
 
 /**
  * Générer un token JWT
