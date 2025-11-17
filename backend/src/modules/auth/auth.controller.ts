@@ -16,7 +16,7 @@ export function authController(
   // --- REGISTER ---
   app.post<{ Body: RegisterRequest }>('/api/auth/register', async (request, reply) => {
     const validated = await validateUserData(request, reply);
-    if (!validated) return;
+    if (!validated) return; // la réponse 400 a déjà été envoyée
 
     const result = await authService.register(validated);
     return formatSuccess(result, 'User created, 2FA required.');
@@ -64,8 +64,20 @@ export function authController(
     }
 
     const tokens = await refreshService.rotateRefreshToken(refreshToken);
-    reply.setCookie('token', tokens.accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60, path: '/' });
-    reply.setCookie('refreshToken', tokens.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60, path: '/' });
+    reply.setCookie('token', tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60,
+      path: '/',
+    });
+    reply.setCookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60,
+      path: '/',
+    });
 
     return formatSuccess(tokens, 'Token refreshed successfully');
   });
