@@ -17,11 +17,13 @@ RUN npm ci
 RUN apk add curl
 
 # Étape 5 : 
+# ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 RUN npx prisma generate
+#   || echo "⚠️ prisma generate FAILED (CDN/Prisma en vrac), l'image DEV continue quand même"
 
 # Étape 6 : exposer le port du serveur (3000)
 EXPOSE 3000
 
 # Étape 7 : commande par défaut pour lancer ton serveur
 # CMD ["npm", "run", "dev"]
-CMD ["sh", "-c", "npx prisma migrate dev --name init && npm run dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
