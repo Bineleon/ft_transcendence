@@ -22,6 +22,11 @@ export const env = {
   // Base de données
   DATABASE_URL: process.env.DATABASE_URL || 'file:/app/database/dev.db',
 
+  // Google OAuth
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+  GOOGLE_REDIRECT_URL: process.env.GOOGLE_REDIRECT_URL || '',
+
   // Logging
   LOG_LEVEL: (process.env.LOG_LEVEL || 'info') as 'info' | 'warn' | 'error' | 'debug'
 } as const;

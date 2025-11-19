@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN mkdir -p database && chown -R node:node database
+RUN mkdir -p database && chown -R node:node /app/database
 
 
 # Deps pour node-gyp + SQLite (musl)
@@ -17,9 +17,7 @@ RUN npm ci
 RUN apk add curl
 
 # Étape 5 : 
-# ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 RUN npx prisma generate
-#   || echo "⚠️ prisma generate FAILED (CDN/Prisma en vrac), l'image DEV continue quand même"
 
 # Étape 6 : exposer le port du serveur (3000)
 EXPOSE 3000

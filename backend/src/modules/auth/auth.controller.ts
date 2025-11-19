@@ -6,17 +6,21 @@ import { formatSuccess } from '../../shared/utils/formatters.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { validateUserData } from './auth.policies.js';
 import { RefreshService } from './refresh.service.js';
+import { GoogleOAuthService } from './google-oauth.service.js';
+import { generateToken } from '../../shared/utils/jwt.js';
+import { env } from '../../shared/config/environment.js';
 
 export function authController(
   app: FastifyInstance,
   authService: AuthService,
   userService: UserService,
-  refreshService: RefreshService
+  refreshService: RefreshService,
+  googleOAuth: GoogleOAuthService
 ) {
   // --- REGISTER ---
   app.post<{ Body: RegisterRequest }>('/api/auth/register', async (request, reply) => {
     const validated = await validateUserData(request, reply);
-    if (!validated) return; // la réponse 400 a déjà été envoyée
+    if (!validated) return;
 
     const result = await authService.register(validated);
     return formatSuccess(result, 'User created, 2FA required.');
@@ -37,7 +41,7 @@ export function authController(
 
     reply.setCookie('token', result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 15 * 60,
       path: '/',
@@ -45,7 +49,7 @@ export function authController(
 
     reply.setCookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
@@ -66,14 +70,14 @@ export function authController(
     const tokens = await refreshService.rotateRefreshToken(refreshToken);
     reply.setCookie('token', tokens.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 15 * 60,
       path: '/',
     });
     reply.setCookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
@@ -95,5 +99,139 @@ export function authController(
     const userId = request.user!.userId;
     const profile = await userService.getOwnProfile(userId);
     return formatSuccess({ user: profile });
+  });
+
+  // ===============================
+  //       GOOGLE OAUTH
+  // ===============================
+
+  // --- GOOGLE: REDIRECT VERS GOOGLE ---
+  app.get('/api/auth/google', async (request, reply) => {
+    const redirectUri = env.GOOGLE_REDIRECT_URL;
+    const clientId = env.GOOGLE_CLIENT_ID;
+
+    if (!redirectUri || !clientId) {
+      request.log.error('Missing Google OAuth env vars');
+      return reply.code(500).send({
+        error: {
+          code: 'OAUTH_CONFIG_ERROR',
+          message: 'Google OAuth is not configured',
+          statusCode: 500,
+        },
+      });
+    }
+
+    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    url.searchParams.set('client_id', clientId);
+    url.searchParams.set('redirect_uri', redirectUri);
+    url.searchParams.set('response_type', 'code');
+    url.searchParams.set('scope', 'openid email profile');
+    url.searchParams.set('access_type', 'offline');
+    url.searchParams.set('prompt', 'consent');
+
+    return reply.redirect(url.toString());
+  });
+
+  // --- GOOGLE: CALLBACK ---
+  app.get('/api/auth/google/callback', async (request, reply) => {
+    const { code } = request.query as { code?: string };
+
+    if (!code) {
+      return reply.code(400).send({
+        error: {
+          code: 'OAUTH_NO_CODE',
+          message: 'Missing authorization code',
+          statusCode: 400,
+        },
+      });
+    }
+
+    const redirectUri = env.GOOGLE_REDIRECT_URL;
+    const clientId = env.GOOGLE_CLIENT_ID;
+    const clientSecret = env.GOOGLE_CLIENT_SECRET;
+
+    if (!redirectUri || !clientId || !clientSecret) {
+      request.log.error('Missing Google OAuth env vars');
+      return reply.code(500).send({
+        error: {
+          code: 'OAUTH_CONFIG_ERROR',
+          message: 'Google OAuth is not configured',
+          statusCode: 500,
+        },
+      });
+    }
+
+    try {
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }).toString(),
+      });
+
+      if (!tokenRes.ok) {
+        const text = await tokenRes.text();
+        request.log.error({ text }, 'Failed to exchange code for token');
+        return reply.code(400).send({
+          error: {
+            code: 'OAUTH_TOKEN_ERROR',
+            message: 'Failed to obtain access token',
+            statusCode: 400,
+          },
+        });
+      }
+
+      const tokenData = (await tokenRes.json()) as any;
+      const accessToken = tokenData.access_token as string | undefined;
+
+      if (!accessToken) {
+        return reply.code(400).send({
+          error: {
+            code: 'OAUTH_NO_ACCESS_TOKEN',
+            message: 'No access token in token response',
+            statusCode: 400,
+          },
+        });
+      }
+
+      const googleUser = await googleOAuth.getUserInfo(accessToken);
+      const user = await googleOAuth.findOrCreateUser(googleUser);
+      const userId = String(user.id);
+      const appAccessToken = generateToken({ userId, email: user.email });
+      const refreshToken = await refreshService.createRefreshToken(userId);
+
+      reply.setCookie('token', appAccessToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60,
+        path: '/',
+      });
+
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      });
+
+      // Redirection vers le front déjà authentifié
+      return reply.redirect('/#/profile');
+    } catch (err) {
+      request.log.error({ err }, 'Google OAuth callback failed');
+      return reply.code(500).send({
+        error: {
+          code: 'OAUTH_INTERNAL_ERROR',
+          message: 'Google OAuth failed',
+          statusCode: 500,
+        },
+      });
+    }
   });
 }

@@ -3,6 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
+    user: node
     ports:
       - "3000:3000"
     env_file:

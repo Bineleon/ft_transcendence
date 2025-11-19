@@ -1,3 +1,4 @@
+
 /**
  * Modèle pour l'authentification
  * Définit les types de données pour l'inscription, la connexion et les tokens
@@ -34,23 +35,6 @@ export interface AuthResponse {
     updatedAt: string;
   };
   token: string;  // JWT token (sera aussi dans un cookie httpOnly)
-}
-
-/**
- * Payload du JWT (ce qu'on met dans le token)
- */
-export interface JWTPayload {
-  userId: string;
-  email: string;
-}
-
-/**
- * Utilisateur décodé depuis le JWT (request.user)
- * Ajouté par le middleware authenticate
- */
-export interface AuthenticatedUser {
-  userId: string;
-  email: string;
 }
 
 /**
