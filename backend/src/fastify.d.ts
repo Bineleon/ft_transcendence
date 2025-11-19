@@ -9,15 +9,6 @@ import 'fastify';
 import type { JwtPayload } from './shared/utils/jwt.js';
 
 /**
- * Payload du token JWT décodé
- */
-interface JwtPayload {
-  userId: string;
-  iat?: number;  // Issued at
-  exp?: number;  // Expiration
-}
-
-/**
  * Extension de FastifyRequest
  * Ajoute la propriété 'user' disponible après authenticate
  */

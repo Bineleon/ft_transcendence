@@ -96,7 +96,15 @@ function login(): HTMLElement {
         }
     });
 
-    form.append(inputLogin, inputPassword, input2FA, inputSubmit);
+    // --- Bouton Google OAuth ---
+    const divider = el("div", "text-center text-sm text-gray-400 my-2");
+    divider.textContent = "OR";
+
+    const googleBtn = el("a", "btn-click flex items-center justify-center gap-2") as HTMLAnchorElement;
+    googleBtn.href = "/api/auth/google";
+    googleBtn.textContent = "Sign in with Google";
+
+    form.append(inputLogin, inputPassword, input2FA, inputSubmit, divider, googleBtn);
     panel.append(loginBox, subTitle, form);
     return panel;
 }
@@ -108,10 +116,14 @@ function register(): HTMLElement {
     title.append(text("SUBSCRIBE TODAY !!!"));
 
     const subTitle = el("h3", "font-modern-type text-2xl text-justify mb-6");
-    subTitle.append(text("and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"));
+    subTitle.append(
+        text(
+            "and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"
+        )
+    );
 
     const form = el("form", "flex flex-col gap-4") as HTMLFormElement;
-    form.noValidate = true; // ⬅️ ajout pour ne plus bloquer le submit par la validation HTML5
+    form.noValidate = true; // on laisse le backend gérer la validation métier
 
     const inputEmail = el("input", "btn-input") as HTMLInputElement;
     inputEmail.type = "email";
@@ -137,7 +149,7 @@ function register(): HTMLElement {
     submit.type = "submit";
     submit.textContent = "Submit";
 
-    form.addEventListener("input", () => submit.disabled = !form.checkValidity());
+    form.addEventListener("input", () => (submit.disabled = !form.checkValidity()));
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
