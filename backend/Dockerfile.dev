@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN mkdir -p database && chown -R node:node database
+RUN mkdir -p database && chown -R node:node /app/database
 
 
 # Deps pour node-gyp + SQLite (musl)
@@ -24,4 +24,4 @@ EXPOSE 3000
 
 # Étape 7 : commande par défaut pour lancer ton serveur
 # CMD ["npm", "run", "dev"]
-CMD ["sh", "-c", "npx prisma migrate deploy init && npm run dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
