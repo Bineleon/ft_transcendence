@@ -24,4 +24,4 @@ EXPOSE 3000
 
 # Étape 7 : commande par défaut pour lancer ton serveur
 # CMD ["npm", "run", "dev"]
-CMD ["sh", "-c", "npx prisma migrate dev --name init && npm run dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy init && npm run dev"]

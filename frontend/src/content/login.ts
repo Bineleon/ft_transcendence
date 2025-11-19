@@ -9,7 +9,7 @@ function login(): HTMLElement {
     const subTitle = el("h3", "font-ocean-type text-2xl text-center mb-6");
     subTitle.append(text("Please login to access the game and continue your adventure! We missed you !"));
 
-    const form = el("form", "flex flex-col gap-4");
+    const form = el("form", "flex flex-col gap-4") as HTMLFormElement;
 
     // --- Inputs login / password ---
     const inputLogin = el("input", "btn-input") as HTMLInputElement;
@@ -53,7 +53,7 @@ function login(): HTMLElement {
                     alert("2FA verified! Login successful.");
                     window.location.hash = "#/profile";
                 } else {
-                    const errorMessage = data.error?.message || data.message || 'Invalid 2FA code';
+                    const errorMessage = data.error?.message || data.message || "Invalid 2FA code";
                     alert(`2FA verification failed: ${errorMessage}`);
                     inputSubmit.disabled = false;
                 }
@@ -82,19 +82,27 @@ function login(): HTMLElement {
                 input2FA.focus();
                 alert("Login successful! Please enter your 2FA code sent by email.");
             } else {
-                const errorMessage = data.error?.message || data.message || 'Login failed';
+                const errorMessage = data.error?.message || data.message || "Login failed";
                 alert(`Login failed: ${errorMessage}`);
                 inputSubmit.disabled = false;
             }
 
         } catch (error) {
             console.error("Login error:", error);
-            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            alert(`An error occurred: ${error instanceof Error ? error.message : "Network error"}`);
             inputSubmit.disabled = false;
         }
     });
 
-    form.append(inputLogin, inputPassword, input2FA, inputSubmit);
+    // --- Bouton Google OAuth ---
+    const divider = el("div", "text-center text-sm text-gray-400 my-2");
+    divider.textContent = "OR";
+
+    const googleBtn = el("a", "btn-click flex items-center justify-center gap-2") as HTMLAnchorElement;
+    googleBtn.href = "/api/auth/google";
+    googleBtn.textContent = "Sign in with Google";
+
+    form.append(inputLogin, inputPassword, input2FA, inputSubmit, divider, googleBtn);
     panel.append(loginBox, subTitle, form);
     return panel;
 }
@@ -106,10 +114,14 @@ function register(): HTMLElement {
     title.append(text("SUBSCRIBE TODAY !!!"));
 
     const subTitle = el("h3", "font-modern-type text-2xl text-justify mb-6");
-    subTitle.append(text("and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"));
+    subTitle.append(
+        text(
+            "and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"
+        )
+    );
 
     const form = el("form", "flex flex-col gap-4") as HTMLFormElement;
-    form.noValidate = true; // ⬅️ ajout pour ne plus bloquer le submit par la validation HTML5
+    form.noValidate = true; // on laisse le backend gérer la validation métier
 
     const inputEmail = el("input", "btn-input") as HTMLInputElement;
     inputEmail.type = "email";
@@ -135,20 +147,26 @@ function register(): HTMLElement {
     submit.type = "submit";
     submit.textContent = "Submit";
 
-    form.addEventListener("input", () => submit.disabled = !form.checkValidity());
+    form.addEventListener("input", () => (submit.disabled = !form.checkValidity()));
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         if (!inputEmail.value || !inputLogin.value || !inputPassword.value) {
-            alert("Please fill in all fields."); return;
+            alert("Please fill in all fields.");
+            return;
         }
         if (inputPassword.value !== confirmPassword.value) {
-            alert("Passwords do not match!"); return;
+            alert("Passwords do not match!");
+            return;
         }
 
         submit.disabled = true;
-        const payload = { email: inputEmail.value, username: inputLogin.value, password: inputPassword.value };
+        const payload = {
+            email: inputEmail.value,
+            username: inputLogin.value,
+            password: inputPassword.value
+        };
 
         try {
             const response = await fetch("/api/auth/register", {
@@ -157,23 +175,29 @@ function register(): HTMLElement {
                 body: JSON.stringify(payload),
                 credentials: "include"
             });
-            const data = await response.json();
+
+            let data: any = null;
+            try {
+                data = await response.json();
+            } catch (e) {
+                console.log("REGISTER: no JSON body or parse error", e);
+            }
 
             if (response.ok) {
                 alert("Registration successful! You can now log in.");
                 window.location.hash = "#/profile";
             } else {
                 const errorMessage =
-                    (Array.isArray(data?.error?.messages) && data.error.messages.join('\n')) ||
+                    (Array.isArray(data?.error?.messages) && data.error.messages.join("\n")) ||
                     data?.error?.message ||
                     data?.message ||
-                    'Unknown error';
+                    "Unknown error";
 
                 alert(`Registration failed:\n${errorMessage}`);
             }
         } catch (error) {
             console.error("Registration error:", error);
-            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            alert(`An error occurred: ${error instanceof Error ? error.message : "Network error"}`);
         } finally {
             submit.disabled = false;
         }
@@ -187,7 +211,7 @@ function register(): HTMLElement {
 /* Page complète LoginPage */
 export function LoginPage(): HTMLElement {
     const main = el("main", "p-4");
-    const grid = el("section", "grid grid-cols-[30%_68%] gap-6");
+    const grid = el("section", "grid grid-cols-1 md:grid-cols-[30%_68%] gap-6");
 
     grid.append(login(), register());
     main.append(grid);

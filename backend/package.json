@@ -33,7 +33,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.19.1",
-    "@types/nodemailer": "^7.0.3",
+    "@types/nodemailer": "^7.0.4",
     "pino": "^10.1.0",
     "pino-pretty": "^13.1.2",
     "pretty": "^2.0.0",
