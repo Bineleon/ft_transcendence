@@ -28,7 +28,11 @@ export function Game(): HTMLElement {
   const leftTitle = el(
     "h3", "items-center border-4 font-jmh uppercase text-xl mb-4"
   );
-  leftTitle.append(text("Breaking News !"));
+  const snakeLink = el("a", "text-black underline decoration-4 hover:bg-black hover:text-white");
+  snakeLink.href = "#/snake";
+  snakeLink.append(text("YOU SHOULD CLICK"));
+  leftTitle.append(snakeLink);
+
 
   const leftContent = el(
     "p", "font-modern-type text-justify text-xl"

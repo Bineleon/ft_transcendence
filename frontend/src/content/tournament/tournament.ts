@@ -1,6 +1,8 @@
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
 import { notLoggedIn, pongAlert } from "../utils/logchecks.ts";
+import { createDBTournament } from "../utils/todb.ts";
+
 
 export type tournamentType = "KING" | "CLASSIC" | "GAUNTLET";
 
@@ -21,6 +23,16 @@ const KING_TIME_CHOICES = [
   { minutes: 60, label: "60 minutes", img: "/imgs/60.png" },
 ];
 
+// Envoyer a la Back
+export interface TournamentFormDatas {
+    tName: string;
+    creatorID: string;
+    tMode: tournamentType;
+    maxParticipants: number;
+    kingMaxTime?: number;
+    kingMaxRounds?: number;
+}
+
 interface TournamentSettings {
     form : HTMLFormElement;
     nameInput : HTMLInputElement;
@@ -39,7 +51,9 @@ interface TournamentSettings {
 }
 
 let formEls: TournamentSettings | null = null;
+let formDatas: TournamentFormDatas | null = null;
 let TMode: tournamentType | null = null;
+export let tCode: string | null = null;
 
 export function TournamentFormUI(subscriptionSection: HTMLElement): void {
     TournamentForm(subscriptionSection);
@@ -52,31 +66,31 @@ function generateTournamentCode(): string {
     for (let i = 0; i < 6; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    function checkTournamentCodeExists(code: string) {
+    }
     return code;
-}
-
-function checkTournamentCodeExists(code: string | null): boolean {
-    
-    return false;
 }
 
 function handleGenerateTournament(): void {
     if (!formEls) return;
     
-    if (!formEls.nameInput.value.trim() || !formEls.participantsButton.value || !TMode) {
-        // pongAlert("Please fill in all required fields.");
+    if (((!formEls.nameInput.value.trim() || !formEls.participantsButton.value) && TMode !== "KING") || !TMode) {
         pongAlert("Please fill in all required fields.", { title: "Incomplete Form", onClose: () => {} });
         return;
     }
-
-    let code = null;
-    while (checkTournamentCodeExists(code)) {
-        code = generateTournamentCode();
+    else if (TMode === "KING" && (!formEls.kingTimeHiddenInput.value || !formEls.kingRoundsHiddenInput.value)) {
+        pongAlert("Please select King of the Hill settings.", { title: "Incomplete Form", onClose: () => {} });
+        return;
     }
 
-    // createDBTournament(code, formEls);
-    const mode = TMode;
-    document.location.href = `/tournament/${mode.toLowerCase()}`;
+    tCode = generateTournamentCode();
+    formDatas = {
+        tName: formEls.nameInput.value.trim(),
+        creatorID: "currentUserID", // À remplacer par l'ID réel de l'utilisateur connecté
+        tMode: "CLASSIC",
+        maxParticipants: parseInt(formEls.participantsButton.value, 10),
+    };
+    createDBTournament(tCode, formDatas);
 }
 
 function setupKingRoundsSelector(): void {

@@ -10,7 +10,16 @@ export type Routes = Record<string, Component>;
 function getPathFromHash(routes: Routes): string {
   const hash = window.location.hash || "#/";
   const path = hash.slice(1); // Supprime le '#'
-  return routes[path] ? path : "/"; // Route par défaut si non trouvée
+
+  if (routes[path]) return path;
+
+  for (const base of Object.keys(routes)) {
+    console.log("Checking base route:", base, "against path:", path);
+    if (path === base) return base;
+    if (path.startsWith(base + "/")) return base;
+  }
+
+  return "/"; // Route par défaut si non trouvée
 }
 
 /* Initialise le routeur */
@@ -38,4 +47,15 @@ function render(): void {
   window.addEventListener("DOMContentLoaded", render);
 
   return { navigate };
+}
+
+export function getRouteTail(base: string): string {
+  const hash = window.location.hash || "#/";
+  const path = hash.slice(1); // "/profile/2"
+
+  if (path === base) return "";
+  if (path.startsWith(base + "/")) {
+    return path.slice(base.length + 1); // après "/profile/"
+  }
+  return "";
 }

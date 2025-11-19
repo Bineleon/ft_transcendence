@@ -7,6 +7,7 @@ import { PlayPong } from "./content/pong/playpong";
 import { Profile } from "./content/profile";
 import { ChoseTournament } from "./content/tournament/tournament";
 import { classicTournament } from "./content/tournament/classic";
+import { PlaySnake } from "./content/snake/snake";
 
 
 // Structure des routes de l'application
@@ -16,10 +17,11 @@ const routes = {
   "/game": Game,
   "/profile": Profile,
   "/playpong": PlayPong,
-  "/tournament": ChoseTournament,
   "/tournament/classic": classicTournament,
   // "/tournament/king": kingTournament,
   // "/tournament/gauntlet": gauntletTournament,
+  "/tournament": ChoseTournament,
+  "/snake": PlaySnake,
 };
 
 // 

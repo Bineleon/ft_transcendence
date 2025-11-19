@@ -1,4 +1,5 @@
 import { el, text } from "./home";
+import { pongAlert } from "./utils/logchecks";
 
 /* Fonction Login */
 function login(): HTMLElement {
@@ -50,11 +51,12 @@ function login(): HTMLElement {
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert("2FA verified! Login successful.");
-                    window.location.hash = "#/profile";
+                    pongAlert("2FA verified! Login successful.");
+                    const ID = input2FA.dataset.userId;
+                    window.location.hash = `#/profile/${ID}`;
                 } else {
                     const errorMessage = data.error?.message || data.message || 'Invalid 2FA code';
-                    alert(`2FA verification failed: ${errorMessage}`);
+                    pongAlert(`2FA verification failed: ${errorMessage}`);
                     inputSubmit.disabled = false;
                 }
                 return;
@@ -62,7 +64,7 @@ function login(): HTMLElement {
 
             // --- Phase login classique ---
             if (!inputLogin.value || !inputPassword.value) {
-                alert("Please fill in all fields.");
+                pongAlert("Please fill in all fields.");
                 inputSubmit.disabled = false;
                 return;
             }
@@ -80,16 +82,16 @@ function login(): HTMLElement {
                 input2FA.classList.remove("hidden");
                 input2FA.dataset.userId = data.data.userId;
                 input2FA.focus();
-                alert("Login successful! Please enter your 2FA code sent by email.");
+                pongAlert("Login successful! Please enter your 2FA code sent by email.");
             } else {
                 const errorMessage = data.error?.message || data.message || 'Login failed';
-                alert(`Login failed: ${errorMessage}`);
+                pongAlert(`Login failed: ${errorMessage}`);
                 inputSubmit.disabled = false;
             }
 
         } catch (error) {
             console.error("Login error:", error);
-            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
             inputSubmit.disabled = false;
         }
     });
@@ -141,10 +143,10 @@ function register(): HTMLElement {
         event.preventDefault();
 
         if (!inputEmail.value || !inputLogin.value || !inputPassword.value) {
-            alert("Please fill in all fields."); return;
+            pongAlert("Please fill in all fields."); return;
         }
         if (inputPassword.value !== confirmPassword.value) {
-            alert("Passwords do not match!"); return;
+            pongAlert("Passwords do not match!"); return;
         }
 
         submit.disabled = true;
@@ -160,8 +162,8 @@ function register(): HTMLElement {
             const data = await response.json();
 
             if (response.ok) {
-                alert("Registration successful! You can now log in.");
-                window.location.hash = "#/profile";
+                pongAlert("Registration successful! You can now log in.");
+                window.location.hash = "#/login";
             } else {
                 const errorMessage =
                     (Array.isArray(data?.error?.messages) && data.error.messages.join('\n')) ||
@@ -169,11 +171,11 @@ function register(): HTMLElement {
                     data?.message ||
                     'Unknown error';
 
-                alert(`Registration failed:\n${errorMessage}`);
+                pongAlert(`Registration failed:\n${errorMessage}`);
             }
         } catch (error) {
             console.error("Registration error:", error);
-            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
         } finally {
             submit.disabled = false;
         }

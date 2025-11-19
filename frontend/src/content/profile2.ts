@@ -1,24 +1,18 @@
 import { el, text } from "./home";
-import { getRouteTail } from "../router";
-import { getUserDatas } from "../content/utils/todb.ts";
-import type { User } from "../content/utils/types.ts";
 
 const pictureUrl = "/public/imgs/fcoullou.jpg";
 const testLogin = "Chatou";
 const testEmail = "user123@example.com";
 
 // Lire l'id dans le href ou le hash
-// const userID = getRouteTail("/profile");
-
 // Creer le GET pour recuperer les infos utilisateur
-// const userDatas: Promise<User> = getUserDatas(userID);
 
 // creer la const avec les infos recuperees
 
 
 export function Profile(): HTMLElement {
     const main = el("main", "p-4");
-    const section = el("section", "grid grid-cols-1 grid-rows-1 md:grid-cols-2 gap-6");
+    const section = el("section", "grid grid-cols-1 grid-rows-1 md:grid-cols-2 grid-rows-2 gap-6");
 
     const picframe = el("div", "frame-photo");
     const picture = el("img", "frame-photo-img img-newspaper");
