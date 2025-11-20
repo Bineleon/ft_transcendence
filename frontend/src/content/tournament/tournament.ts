@@ -576,22 +576,28 @@ export function ChoseTournament(): HTMLElement {
 /// ********* TOURNAMENT SUBSCRIPTIONS *********/
     const subscriptionSection = el("div", "border-subscription box-subscription w-full h-auto");
 
-    if (notLoggedIn()) {
-        const loginPrompt = el("div", "text-center text-lg");
-        loginPrompt.append(
-            text(`Please `),
-            el("a", "text-blue-400 underline hover:text-blue-600", text("log in")),
-            text(` to create or join a tournament.`)
-        );
-        subscriptionSection.append(loginPrompt);
-    } else {
-        const subscriptionTitle = el("h2", "title-hed text-center my-4 mt-8");
-        subscriptionTitle.append(text("Use this Coupon to create a Tournament"));
-        subscriptionSection.append(subscriptionTitle);
-        // Build the form
-
-        TournamentFormUI(subscriptionSection);
-    }
+ // notLoggedIn() retourne Promise<boolean> — on met à jour la section quand la promesse est résolue
+    notLoggedIn().then((isNotLoggedIn) => {
+        if (isNotLoggedIn) {
+            const loginPrompt = el("div", "text-center text-lg");
+            loginPrompt.append(
+                text(`Please `),
+                el("a", "text-blue-400 underline hover:text-blue-600", text("log in")),
+                text(` to create or join a tournament.`)
+            );
+            subscriptionSection.append(loginPrompt);
+        } else {
+            const subscriptionTitle = el("h2", "title-hed text-center my-4 mt-8");
+            subscriptionTitle.append(text("Use this Coupon to create a Tournament"));
+            subscriptionSection.append(subscriptionTitle);
+            // Build the form
+            TournamentFormUI(subscriptionSection);
+        }
+    }).catch((err) => {
+        console.error("Failed to determine login state:", err);
+        // fallback UI
+        subscriptionSection.append(el("div", "text-center text-red-400", text("Error loading subscription UI")));
+    });
 
 /// ********* ASSEMBLAGE *********/
 

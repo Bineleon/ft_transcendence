@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
+import { setupFriendsModule } from './modules/friends/index.js';
 
 // Configuration
 import { env } from './shared/config/environment.js';
@@ -72,6 +73,7 @@ export function createApp() {
   // ==========================================
   
   setupAuthModule(app, prisma);
+  setupFriendsModule(app);
 
   // ==========================================
   // 6️⃣ ROUTE DE SANTÉ (Health check)

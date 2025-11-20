@@ -101,6 +101,31 @@ export function authController(
     return formatSuccess({ user: profile });
   });
 
+   app.get('/api/auth/loggedIn', async (request, reply) => {
+    try {
+      const token =
+        request.cookies.token ||
+        (request.headers.authorization?.startsWith('Bearer ')
+          ? request.headers.authorization.split(' ')[1]
+          : null);
+
+      if (!token) {
+        return reply.send(true);
+      }
+
+      // Vérifie le token avec ta fonction custom
+      const decoded = await import('../../shared/utils/jwt.js').then(m => m.verifyToken(token));
+
+      if (decoded) {
+        return reply.send(false); // Token valide => utilisateur connecté
+      }
+
+      return reply.send(true); // Par défaut, pas connecté
+    } catch {
+      return reply.send(true); // Erreur => token invalide => pas connecté
+    }
+  });
+
   // ===============================
   //       GOOGLE OAUTH
   // ===============================
@@ -233,5 +258,6 @@ export function authController(
         },
       });
     }
-  });
+});
 }
+
