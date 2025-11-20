@@ -126,6 +126,32 @@ export function authController(
     }
   });
 
+// auth.controller.ts
+app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (request, reply) => {
+  try {
+    const userId = request.user!.userId;
+
+    // Supprime le compte
+    await userService.deleteUser(userId);
+
+    // Supprime les cookies pour logout
+    reply.clearCookie('token');
+    reply.clearCookie('refreshToken');
+
+    return { success: true, message: 'Account deleted successfully' };
+  } catch (err) {
+    request.log.error(err, 'Failed to delete account');
+    return reply.code(500).send({
+      error: {
+        code: 'DELETE_ACCOUNT_FAILED',
+        message: 'Failed to delete account',
+        statusCode: 500,
+      },
+    });
+  }
+});
+
+
   // ===============================
   //       GOOGLE OAUTH
   // ===============================

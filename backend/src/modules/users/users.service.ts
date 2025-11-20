@@ -3,6 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../../shared/database/prisma.js';
 import type {
   UpdateProfileRequest,
   ChangePasswordRequest,
@@ -21,30 +22,24 @@ import {
 
 export class UserService {
   private readonly SEARCH_LIMIT = 50;
+  private prisma: PrismaClient;
 
-  constructor(private prisma: PrismaClient) {}
+  constructor(prisma?: PrismaClient) {
+    this.prisma = prisma || getPrismaClient();
+  }
 
   async getOwnProfile(userId: string): Promise<UserProfile> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-
     if (!user) throw new NotFoundError('User not found');
-
     return formatUser(user);
   }
 
   async getPublicProfile(userId: string): Promise<PublicUserProfile> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        avatarUrl: true,
-        createdAt: true
-      }
+      select: { id: true, username: true, avatarUrl: true, createdAt: true }
     });
-
     if (!user) throw new NotFoundError('User not found');
-
     return {
       id: user.id,
       username: user.username,
@@ -61,31 +56,21 @@ export class UserService {
       const emailTaken = await this.prisma.user.findFirst({
         where: { email: data.email, id: { not: userId } }
       });
-
       if (emailTaken) throw new ConflictError('Email already in use');
-
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(data.email)) {
-        throw new ValidationError('Invalid email format');
-      }
+      if (!emailRegex.test(data.email)) throw new ValidationError('Invalid email format');
     }
 
     if (data.username !== undefined) {
-      if (data.username.length < 3 || data.username.length > 20) {
-        throw new ValidationError('Username must be between 3 and 20 characters');
-      }
-
+      if (data.username.length < 3 || data.username.length > 20) throw new ValidationError('Username must be between 3 and 20 characters');
       const usernameTaken = await this.prisma.user.findFirst({
         where: { username: data.username, id: { not: userId } }
       });
-
       if (usernameTaken) throw new ConflictError('Username already in use');
     }
 
-    if (data.password !== undefined) {
-      if (data.password.length < 8) {
-        throw new ValidationError('Password must be at least 8 characters long');
-      }
+    if (data.password !== undefined && data.password.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters long');
     }
 
     const updateData: UpdateUserData = {
@@ -94,77 +79,61 @@ export class UserService {
       ...(data.password && { password: await hashPassword(data.password) })
     };
 
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: updateData
-    });
-
+    const user = await this.prisma.user.update({ where: { id: userId }, data: updateData });
     return formatUser(user);
   }
 
-  /**
-   * Changer son mot de passe
-   */
   async changePassword(userId: string, data: ChangePasswordRequest): Promise<void> {
-    if (!data.currentPassword || !data.newPassword) {
-      throw new ValidationError('Current and new password are required');
-    }
-
-    if (data.newPassword.length < 8) {
-      throw new ValidationError('New password must be at least 8 characters long');
-    }
-
-    if (data.currentPassword === data.newPassword) {
-      throw new ValidationError('New password must be different from current password');
-    }
+    if (!data.currentPassword || !data.newPassword) throw new ValidationError('Current and new password are required');
+    if (data.newPassword.length < 8) throw new ValidationError('New password must be at least 8 characters long');
+    if (data.currentPassword === data.newPassword) throw new ValidationError('New password must be different from current password');
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError('User not found');
-
-    // 🔥 Correction : compte Google → pas de mot de passe local
-    if (!user.passwordHash) {
-      throw new AuthError("This account was created via Google OAuth and has no password to change.");
-    }
+    if (!user.passwordHash) throw new AuthError("This account was created via Google OAuth and has no password to change.");
 
     const isValid = await comparePassword(data.currentPassword, user.passwordHash);
     if (!isValid) throw new AuthError('Current password is incorrect');
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        passwordHash: await hashPassword(data.newPassword)
-      }
+      data: { passwordHash: await hashPassword(data.newPassword) }
     });
   }
 
   async searchUsers(search: string) {
     const limit = this.SEARCH_LIMIT;
-
-    const where = search
-      ? { username: { contains: search, mode: 'insensitive' as const } }
-      : {};
-
+    const where = search ? { username: { contains: search, mode: 'insensitive' as const } } : {};
     const users = await this.prisma.user.findMany({
       where,
       select: { id: true, username: true, avatarUrl: true },
       take: limit,
       orderBy: { username: 'asc' }
     });
-
     const total = await this.prisma.user.count({ where });
-
-    return {
-      items: users,
-      total,
-      limit,
-      hasMore: total > limit
-    };
+    return { items: users, total, limit, hasMore: total > limit };
   }
 
-  async deleteAccount(userId: string): Promise<void> {
+  /**
+   * Supprime toutes les données d'un utilisateur et son compte
+   */
+  async deleteUser(userId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError('User not found');
 
+    // Supprimer toutes les relations amicales
+    await this.prisma.friend.deleteMany({ where: { OR: [{ userId }, { friendId: userId }] } });
+
+    // Supprimer les sessions
+    await this.prisma.session.deleteMany({ where: { userId } });
+
+    // Supprimer les refresh tokens
+    await this.prisma.refreshToken.deleteMany({ where: { userId } });
+
+    // Supprimer les codes 2FA
+    await this.prisma.twoFactor.deleteMany({ where: { userId } });
+
+    // Enfin, supprimer l’utilisateur
     await this.prisma.user.delete({ where: { id: userId } });
   }
 
