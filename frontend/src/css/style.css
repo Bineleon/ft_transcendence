@@ -512,6 +512,25 @@
            font-modern-type;
   }
 
+/*---------------------------------------------------------
+              TOURNAMENT BRACKETS STYLES
+----------------------------------------------------------*/
+  .brackets {
+    @apply items-center;
+    display: flex;
+    justify-content: space-evenly;
+    margin-bottom: 100px;
+    overflow: visible;
+    width: 100%;
+  }
+
+  .sectionFor8 {
+    width: 25%;
+  }
+
+  .round-1-For8 {
+    grid-row: span 4;
+  }
 }
 
 /*---------------------------------------------------------

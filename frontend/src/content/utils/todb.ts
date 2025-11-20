@@ -1,3 +1,4 @@
+import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
 import { pongAlert } from "./logchecks.ts";
 import type { User } from "./types.ts";
@@ -31,6 +32,37 @@ export async function createDBTournament(code: string, datas: TournamentFormData
         pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament Creation Error" });
     } finally {
         // Any cleanup if necessary
+    }
+}
+
+
+export function getUserNameByIdTEMP(id: string, users: User[]): string {
+    // TEMPORAIRE EN ATTENDANT LES VRAIES ROUTES
+    const user = users.find((u) => u.userId === id);
+    return user ? user.userName : "Unknown User";
+}
+
+
+export async function getUserNameById(id: string): Promise<string> {
+    const IDHere = getRouteTail("/profile");
+    try {
+        const response = await fetch(`/api/profile/${IDHere}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            return data.username as string;
+        } else {
+            pongAlert(`Failed to fetch username: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Username Fetch Error" });
+            throw new Error(data.error?.message || data.message || 'Unknown error');
+        }
+    } catch (error) {
+        console.error("Username fetch error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Username Fetch Error" });
+        throw error;
     }
 }
 

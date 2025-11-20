@@ -1,3 +1,5 @@
+import type { tournamentMode } from "../tournament/tournament";
+
 export interface User {
     userId: string;
     userName: string;
@@ -25,7 +27,7 @@ interface Friend {
 }
 
 
-interface Match {
+export interface Match {
     matchId: string;
     tournamentId: string | null;
     gameCode: string;
@@ -42,12 +44,18 @@ interface Match {
     winner: String;
 }
 
+export type tStatus = "OPEN" | "RUNNING" | "CLOSED";
 export interface Tournament {
     tournamentId: string;
     name: string;
-    status: string;
+    status: tStatus;
     createdAt: string;
-    createdBy: string;
+    creatorId: string;
+    tMode: tournamentMode
+    maxParticipants: number;
+    kingMaxTime?: number;
+    kingMaxRounds?: number;
     matches: Match[];
+    players: User[];
     creator: User;
 }
