@@ -52,7 +52,7 @@ function login(): HTMLElement {
 
                 if (response.ok) {
                     pongAlert("2FA verified! Login successful.");
-                    const ID = input2FA.dataset.userId;
+                    const ID = inputLogin.value;
                     window.location.hash = `#/profile/${ID}`;
                 } else {
                     const errorMessage = data.error?.message || data.message || 'Invalid 2FA code';

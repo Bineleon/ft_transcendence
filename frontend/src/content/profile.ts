@@ -1,17 +1,17 @@
 import { el, text } from "./home";
-import { getRouteTail } from "../router";
-import { getUserDatas } from "../content/utils/todb.ts";
-import type { User } from "../content/utils/types.ts";
+// import { getRouteTail } from "../router";
+// import { getUserDatas } from "../content/utils/todb.ts";
+// import type { User } from "../content/utils/types.ts";
 
 const pictureUrl = "/public/imgs/fcoullou.jpg";
 const testLogin = "Chatou";
 const testEmail = "user123@example.com";
 
 // Lire l'id dans le href ou le hash
-// const userID = getRouteTail("/profile");
+// const userName = getRouteTail("/profile");
 
 // Creer le GET pour recuperer les infos utilisateur
-// const userDatas: Promise<User> = getUserDatas(userID);
+// const userDatas: Promise<User> = getUserDatas(userName);
 
 // creer la const avec les infos recuperees
 
@@ -51,7 +51,43 @@ export function Profile(): HTMLElement {
     infoBox.append(stats); 
 
     section.append(picframe, infoBox);
-    main.append(section);
+
+/// Friends Section
+    const friendsSection = el("div", "grid grid-cols-1 grid-rows-1 md:grid-cols-2 gap-6 mt-8");
+    const list = el("div", "mx-[10%]");
+    const friendsTitle = el("h2", "font-royalvogue text-4xl mb-4");
+    friendsTitle.append(text("Friends"));
+
+    const friendsList = el("ul", "relative list-disc list-inside font-modern-type text-lg");
+    const friendNames = ["Alice", "Bob", "Charlie", "Diana"];
+    friendNames.forEach((friend) => {
+        const li = el("li", "");
+        li.append(text(friend));
+        friendsList.append(li);
+    });
+    list.append(friendsTitle, friendsList);
+
+    const FriendsRequests = el("div", "mx-[10%]");
+    const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
+    requestsTitle.append(text("Requests"));
+    FriendsRequests.append(requestsTitle);
+
+    const requestNames = ["Eve", "Frank"];
+    requestNames.forEach((request) => {
+        const requestDiv = el("div", "flex items-center mb-2");
+        const nameSpan = el("span", "flex-1 font-modern-type text-lg");
+        nameSpan.append(text(request));
+
+        const acceptButton = el("button", "btn-click mr-2") as HTMLButtonElement;
+        acceptButton.textContent = "Accept";
+        const declineButton = el("button", "btn-click") as HTMLButtonElement;
+        declineButton.textContent = "Decline";
+
+        requestDiv.append(nameSpan, acceptButton, declineButton);
+        FriendsRequests.append(requestDiv);
+    });
+    friendsSection.append(list, FriendsRequests);
+    main.append(section, friendsSection);
     return main;
 }
 

@@ -1,9 +1,25 @@
 import { el } from "../home";
 
-export function notLoggedIn(): boolean {
-    // Placeholder function to check if the user is logged in
-    // Replace with actual authentication logic
-    return false;
+export async function notLoggedIn(): Promise<boolean> {
+    try {
+        const response = await fetch(`/api/auth/loggedIn`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            return data as boolean;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error("Profile fetch error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Profile Fetch Error" });
+        throw error;
+    }
+    // return false;
 }
 
 export function redirectToLogin() {

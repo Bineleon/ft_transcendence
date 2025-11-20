@@ -4,13 +4,13 @@ import { notLoggedIn, pongAlert } from "../utils/logchecks.ts";
 import { createDBTournament } from "../utils/todb.ts";
 
 
-export type tournamentType = "KING" | "CLASSIC" | "GAUNTLET";
+export type tournamentMode = "KING" | "CLASSIC" | "GAUNTLET";
 
 interface NumberOfPlayers {
     maxParticipants: number[];
 }
 
-const PlayersLimits: Record<tournamentType, NumberOfPlayers> = {
+const PlayersLimits: Record<tournamentMode, NumberOfPlayers> = {
     KING: { maxParticipants: [4, 5, 6, 7, 8, 9, 10] },
     CLASSIC: { maxParticipants: [4, 8, 16] },
     GAUNTLET: { maxParticipants: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] },
@@ -27,7 +27,7 @@ const KING_TIME_CHOICES = [
 export interface TournamentFormDatas {
     tName: string;
     creatorID: string;
-    tMode: tournamentType;
+    tMode: tournamentMode;
     maxParticipants: number;
     kingMaxTime?: number;
     kingMaxRounds?: number;
@@ -52,7 +52,7 @@ interface TournamentSettings {
 
 let formEls: TournamentSettings | null = null;
 let formDatas: TournamentFormDatas | null = null;
-let TMode: tournamentType | null = null;
+let TMode: tournamentMode | null = null;
 export let tCode: string | null = null;
 
 export function TournamentFormUI(subscriptionSection: HTMLElement): void {
@@ -199,7 +199,7 @@ function setupKingTimeSelector(): void {
 }
 
 
-function renderParticipantsOptions(mode: tournamentType): void {
+function renderParticipantsOptions(mode: tournamentMode): void {
     if (!formEls) return;
 
     const container = formEls.participantsContainer;
@@ -337,7 +337,7 @@ function buildTournamentForm(subscriptionSection: HTMLElement): void {
 }
 
 export function TournamentForm(subscriptionSection: HTMLElement) : void {
-    const modes: { label: string; value: tournamentType }[] = [
+    const modes: { label: string; value: tournamentMode }[] = [
         { label: "King", value: "KING" },
         { label: "Classic", value: "CLASSIC" },
         { label: "Gauntlet", value: "GAUNTLET" },
@@ -359,13 +359,13 @@ export function TournamentForm(subscriptionSection: HTMLElement) : void {
     subscriptionSection.append(...buttons);
 }
 
-export function setTournamentMode(mode: tournamentType): void {
+export function setTournamentMode(mode: tournamentMode): void {
     TMode = mode;
 
     // Update visual state of mode buttons
     const allButtons = document.querySelectorAll<HTMLButtonElement>(".btn-tournament");
     allButtons.forEach(button => {
-        const buttonMode = button.dataset.mode as tournamentType | undefined;
+        const buttonMode = button.dataset.mode as tournamentMode | undefined;
 
         // Clean
         button.classList.remove("box-selected", "box-unselected");
@@ -393,7 +393,7 @@ export function setTournamentMode(mode: tournamentType): void {
 }
 
 
-export function getTournamentMode(): tournamentType | null {
+export function getTournamentMode(): tournamentMode | null {
     return TMode;
 }
 
@@ -576,23 +576,28 @@ export function ChoseTournament(): HTMLElement {
 /// ********* TOURNAMENT SUBSCRIPTIONS *********/
     const subscriptionSection = el("div", "border-subscription box-subscription w-full h-auto");
 
-    if (notLoggedIn()) {
-        const loginPrompt = el("div", "text-center text-lg");
-        loginPrompt.append(
-            text(`Please `),
-            el("a", "text-blue-400 underline hover:text-blue-600", text("log in")),
-            text(` to create or join a tournament.`)
-        );
-        subscriptionSection.append(loginPrompt);
-    } else {
-        const subscriptionTitle = el("h2", "title-hed text-center my-4 mt-8");
-        subscriptionTitle.append(text("Use this Coupon to create a Tournament"));
-        subscriptionSection.append(subscriptionTitle);
-        // Build the form
-
-        TournamentFormUI(subscriptionSection);
-    }
-
+// notLoggedIn() retourne Promise<boolean> — on met à jour la section quand la promesse est résolue
+    notLoggedIn().then((isNotLoggedIn) => {
+        if (isNotLoggedIn) {
+            const loginPrompt = el("div", "text-center text-lg");
+            loginPrompt.append(
+                text(`Please `),
+                el("a", "text-blue-400 underline hover:text-blue-600", text("log in")),
+                text(` to create or join a tournament.`)
+            );
+            subscriptionSection.append(loginPrompt);
+        } else {
+            const subscriptionTitle = el("h2", "title-hed text-center my-4 mt-8");
+            subscriptionTitle.append(text("Use this Coupon to create a Tournament"));
+            subscriptionSection.append(subscriptionTitle);
+            // Build the form
+            TournamentFormUI(subscriptionSection);
+        }
+    }).catch((err) => {
+        console.error("Failed to determine login state:", err);
+        // fallback UI
+        subscriptionSection.append(el("div", "text-center text-red-400", text("Error loading subscription UI")));
+    });
 /// ********* ASSEMBLAGE *********/
 
     main.append(header, spacer, tournaments, subscriptionSection);
