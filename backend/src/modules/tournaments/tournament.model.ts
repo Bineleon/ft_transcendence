@@ -4,6 +4,8 @@ export interface CreateTournamentDTO {
   creatorID: string;
   mode: string;
   maxParticipants: number;
+  kingMaxTime: number | null;
+  kingMaxRounds: number | null;
 }
 
 export interface TournamentResponse {
@@ -13,11 +15,17 @@ export interface TournamentResponse {
   mode: string;
   status: string;
   maxParticipants: number;
+  kingMaxTime: number | null;
+  kingMaxRounds: number | null;
+  createdBy: string | null;
+  createdAt: Date;
   creator?: {
     id: string;
     username: string;
     avatarUrl: string | null;
-  };
+  } | null;                       
   matches?: any[];
-  createdAt: Date;
+  // _count?: {                      // ⬅️ AJOUTER pour findAll()
+  //   matches: number;
+  // };
 }
