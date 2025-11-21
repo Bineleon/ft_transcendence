@@ -7,14 +7,13 @@ export function friendsController(app: FastifyInstance, friendsService: FriendsS
   // ---------------------------------------------
   // 1️⃣ Envoyer une demande d'ami
   // ---------------------------------------------
-  app.post<{ Body: { friendId: string } }>(
+  app.post<{ Body: { username: string } }>(
     '/api/friends/request',
     { preHandler: authenticate },
     async (request) => {
-      const { friendId } = request.body;
       const userId = request.user!.userId;
-
-      const friendRequest = await friendsService.sendFriendRequest(userId, friendId);
+      const { username } = request.body;
+      const friendRequest = await friendsService.sendFriendRequest(userId, username);
       return { success: true, data: friendRequest };
     }
   );
@@ -60,6 +59,19 @@ export function friendsController(app: FastifyInstance, friendsService: FriendsS
 
       await friendsService.removeFriend(userId, friendId);
       return { success: true, message: 'Friend removed' };
+    }
+  );
+
+  // ---------------------------------------------
+  // 5️⃣ Récupérer les demandes reçues
+  // ---------------------------------------------
+  app.get(
+    '/api/friends/requests',
+    { preHandler: authenticate },
+    async (request) => {
+      const userId = request.user!.userId;
+      const requests = await friendsService.getRequests(userId);
+      return { success: true, data: requests };
     }
   );
 }

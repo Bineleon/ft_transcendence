@@ -205,24 +205,24 @@ export function userController(app: FastifyInstance, userService: UserService) {
    *   "message": "Account deleted successfully"
    * }
    */
-  app.delete<{ Params: { id: string } }>(
-    '/api/users/:id', 
-    { preHandler: [authenticate, requireOwner] },
-    async (request, reply) => {
-      const userId = request.params.id;
-      await userService.deleteAccount(userId);
+//   app.delete<{ Params: { id: string } }>(
+//     '/api/users/:id', 
+//     { preHandler: [authenticate, requireOwner] },
+//     async (request, reply) => {
+//       const userId = request.params.id;
+//       await userService.deleteAccount(userId);
       
-      // Supprimer le cookie JWT (déconnexion)
-      reply.clearCookie('token', {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
-      });
+//       // Supprimer le cookie JWT (déconnexion)
+//       reply.clearCookie('token', {
+//         path: '/',
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === 'production',
+//         sameSite: 'strict'
+//       });
       
-      return formatSuccess(undefined, 'Account deleted successfully');
-    }
-  );
+//       return formatSuccess(undefined, 'Account deleted successfully');
+//     }
+//   );
 
   /**
    * GET /api/users
