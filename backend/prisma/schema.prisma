@@ -13,6 +13,12 @@ enum TournamentStatus {
   CLOSED
 }
 
+enum TournamentMode {
+  CLASSIC
+  GAUNTLET
+  KING
+}
+
 enum MatchStatus {
   SCHEDULED
   IN_PROGRESS
@@ -50,13 +56,18 @@ model User {
 }
 
 model Tournament {
-  id        String           @id @default(cuid())
-  name      String
-  status    TournamentStatus @default(OPEN)
-  createdBy String?          @map("created_by")
-  createdAt DateTime         @default(now()) @map("created_at")
-  matches   Match[]
-  creator   User?            @relation("UserCreatedTournaments", fields: [createdBy], references: [id])
+  id                String            @id @default(cuid())
+  code              String            @unique
+  name              String
+  status            TournamentStatus  @default(OPEN)
+  mode              TournamentMode   @default(CLASSIC)
+  maxParticipants   Int               @map("max_participants")
+  kingMaxTime       Int?              @map("king_max_time")
+  kingMaxRounds     Int?              @map("king_max_rounds")
+  createdBy         String?           @map("created_by")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  matches           Match[]
+  creator           User?             @relation("UserCreatedTournaments", fields: [createdBy], references: [id])
 
   @@index([status])
 }
