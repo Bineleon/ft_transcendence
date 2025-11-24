@@ -1,21 +1,90 @@
 import { el, text } from "./home";
 import { logout } from "../content/utils/logout.ts";
 import { deleteAccount } from "./utils/deleteAccount.ts";
+import { pongAlert } from "./utils/logchecks";
 
 export function Profile(): HTMLElement {
     const main = el("main", "p-4");
 
-    // ——— Structure principale ———
     const section = el("section", "grid grid-cols-1 md:grid-cols-2 gap-6");
 
-    // ——— Frame photo ———
-    const picframe = el("div", "frame-photo");
-    const picture = el("img", "frame-photo-img img-newspaper");
-    picframe.append(picture);
+    const picframe = el("div", "frame-photo relative flex items-center justify-center group");
+    const picture = el("img", "frame-photo-img img-newspaper cursor-pointer") as HTMLImageElement;
+
+    // ⚡ Placeholder uniforme
+    picture.src = "/imgs/avatar2.png";
+    picture.alt = "Avatar utilisateur";
+    picture.loading = "lazy";
+    picture.tabIndex = 0;
+    picture.setAttribute("role", "button");
+    picture.setAttribute("aria-label", "Changer la photo de profil");
+
+    // ⚡ Éviter boucle infinie sur erreur
+    picture.dataset.fallback = "false";
+    picture.addEventListener("error", () => {
+        if (picture.dataset.fallback === "false") {
+            picture.src = "/imgs/avatar2.png";
+            picture.dataset.fallback = "true";
+        }
+    });
+
+    const avatarInput = document.createElement("input") as HTMLInputElement;
+    avatarInput.type = "file";
+    avatarInput.accept = "image/*";
+    avatarInput.className = "hidden";
+
+    const editHint = el("div", "absolute bottom-2 right-2 bg-white/80 rounded-full p-1 shadow pointer-events-none");
+    editHint.innerHTML = "✎";
+
+    const hoverOverlay = el("div",
+        "absolute inset-0 flex items-center font-jmh justify-center bg-black/40 text-stone-100 text-3xl opacity-0 transition-opacity duration-200 pointer-events-none group-hover:opacity-100"
+    );
+    hoverOverlay.textContent = "Click to change avatar";
+
+    const MAX_SIZE = 2 * 1024 * 1024;
+
+    function openFilePicker() { avatarInput.click(); }
+
+    picture.addEventListener("click", openFilePicker);
+    picture.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFilePicker(); }
+    });
+
+    avatarInput.addEventListener("change", async () => {
+        const file = avatarInput.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) { pongAlert("Fichier non supporté"); return; }
+        if (file.size > MAX_SIZE) { pongAlert("Image trop grosse (max 2MB)"); return; }
+
+        const tmpUrl = URL.createObjectURL(file);
+        picture.src = tmpUrl;
+
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            const res = await fetch("/api/users/me/avatar", {
+                method: "POST",
+                body: fd,
+                credentials: "include",
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error("Upload failed");
+            // ⚡ Charger seulement l’avatar, pas tout le profil
+            picture.src = data.data.avatarUrl || "/imgs/avatar2.png";
+        } catch (err) {
+            console.error("Upload avatar error", err);
+            pongAlert("Erreur lors de l'envoi. Réessaye.");
+            picture.src = "/imgs/avatar2.png";
+        } finally {
+            URL.revokeObjectURL(tmpUrl);
+            avatarInput.value = "";
+        }
+    });
+
+    picframe.append(picture, avatarInput, editHint, hoverOverlay);
 
     // ——— Info box ———
     const infoBox = el("div", "frame-photo p-9 flex flex-col");
-
     const loginLabel = el("h1", "p-4 font-jmh w-full text-8xl mb-4");
     const emailLabel = el("h2", "p-4 font-modern-type text-3xl mb-4");
     infoBox.append(loginLabel, emailLabel);
@@ -27,7 +96,6 @@ export function Profile(): HTMLElement {
     stats.readOnly = true;
     infoBox.append(stats);
 
-    // ——— Bouton Logout ———
     const logoutBtn = el(
         "button",
         "ml-auto mt-2 mr-2 text-black/60 hover:text-black/80 font-modern-type text-xl underline underline-offset-4 transition"
@@ -36,7 +104,6 @@ export function Profile(): HTMLElement {
     logoutBtn.onclick = () => logout();
     infoBox.append(logoutBtn);
 
-    // ——— Bouton Delete Account ———
     const deleteButton = el(
         "button",
         "ml-auto mt-2 mr-2 text-red-600/60 hover:text-red-700/80 font-modern-type text-xl underline underline-offset-4 transition"
@@ -45,7 +112,6 @@ export function Profile(): HTMLElement {
     deleteButton.onclick = async () => {
         const sure = confirm("Cette action est irréversible. Voulez-vous vraiment supprimer votre compte ?");
         if (!sure) return;
-
         const ok = await deleteAccount();
         if (ok) window.location.href = "/#/login";
         else alert("Impossible de supprimer le compte.");
@@ -58,7 +124,6 @@ export function Profile(): HTMLElement {
     // ——— Friends Section ———
     const friendsSection = el("div", "grid grid-cols-1 md:grid-cols-2 gap-6 mt-8");
 
-    // Liste des amis
     const list = el("div", "mx-[10%]");
     const friendsTitle = el("h2", "font-royalvogue text-4xl mb-4");
     friendsTitle.append(text("Friends"));
@@ -67,7 +132,6 @@ export function Profile(): HTMLElement {
     const friendsList = el("ul", "relative list-disc list-inside font-modern-type text-lg");
     list.append(friendsList);
 
-    // ——— Add Friend ———
     const addFriendBox = el("div", "mt-4 flex items-center");
     const addFriendInput = el("input", "border p-2 rounded flex-1 mr-2") as HTMLInputElement;
     addFriendInput.placeholder = "Nom ou ID de l'ami";
@@ -80,7 +144,6 @@ export function Profile(): HTMLElement {
     addFriendBtn.onclick = async () => {
         const friendUsername = addFriendInput.value.trim();
         if (!friendUsername) return;
-
         try {
             const res = await fetch("/api/friends/request", {
                 method: "POST",
@@ -93,58 +156,40 @@ export function Profile(): HTMLElement {
                 alert("Demande envoyée !");
                 addFriendInput.value = "";
                 loadFriends(friendsList, requestsBox);
-            } else {
-                alert("Impossible d'envoyer la demande.");
-            }
+            } else alert("Impossible d'envoyer la demande.");
         } catch {
             alert("Erreur réseau.");
         }
     };
-
     addFriendBox.append(addFriendInput, addFriendBtn);
     list.append(addFriendBox);
 
-    // ——— Demandes d'amis ———
     const requestsBox = el("div", "mx-[10%]");
     const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
-    requestsTitle.append(text("Requests"));
     requestsBox.append(requestsTitle);
 
     friendsSection.append(list, requestsBox);
     main.append(friendsSection);
 
-    // ——— Charger dynamiquement le profil et les amis ———
+    // ⚡ Charger profil et amis une seule fois
     loadProfileData(picture, loginLabel, emailLabel, stats, friendsList, requestsBox);
 
     return main;
 }
 
-// ——— Fonction pour charger le profil ———
-async function loadProfileData(
-    picture: HTMLImageElement,
-    loginLabel: HTMLElement,
-    emailLabel: HTMLElement,
-    stats: HTMLTextAreaElement,
-    friendsList: HTMLElement,
-    requestsBox: HTMLElement
+async function loadProfileData(picture: HTMLImageElement, loginLabel: HTMLElement, emailLabel: HTMLElement,
+    stats: HTMLTextAreaElement, friendsList: HTMLElement, requestsBox: HTMLElement
 ) {
     try {
         const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) throw new Error("Impossible de charger le profil");
-
         const data = await res.json();
         const user = data.data.user;
-
-        picture.src = user.avatarUrl || "/public/imgs/default-avatar.png";
+        picture.src = user.avatarUrl || "/imgs/avatar2.png";
         loginLabel.textContent = user.username;
         emailLabel.textContent = user.email;
         stats.value =
-            "Informations du compte:\n\n" +
-            `ID: ${user.id}\n` +
-            `Créé le: ${new Date(user.createdAt).toLocaleString()}\n\n` +
-            "Statistiques:\n" +
-            "(À connecter bientôt à la DB)";
-
+            `Informations du compte:\n\nID: ${user.id}\nCréé le: ${new Date(user.createdAt).toLocaleString()}\n\nStatistiques:\n(À connecter bientôt à la DB)`;
         loadFriends(friendsList, requestsBox);
     } catch (err) {
         loginLabel.textContent = "Erreur";
@@ -153,17 +198,13 @@ async function loadProfileData(
     }
 }
 
-// ——— Fonction pour charger amis + demandes depuis le backend ———
 async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
     friendsList.innerHTML = "";
-    // garde le titre Requests
-    const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
-    requestsTitle.append(text("Requests"));
     requestsBox.innerHTML = "";
+    const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
     requestsBox.append(requestsTitle);
 
     try {
-        // — Liste amis —
         const friendsRes = await fetch("/api/friends", { credentials: "include" });
         const friendsData = await friendsRes.json();
         if (friendsData.success && Array.isArray(friendsData.data)) {
@@ -173,15 +214,13 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                 friendsList.append(li);
             });
         }
-
-        // — Demandes reçues —
         const requestsRes = await fetch("/api/friends/requests", { credentials: "include" });
         const requestsData = await requestsRes.json();
         if (requestsData.success && Array.isArray(requestsData.data)) {
             requestsData.data.forEach((req: any) => {
                 const reqDiv = el("div", "flex items-center mb-2");
                 const nameSpan = el("span", "flex-1 font-modern-type text-lg");
-                nameSpan.textContent = req.user.username; // expéditeur
+                nameSpan.textContent = req.user.username;
 
                 const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;
                 acceptBtn.textContent = "Accept";
@@ -194,7 +233,6 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                     });
                     loadFriends(friendsList, requestsBox);
                 };
-
                 const declineBtn = el("button", "btn-click") as HTMLButtonElement;
                 declineBtn.textContent = "Decline";
                 declineBtn.onclick = async () => {
@@ -206,12 +244,9 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                     });
                     loadFriends(friendsList, requestsBox);
                 };
-
                 reqDiv.append(nameSpan, acceptBtn, declineBtn);
                 requestsBox.append(reqDiv);
             });
         }
-    } catch (err) {
-        console.error("Erreur chargement amis :", err);
-    }
+    } catch (err) { console.error("Erreur chargement amis :", err); }
 }

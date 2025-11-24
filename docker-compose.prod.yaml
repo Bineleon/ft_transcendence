@@ -14,6 +14,7 @@ services:
       NODE_ENV: production
     volumes:
       - db-data:/app/database
+      - avatars:/app/avatars
     networks:
       - app_network
     restart: unless-stopped
@@ -30,12 +31,15 @@ services:
       - "8443:443"
     depends_on:
       - backend
+    volumes:
+      - avatars:/app/avatars
     networks:
       - app_network
     restart: unless-stopped
 
 volumes:
   db-data:
+  avatars:
 
 networks:
   app_network:
