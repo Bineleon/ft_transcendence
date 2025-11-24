@@ -12,7 +12,7 @@ export function Profile(): HTMLElement {
     const picture = el("img", "frame-photo-img img-newspaper cursor-pointer") as HTMLImageElement;
 
     // ⚡ Placeholder uniforme
-    picture.src = "/imgs/avatar2.png";
+    picture.src = "/imgs/avatar.png";
     picture.alt = "Avatar utilisateur";
     picture.loading = "lazy";
     picture.tabIndex = 0;
@@ -23,7 +23,7 @@ export function Profile(): HTMLElement {
     picture.dataset.fallback = "false";
     picture.addEventListener("error", () => {
         if (picture.dataset.fallback === "false") {
-            picture.src = "/imgs/avatar2.png";
+            picture.src = "/imgs/avatar.png";
             picture.dataset.fallback = "true";
         }
     });
@@ -70,11 +70,11 @@ export function Profile(): HTMLElement {
             const data = await res.json();
             if (!data.success) throw new Error("Upload failed");
             // ⚡ Charger seulement l’avatar, pas tout le profil
-            picture.src = data.data.avatarUrl || "/imgs/avatar2.png";
+            picture.src = data.data.avatarUrl || "/imgs/avatar.png";
         } catch (err) {
             console.error("Upload avatar error", err);
             pongAlert("Erreur lors de l'envoi. Réessaye.");
-            picture.src = "/imgs/avatar2.png";
+            picture.src = "/imgs/avatar.png";
         } finally {
             URL.revokeObjectURL(tmpUrl);
             avatarInput.value = "";
@@ -186,7 +186,7 @@ async function loadProfileData(picture: HTMLImageElement, loginLabel: HTMLElemen
         if (!res.ok) throw new Error("Impossible de charger le profil");
         const data = await res.json();
         const user = data.data.user;
-        picture.src = user.avatarUrl || "/imgs/avatar2.png";
+        picture.src = user.avatarUrl || "/imgs/avatar.png";
         loginLabel.textContent = user.username;
         emailLabel.textContent = user.email;
         stats.value =
