@@ -25,4 +25,6 @@ stop:
 clean:
 	docker system prune -af
 	docker volume rm ft_transcendence_db-data || true
+	docker volume rm ft_transcendence_avatars-data || true
+	docker volume rm ft_transcendence_avatars|| true
 	docker system prune -a --volumes
