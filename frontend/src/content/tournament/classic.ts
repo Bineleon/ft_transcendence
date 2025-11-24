@@ -126,7 +126,7 @@ export function classicTournament(): HTMLElement {
 /// Check Logged User a implementer plus tard
 
     const main = el("div", "");
-    const tCodeTitle = el("h1", "text-xl mb-4 text-right");
+    const tCodeTitle = el("h1", "article-base text-center");
     tCodeTitle.append(el("span", "", text("Welcome to Tournament: ")));
     tCodeTitle.append(el("span", "font-bold", text(tClassicDatas.name)));
     tCodeTitle.append(el("span", "", text(` (Code: ${tClassicDatas.tournamentId})`)));

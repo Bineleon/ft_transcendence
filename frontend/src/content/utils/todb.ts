@@ -20,6 +20,7 @@ export async function createDBTournament(code: string, datas: TournamentFormData
         });
         const data = await response.json();
         console.log("Code created:", code);
+        console.log("tMode:", datas.tMode.toLocaleLowerCase());
         // if (response.ok) {
             window.location.hash = `#/tournament/${datas.tMode.toLowerCase()}/${code}`;
         // } else {

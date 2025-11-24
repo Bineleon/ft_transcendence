@@ -1,4 +1,4 @@
-/* router.ts */
+import { logUI } from "./content/utils/logUI";
 
 /* Component est une fonction qui retourne un HTMLElement */
 export type Component = () => HTMLElement;
@@ -34,6 +34,12 @@ function render(): void {
   const path = getPathFromHash(routes);
   const node = routes[path]();
   root!.replaceChildren(node);
+
+  // Met à jour le statut utilisateur à chaque rendu de route
+  try { logUI();
+  } catch (error) {
+    console.error("Error updating user status:", error);
+  }
 }
 
 

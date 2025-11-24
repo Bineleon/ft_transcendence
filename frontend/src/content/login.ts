@@ -52,6 +52,7 @@ function login(): HTMLElement {
 
                 if (response.ok) {
                     pongAlert("2FA verified! Login successful.");
+                    try { window.dispatchEvent(new Event("auth-changed")); } catch (e) {}
                     const ID = inputLogin.value;
                     window.location.hash = `#/profile/${ID}`;
                 } else {

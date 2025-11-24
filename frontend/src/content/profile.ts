@@ -1,6 +1,7 @@
 import { el, text } from "./home";
 import { logout } from "../content/utils/logout.ts";
 import { deleteAccount } from "./utils/deleteAccount.ts";
+import { pongAlert } from "./utils/logchecks.ts";
 
 export function Profile(): HTMLElement {
     const main = el("main", "p-4");
@@ -9,15 +10,86 @@ export function Profile(): HTMLElement {
     const section = el("section", "grid grid-cols-1 md:grid-cols-2 gap-6");
 
     // ——— Frame photo ———
-    const picframe = el("div", "frame-photo");
-    const picture = el("img", "frame-photo-img img-newspaper");
-    picframe.append(picture);
+    // group permet d'utiliser group-hover:... sur l'overlay
+    const picframe = el("div", "frame-photo relative flex items-center justify-center group");
+    const picture = el("img", "frame-photo-img img-newspaper cursor-pointer") as HTMLImageElement;
+    // placeholder par défaut visible immédiatement
+    picture.src = "/public/imgs/avatar.png";
+    picture.alt = "Avatar utilisateur";
+    picture.loading = "lazy";
+    // fallback si le src fourni est cassé
+    picture.addEventListener("error", () => { picture.src = "/public/imgs/avatar.png"; });
+    // accessible, clickable
+    picture.tabIndex = 0;
+    picture.setAttribute("role", "button");
+    picture.setAttribute("aria-label", "Changer la photo de profil");
+
+    // hidden file input
+    const avatarInput = document.createElement("input") as HTMLInputElement;
+    avatarInput.type = "file";
+    avatarInput.accept = "image/*";
+    avatarInput.className = "hidden";
+
+    // small overlay icon (optional visual affordance)
+    const editHint = el("div", "absolute bottom-2 right-2 bg-white/80 rounded-full p-1 shadow pointer-events-none") as HTMLElement;
+    editHint.innerHTML = "✎";
+
+    // Hover tooltip overlay (visible on group-hover, pointer-events-none so it doesn't block clicks)
+    const hoverOverlay = el("div",
+      "absolute inset-0 flex items-center font-jmh justify-center bg-black/40 text-stone-100 text-3xl opacity-0 transition-opacity duration-200 pointer-events-none group-hover:opacity-100"
+    );
+    hoverOverlay.textContent = "Click to change avatar";
+
+    // handlers
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+    function openFilePicker() {
+        avatarInput.click();
+    }
+
+    picture.addEventListener("click", openFilePicker);
+    picture.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFilePicker(); }
+    });
+
+    avatarInput.addEventListener("change", async () => {
+        const file = avatarInput.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) { pongAlert("Fichier non supporté"); return; }
+        if (file.size > MAX_SIZE) { pongAlert("Image trop grosse (max 2MB)"); return; }
+
+        // preview
+        const tmpUrl = URL.createObjectURL(file);
+        picture.src = tmpUrl;
+
+        // upload (FormData) — adapte l'endpoint si besoin
+        try {
+            const fd = new FormData();
+            fd.append("avatar", file);
+            const res = await fetch("/api/auth/me/avatar", {
+                method: "POST",
+                body: fd,
+                credentials: "include",
+            });
+            if (!res.ok) throw new Error("Upload failed");
+            await loadProfileData(picture, loginLabel, emailLabel, stats, friendsList, requestsBox);
+        } catch (err) {
+            console.error("Upload avatar error", err);
+            pongAlert("Erreur lors de l'envoi. Réessaye.");
+        } finally {
+            // cleanup tmp url
+            URL.revokeObjectURL(tmpUrl);
+            avatarInput.value = "";
+        }
+    });
+
+    picframe.append(picture, avatarInput, editHint, hoverOverlay);
 
     // ——— Info box ———
     const infoBox = el("div", "frame-photo p-9 flex flex-col");
 
-    const loginLabel = el("h1", "p-4 font-jmh w-full text-8xl mb-4");
-    const emailLabel = el("h2", "p-4 font-modern-type text-3xl mb-4");
+    const loginLabel = el("h1", "title-profile mt-4");
+    const emailLabel = el("h2", "p-4 font-royalvogue text-xl");
     infoBox.append(loginLabel, emailLabel);
 
     const stats = el("textarea", `
@@ -30,16 +102,15 @@ export function Profile(): HTMLElement {
     // ——— Bouton Logout ———
     const logoutBtn = el(
         "button",
-        "ml-auto mt-2 mr-2 text-black/60 hover:text-black/80 font-modern-type text-xl underline underline-offset-4 transition"
+        "big-link"
     );
     logoutBtn.append(text("Logout"));
     logoutBtn.onclick = () => logout();
     infoBox.append(logoutBtn);
 
     // ——— Bouton Delete Account ———
-    const deleteButton = el(
-        "button",
-        "ml-auto mt-2 mr-2 text-red-600/60 hover:text-red-700/80 font-modern-type text-xl underline underline-offset-4 transition"
+    const deleteButton = el("button",
+        `big-link`
     );
     deleteButton.append(text("Supprimer mon compte"));
     deleteButton.onclick = async () => {
@@ -135,7 +206,7 @@ async function loadProfileData(
         const data = await res.json();
         const user = data.data.user;
 
-        picture.src = user.avatarUrl || "/public/imgs/default-avatar.png";
+        picture.src = user.avatarUrl || "/public/imgs/avatar.png";
         loginLabel.textContent = user.username;
         emailLabel.textContent = user.email;
         stats.value =
@@ -144,6 +215,12 @@ async function loadProfileData(
             `Créé le: ${new Date(user.createdAt).toLocaleString()}\n\n` +
             "Statistiques:\n" +
             "(À connecter bientôt à la DB)";
+
+        // ajoute le nom dans le sessionStorage pour l'affichage global
+        try {
+            if (user.username) sessionStorage.setItem("userName", user.username);
+            window.dispatchEvent(new Event("auth-changed"));
+        } catch (e) { /* noop */ }
 
         loadFriends(friendsList, requestsBox);
     } catch (err) {

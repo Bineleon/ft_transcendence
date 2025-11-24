@@ -197,6 +197,9 @@
            mb-1 tracking-widest
            flex justify-center;
   }
+  .title-profile {
+    @apply px-4 pt-4 font-jmh w-full text-5xl tracking-widest;
+  }
   .subtitle-hed {
     @apply font-im-great text-center 
            text-base
@@ -223,6 +226,11 @@
   }
   .article-link {
     @apply text-black underline decoration-4 hover:bg-black hover:text-white;
+  }
+
+  .big-link {
+    @apply text-xl underline decoration-4 hover:text-red-800
+    font-modern-type cursor-pointer text-right mr-4 mb-2;
   }
 
   .in-dark-box {

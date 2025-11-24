@@ -1,6 +1,6 @@
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
-import { notLoggedIn, pongAlert } from "../utils/logchecks.ts";
+import { notLoggedIn, pongAlert, reLogAlert } from "../utils/logchecks.ts";
 import { createDBTournament } from "../utils/todb.ts";
 
 
@@ -66,8 +66,7 @@ function generateTournamentCode(): string {
     for (let i = 0; i < 6; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    function checkTournamentCodeExists(code: string) {
-    }
+    // function checkTournamentCodeExists(code: string) {}
     return code;
 }
 
@@ -576,16 +575,17 @@ export function ChoseTournament(): HTMLElement {
 /// ********* TOURNAMENT SUBSCRIPTIONS *********/
     const subscriptionSection = el("div", "border-subscription box-subscription w-full h-auto");
 
- // notLoggedIn() retourne Promise<boolean> — on met à jour la section quand la promesse est résolue
 // notLoggedIn() retourne Promise<boolean> — on met à jour la section quand la promesse est résolue
     notLoggedIn().then((isNotLoggedIn) => {
         if (isNotLoggedIn) {
-            const loginPrompt = el("div", "text-center text-lg");
-            loginPrompt.append(
-                text(`Please `),
-                el("a", "text-blue-400 underline hover:text-blue-600", text("log in")),
-                text(` to create or join a tournament.`)
-            );
+            subscriptionSection.classList.remove("border-subscription");
+            subscriptionSection.classList.add("border-1", "border-stone-300", "rounded-lg");
+            const loginPrompt = el("div", "article-base text-center text-2xl");
+            const loginlink = el("a", "article-link cursor-pointer", text("log in"));
+            loginlink.addEventListener("click", () => {
+                reLogAlert();
+            });
+            loginPrompt.append(text(`Please `), loginlink, text(` to create or join a tournament.`));
             subscriptionSection.append(loginPrompt);
         } else {
             const subscriptionTitle = el("h2", "title-hed text-center my-4 mt-8");
