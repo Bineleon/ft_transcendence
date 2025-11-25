@@ -178,7 +178,7 @@ export function Profile(): HTMLElement {
     return main;
 }
 
-async function loadProfileData(picture: HTMLImageElement, loginLabel: HTMLElement, emailLabel: HTMLElement,
+export async function loadProfileData(picture: HTMLImageElement, loginLabel: HTMLElement, emailLabel: HTMLElement,
     stats: HTMLTextAreaElement, friendsList: HTMLElement, requestsBox: HTMLElement
 ) {
     try {

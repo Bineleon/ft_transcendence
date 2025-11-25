@@ -8,7 +8,6 @@ import { Profile } from "./content/profile";
 import { ChoseTournament } from "./content/tournament/tournament";
 import { classicTournament } from "./content/tournament/classic";
 import { PlaySnake } from "./content/snake/snake";
-import { logUI } from "./content/utils/logUI";
 
 
 // Structure des routes de l'application

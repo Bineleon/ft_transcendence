@@ -1,5 +1,6 @@
 import { el } from "../home.ts";
 import { notLoggedIn } from "./logchecks.ts";
+import { getLoggedName } from "./todb.ts";
 
 let _bound = false;
 
@@ -20,20 +21,22 @@ export function logUI() {
 
         container.append(logStatus, logBtn);
     }
-    notLoggedIn().then((isNotLogged) => {
+    notLoggedIn().then(async (isNotLogged) => {
         if (!logStatus || !logBtn) return;
 
         const newBtn = logBtn.cloneNode(true) as HTMLButtonElement;
         logBtn.replaceWith(newBtn);
         logBtn = newBtn;
-
+    
         if (isNotLogged) {
             logStatus.textContent = "Not logged in";
             logBtn.textContent = "Log In";
             logBtn.onclick = () => { window.location.hash = "#/login"; };
         } else {
-            logStatus.textContent = `Logged in as ${sessionStorage.getItem("userName") || "User"}`;
+            const userName = await getLoggedName();
+            logStatus.textContent = `Logged in as ${userName || "User"}`;
             logBtn.textContent = "Log Out";
+            logBtn.classList.add("hover:text-red-200");
             logBtn.onclick = async () => {
                 try {
                     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });

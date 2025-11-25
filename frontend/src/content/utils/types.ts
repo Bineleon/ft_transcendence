@@ -30,32 +30,27 @@ interface Friend {
 export interface Match {
     matchId: string;
     tournamentId: string | null;
-    gameCode: string;
-    p1UserId: string;
-    p1Score: number;
-    p2UserId: string;
-    p2Score: number;
+    p1User?: User;
+    p2User?: User;
+    p1Score?: number;
+    p2Score?: number;
     status: string;
     createdAt: string;
     updatedAt: string;
-    closedAt: string;
-    p1User: User;
-    p2User: User;
-    winner: String;
+    closedAt?: string;
+    winner?: String;
 }
 
 export type tStatus = "OPEN" | "RUNNING" | "CLOSED";
 export interface Tournament {
-    tournamentId: string;
+    tCode: string;
     name: string;
+    creatorId: string;
+    tMode: tournamentMode;
     status: tStatus;
     createdAt: string;
-    creatorId: string;
-    tMode: tournamentMode
     maxParticipants: number;
     kingMaxTime?: number;
     kingMaxRounds?: number;
     matches: Match[];
-    players: User[];
-    creator: User;
 }

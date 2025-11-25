@@ -10,18 +10,18 @@ const tCode = getRouteTail("/tournament/classic");
 
 /// TEMP EN ATTENDANT LES ROUTES VALIDES
 const tClassicDatas: Tournament = {
-    tournamentId: tCode,
+    tCode: tCode,
     name: "Classic Showdown",
-    status: "OPEN",
-    createdAt: "2024-01-15T10:00:00Z",
     creatorId: "Chatou",
     tMode: "CLASSIC",
-    matches: [] as Match[],
+    status: "OPEN",
+    createdAt: "2024-01-15T10:00:00Z",
     maxParticipants: 4,
     kingMaxTime: 300,
     kingMaxRounds: 5,
-    players: [] as User[],
-    creator: {} as User
+    matches: [] as Match[],
+    // players: [] as User[],
+    // creator: {} as User
 };
 
 const user1: User = {
@@ -78,46 +78,46 @@ const user4: User = {
     createdTournaments: []
 };
 
-export function updateMatches(t: Tournament): Match[] {
-    const matches: Match[] = [];
-    if (t.players[0] && t.players[1]) {
-        matches.push({
-            matchId: "match1",
-            tournamentId: t.tournamentId,
-            gameCode: "game1",
-            p1UserId: t.players[0].userId,
-            p1Score: 0,
-            p2UserId: t.players[1].userId,
-            p2Score: 0,
-            status: "OPEN",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            closedAt: "",
-            p1User: t.players[0],
-            p2User: t.players[1],
-            winner: ""
-        });
-    }
-    if (t.players[2] && t.players[3]) {
-        matches.push({
-            matchId: "match2",
-            tournamentId: t.tournamentId,
-            gameCode: "game2",
-            p1UserId: t.players[2].userId,
-            p1Score: 0,
-            p2UserId: t.players[3].userId,
-            p2Score: 0,
-            status: "OPEN",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            closedAt: "",
-            p1User: t.players[2],
-            p2User: t.players[3],
-            winner: ""
-        });
-    }
-    return matches;
-}
+// export function updateMatches(t: Tournament): Match[] {
+//     const matches: Match[] = [];
+//     if (t.players[0] && t.players[1]) {
+//         matches.push({
+//             matchId: "match1",
+//             tournamentId: t.tournamentId,
+//             gameCode: "game1",
+//             p1UserId: t.players[0].userId,
+//             p1Score: 0,
+//             p2UserId: t.players[1].userId,
+//             p2Score: 0,
+//             status: "OPEN",
+//             createdAt: new Date().toISOString(),
+//             updatedAt: new Date().toISOString(),
+//             closedAt: "",
+//             p1User: t.players[0],
+//             p2User: t.players[1],
+//             winner: ""
+//         });
+//     }
+//     if (t.players[2] && t.players[3]) {
+//         matches.push({
+//             matchId: "match2",
+//             tournamentId: t.tournamentId,
+//             gameCode: "game2",
+//             p1UserId: t.players[2].userId,
+//             p1Score: 0,
+//             p2UserId: t.players[3].userId,
+//             p2Score: 0,
+//             status: "OPEN",
+//             createdAt: new Date().toISOString(),
+//             updatedAt: new Date().toISOString(),
+//             closedAt: "",
+//             p1User: t.players[2],
+//             p2User: t.players[3],
+//             winner: ""
+//         });
+//     }
+//     return matches;
+// }
 
 
 /// FIN TEMP
@@ -129,11 +129,7 @@ export function classicTournament(): HTMLElement {
     const tCodeTitle = el("h1", "article-base text-center");
     tCodeTitle.append(el("span", "", text("Welcome to Tournament: ")));
     tCodeTitle.append(el("span", "font-bold", text(tClassicDatas.name)));
-    tCodeTitle.append(el("span", "", text(` (Code: ${tClassicDatas.tournamentId})`)));
-
-// Creation des Matchs
-    tClassicDatas.players = [user1, user2, user3, user4];
-    tClassicDatas.matches = updateMatches(tClassicDatas);
+    tCodeTitle.append(el("span", "", text(` (Code: ${tCode})`)));
 
 
 // Brackets Tournoi Classic

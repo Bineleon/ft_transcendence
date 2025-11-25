@@ -45,6 +45,7 @@ export function createApp() {
   // --- Modules ---
   setupAuthModule(app, prisma);
   setupFriendsModule(app);
+  console.log("Setting up Tournament Module...");
   setupTournamentModule(app);
 
   // --- Health check ---

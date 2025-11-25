@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { AuthService } from './auth.service.js';
 import type { UserService } from '../users/users.service.js';
 import type { RegisterRequest, LoginRequest } from './auth.model.js';
-import { formatSuccess } from '../../shared/utils/formatters.js';
+import { formatPublicUser, formatSuccess, formatUser } from '../../shared/utils/formatters.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { validateUserData } from './auth.policies.js';
 import { RefreshService } from './refresh.service.js';
@@ -99,6 +99,17 @@ export function authController(
     const userId = request.user!.userId;
     const profile = await userService.getOwnProfile(userId);
     return formatSuccess({ user: profile });
+  });
+
+  // --- PROFILE ---
+  app.get('/api/auth/publicme', { preHandler: authenticate }, async (request) => {
+    const userId = request.user!.userId;
+    const profile = await userService.getOwnProfile(userId);
+    return formatPublicUser({
+      id: profile.id,
+      username: profile.username,
+      avatarUrl: profile.avatarUrl ?? undefined,
+    });
   });
 
    app.get('/api/auth/loggedIn', async (request, reply) => {
