@@ -30,7 +30,7 @@ export function createRouter(rootId: string, routes: Routes) {
 }
 
 // root est forcément non null ici
-function render(): void {
+async function render() {
   const path = getPathFromHash(routes);
   const node = routes[path]();
   root!.replaceChildren(node);

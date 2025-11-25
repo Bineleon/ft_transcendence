@@ -1,141 +1,55 @@
 import { getRouteTail } from "../../router";
 import { el, text } from "../home";
-import { update } from "../pong/game/update";
-import type { Tournament, User, Match } from "../utils/types";
+import { getTournamentDatas } from "../utils/todb";
+import type { Tournament } from "../utils/types";
 import { renderTournamentBrackets } from "./brackets";
 // import { getTournamentDatas } from "../utils/todb";
 
 const tCode = getRouteTail("/tournament/classic");
 // const tClassicDatas: Promise<Tournament> = getTournamentDatas(tCode); 
-
-/// TEMP EN ATTENDANT LES ROUTES VALIDES
-const tClassicDatas: Tournament = {
-    tCode: tCode,
-    name: "Classic Showdown",
-    creatorId: "Chatou",
-    tMode: "CLASSIC",
-    status: "OPEN",
-    createdAt: "2024-01-15T10:00:00Z",
-    maxParticipants: 4,
-    kingMaxTime: 300,
-    kingMaxRounds: 5,
-    matches: [] as Match[],
-    // players: [] as User[],
-    // creator: {} as User
-};
-
-const user1: User = {
-    userId: "user1",
-    userName: "PlayerOne",
-    avatarUrl: null,
-    createdAt: "2023-12-01T09:00:00Z",
-    updatedAt: "2023-12-01T09:00:00Z",
-    friendOf: [],
-    friends: [],
-    matchesWon: [],
-    matchesAsP2: [],
-    matchesAsP1: [],
-    createdTournaments: []
-};
-
-const user2: User = {
-    userId: "user2",
-    userName: "PlayerTwo",
-    avatarUrl: null,
-    createdAt: "2023-12-02T10:00:00Z",
-    updatedAt: "2023-12-02T10:00:00Z",
-    friendOf: [],
-    friends: [],
-    matchesWon: [],
-    matchesAsP2: [],
-    matchesAsP1: [],
-    createdTournaments: []
-};
-const user3: User = {
-    userId: "user3",
-    userName: "PlayerThree",
-    avatarUrl: null,
-    createdAt: "2023-12-03T11:00:00Z",
-    updatedAt: "2023-12-03T11:00:00Z",
-    friendOf: [],
-    friends: [],
-    matchesWon: [],
-    matchesAsP2: [],
-    matchesAsP1: [],
-    createdTournaments: []
-};
-const user4: User = {
-    userId: "user4",
-    userName: "PlayerFour",
-    avatarUrl: null,
-    createdAt: "2023-12-04T12:00:00Z",
-    updatedAt: "2023-12-04T12:00:00Z",
-    friendOf: [],
-    friends: [],
-    matchesWon: [],
-    matchesAsP2: [],
-    matchesAsP1: [],
-    createdTournaments: []
-};
-
-// export function updateMatches(t: Tournament): Match[] {
-//     const matches: Match[] = [];
-//     if (t.players[0] && t.players[1]) {
-//         matches.push({
-//             matchId: "match1",
-//             tournamentId: t.tournamentId,
-//             gameCode: "game1",
-//             p1UserId: t.players[0].userId,
-//             p1Score: 0,
-//             p2UserId: t.players[1].userId,
-//             p2Score: 0,
-//             status: "OPEN",
-//             createdAt: new Date().toISOString(),
-//             updatedAt: new Date().toISOString(),
-//             closedAt: "",
-//             p1User: t.players[0],
-//             p2User: t.players[1],
-//             winner: ""
-//         });
-//     }
-//     if (t.players[2] && t.players[3]) {
-//         matches.push({
-//             matchId: "match2",
-//             tournamentId: t.tournamentId,
-//             gameCode: "game2",
-//             p1UserId: t.players[2].userId,
-//             p1Score: 0,
-//             p2UserId: t.players[3].userId,
-//             p2Score: 0,
-//             status: "OPEN",
-//             createdAt: new Date().toISOString(),
-//             updatedAt: new Date().toISOString(),
-//             closedAt: "",
-//             p1User: t.players[2],
-//             p2User: t.players[3],
-//             winner: ""
-//         });
-//     }
-//     return matches;
-// }
-
-
 /// FIN TEMP
 
-export function classicTournament(): HTMLElement {
-/// Check Logged User a implementer plus tard
-
+function renderTournamentView(t: Tournament): HTMLElement {
     const main = el("div", "");
     const tCodeTitle = el("h1", "article-base text-center");
     tCodeTitle.append(el("span", "", text("Welcome to Tournament: ")));
-    tCodeTitle.append(el("span", "font-bold", text(tClassicDatas.name)));
+    tCodeTitle.append(el("span", "font-bold", text(t.name)));
     tCodeTitle.append(el("span", "", text(` (Code: ${tCode})`)));
-
-
-// Brackets Tournoi Classic
-    const tournamentBrackets = renderTournamentBrackets(tClassicDatas) as HTMLElement;
+    const tournamentBrackets = renderTournamentBrackets(t) as HTMLElement;
 
 
     main.append(tCodeTitle, tournamentBrackets);
     return main;
+}
+
+export function classicTournament(): HTMLElement {
+    // 1) On crée un container immédiat
+    const container = el("div", "");
+    const loading = el("p", "article-base text-center", text("Loading tournament..."));
+    container.append(loading);
+
+    const tCode = getRouteTail("/tournament/classic");
+
+    // 2) On lance le fetch en async, mais SANS rendre la fonction async
+    getTournamentDatas(tCode).then((tClassicDatas) => {
+        container.innerHTML = "";
+
+        if (!tClassicDatas) {
+            const errorDiv = el("div", "article-base text-center");
+            errorDiv.append(text("Tournament not found."));
+            container.append(errorDiv);
+            return;
+        }
+
+        const view = renderTournamentView(tClassicDatas);
+        // On met la vue dans notre container
+        container.append(view);
+    }).catch((err) => {
+        console.error(err);
+        container.innerHTML = "";
+        container.append(text("Error while loading tournament."));
+    });
+
+    // 3) On renvoie un DOM SYNCHRONE
+    return container;
 }

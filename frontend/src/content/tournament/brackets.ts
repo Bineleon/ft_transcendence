@@ -28,20 +28,20 @@ function listFt(label: string, extraClass = "", whithId?: string): HTMLLIElement
 export function renderBracket(t: Tournament): HTMLElement {
     const wrapper = el("div", "flex mr-3");
 
-    const firstRound = renderFirstRoundColumn("round-1", 16, t, {
+    const firstRound = renderFirstRoundColumn("round-1", t.maxParticipants, t, {
         markAnchorOnIndex: 0,
         extraLiClass: "first-round"
     });
     wrapper.append(firstRound);
 
-    for (let players = 16 / 2; players >= 1; players /= 2) {
+    for (let nbPlayers = t.maxParticipants / 2; nbPlayers >= 1; nbPlayers /= 2) {
         // tu peux garder ton ID basé sur le nombre de joueurs restants si tu veux
-        const roundID = `round-${players}`;
-        console.log(`Rendering round: ${roundID} with ${players} slots`);
+        const roundID = `round-${nbPlayers}`;
+        console.log(`Rendering round: ${roundID} with ${nbPlayers} slots`);
 
         const roundColumn = renderNextRoundsColumns(
             roundID,
-            players - 1,          // ⬅ nombre de slots à dessiner pour CE round
+            nbPlayers - 1,          // ⬅ nombre de slots à dessiner pour CE round
             t,
             {
                 markAnchorOnIndex: 0,

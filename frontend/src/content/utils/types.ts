@@ -3,6 +3,7 @@ import type { tournamentMode } from "../tournament/tournament";
 export interface User {
     userId: string;
     userName: string;
+    alias?: string;
     avatarUrl: string | null;
     createdAt: string;
     updatedAt: string;
