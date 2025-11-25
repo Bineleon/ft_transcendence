@@ -419,9 +419,9 @@ export function ChoseTournament(): HTMLElement {
 
         Congratulations to the Champion!`));
     const profilePic = el("img", "relative h-auto w-auto max-h-24 max-w-24") as HTMLImageElement;
-        profilePic.src = "/public/imgs/trophy.png";
+        profilePic.src = "/imgs/trophy.png";
     const cupIcon = el("img", "relative h-auto w-auto max-h-24 max-w-24") as HTMLImageElement;
-        cupIcon.src = "/public/imgs/trophy.png";
+        cupIcon.src = "/imgs/trophy.png";
 
 // 3) Tournament Code        
     const tournamentCode = el("div", "box-dark img-newspaper text-white text-center text-2xl -m-4 font-im-double uppercase");

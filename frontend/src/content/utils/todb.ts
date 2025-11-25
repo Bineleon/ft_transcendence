@@ -74,7 +74,7 @@ export async function getLoggedID(): Promise<string> {
         headers: { "Content-Type": "application/json" }
     });
     if (!userDatas.ok) {
-        reLogAlert();
+        // reLogAlert();
         return "";
     }
     return (await userDatas.json()).id;
@@ -87,7 +87,7 @@ export async function getLoggedName(): Promise<string> {
         headers: { "Content-Type": "application/json" }
     });
     if (!userDatas.ok) {
-        reLogAlert();
+        // reLogAlert();
         return "";
     }
     return (await userDatas.json()).username;
