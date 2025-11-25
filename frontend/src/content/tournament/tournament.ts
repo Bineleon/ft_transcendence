@@ -1,7 +1,8 @@
+import { getRouteTail } from "../../router.ts";
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
 import { notLoggedIn, pongAlert, reLogAlert } from "../utils/logchecks.ts";
-import { createDBTournament } from "../utils/todb.ts";
+import { createDBTournament, getLoggedID, getUserDatas } from "../utils/todb.ts";
 
 
 export type tournamentMode = "KING" | "CLASSIC" | "GAUNTLET";
@@ -70,7 +71,7 @@ function generateTournamentCode(): string {
     return code;
 }
 
-function handleGenerateTournament(): void {
+async function handleGenerateTournament(): Promise<void> {
     if (!formEls) return;
     
     if (((!formEls.nameInput.value.trim() || !formEls.participantsButton.value) && TMode !== "KING") || !TMode) {
@@ -82,10 +83,11 @@ function handleGenerateTournament(): void {
         return;
     }
 
+    const creatorId = await getLoggedID();
     tCode = generateTournamentCode();
     formDatas = {
         tName: formEls.nameInput.value.trim(),
-        creatorID: "currentUserID", // À remplacer par l'ID réel de l'utilisateur connecté
+        creatorID: creatorId, // À remplacer par l'ID réel de l'utilisateur connecté
         tMode: "CLASSIC",
         maxParticipants: parseInt(formEls.participantsButton.value, 10),
     };

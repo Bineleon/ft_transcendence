@@ -1,7 +1,8 @@
 import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
-import { pongAlert } from "./logchecks.ts";
+import { pongAlert, reLogAlert } from "./logchecks.ts";
 import type { User } from "./types.ts";
+
 
 export async function createDBTournament(code: string, datas: TournamentFormDatas): Promise<void> {
     const payload = {
@@ -21,26 +22,75 @@ export async function createDBTournament(code: string, datas: TournamentFormData
         const data = await response.json();
         console.log("Code created:", code);
         console.log("tMode:", datas.tMode.toLocaleLowerCase());
-        // if (response.ok) {
+        if (response.ok) {
             window.location.hash = `#/tournament/${datas.tMode.toLowerCase()}/${code}`;
-        // } else {
-        //     pongAlert(`Failed to create tournament: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Tournament Creation Error" });
-        // }
+        } else {
+            pongAlert(`Failed to create tournament: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Tournament Creation Error" });
+        }
     }
-
     catch (error) {
         console.error("Tournament creation error:", error);
         pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament Creation Error" });
-    } finally {
-        // Any cleanup if necessary
     }
+
+    // createMatches(code, datas);
 }
 
+export async function createMatches(tournamentCode: string, datas: TournamentFormDatas): Promise<void> {
+    const payload = {
+        tournamentCode: tournamentCode,
+        mode: datas.tMode,
+        maxParticipants: datas.maxParticipants,
+    };
+    try {
+        const response = await fetch("/api/tournament/matches", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            credentials: "include"
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            pongAlert(`Failed to create matches: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Match Creation Error" });
+        }
+    }
+    catch (error) {
+        console.error("Match creation error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Match Creation Error" });
+    }
+}
 
 export function getUserNameByIdTEMP(id: string, users: User[]): string {
     // TEMPORAIRE EN ATTENDANT LES VRAIES ROUTES
     const user = users.find((u) => u.userId === id);
     return user ? user.userName : "Unknown User";
+}
+
+export async function getLoggedID(): Promise<string> {
+    const userDatas = await fetch ("/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+    });
+    if (!userDatas.ok) {
+        reLogAlert();
+        return "";
+    }
+    return (await userDatas.json()).id;
+}
+
+export async function getLoggedName(): Promise<string> {
+    const userDatas = await fetch ("/api/auth/publicme", {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+    });
+    if (!userDatas.ok) {
+        reLogAlert();
+        return "";
+    }
+    return (await userDatas.json()).username;
 }
 
 

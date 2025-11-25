@@ -1,6 +1,7 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
 import type { TournamentMode, TournamentStatus } from '@prisma/client';
 import type { CreateTournamentDTO, TournamentResponse } from './tournament.model.js';
+import { request } from 'http';
 
 const prisma = getPrismaClient();
 
@@ -12,39 +13,58 @@ export class TournamentService {
   
   async create(data: CreateTournamentDTO): Promise<TournamentResponse> {
     // Validation pour le mode KING
+    console.log("Creating tournament with data:", data);
     if (data.mode === 'KING') {
       if (!data.kingMaxTime || !data.kingMaxRounds) {
         throw new Error('KING mode requires kingMaxTime and kingMaxRounds');
       }
     }
-
     // Vérifier que le code n'existe pas
     const exists = await this.codeExists(data.code);
     if (exists) {
       throw new Error('Tournament code already exists');
     }
 
-    return await prisma.tournament.create({
-      data: {
-        code: data.code,
-        name: data.name,
-        createdBy: data.creatorID,
-        mode: data.mode as TournamentMode,
-        maxParticipants: data.maxParticipants,
-        kingMaxTime: data.kingMaxTime,
-        kingMaxRounds: data.kingMaxRounds,
-        status: 'OPEN' as TournamentStatus
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true
+    // Si un creatorID est fourni, vérifier qu'il existe pour éviter la contrainte FK
+    let createdByValue: string | undefined;
+    if (data.creatorID) {
+      const user = await prisma.user.findUnique({ where: { id: data.creatorID }, select: { id: true } });
+      if (!user) {
+        throw new Error(`Creator not found for id=${data.creatorID}`);
+      }
+      createdByValue = data.creatorID;
+    }
+    
+    try {
+      return await prisma.tournament.create({
+        data: {
+          code: data.code,
+          name: data.name,
+          ...(createdByValue ? { createdBy: createdByValue } : {}),
+          mode: data.mode as TournamentMode,
+          maxParticipants: data.maxParticipants,
+          kingMaxTime: data.kingMaxTime,
+          kingMaxRounds: data.kingMaxRounds,
+          status: 'OPEN' as TournamentStatus
+        },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true
+            }
           }
         }
+      });
+    } catch (err) {
+      console.error("createTournament error:", err);
+      // si Prisma renvoie une erreur de FK, rendre le message plus lisible
+      if ((err as any).code === 'P2003') {
+        throw new Error('Foreign key constraint violated (invalid creator id)');
       }
-    });
+      throw err;
+    }
   }
 
   // ==========================================
