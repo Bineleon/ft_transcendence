@@ -145,4 +145,26 @@ export class UserService {
   async getTotalUsers(): Promise<number> {
     return this.prisma.user.count();
   }
+
+  async getPublicProfileByUsername(username: string): Promise<PublicUserProfile> {
+  const user = await this.prisma.user.findUnique({
+    where: { username },
+    select: {
+      id: true,
+      username: true,
+      avatarUrl: true,
+      createdAt: true
+    }
+  });
+
+  if (!user) throw new NotFoundError('User not found');
+
+  return {
+    id: user.id,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
+    createdAt: user.createdAt.toISOString()
+  };
+}
+
 }

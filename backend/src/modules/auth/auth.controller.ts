@@ -101,6 +101,24 @@ export function authController(
     return formatSuccess({ user: profile });
   });
 
+  // --- Profile Public ---
+  app.get('/api/profile/:username', async (request, reply) => {
+  const { username } = request.params as { username: string };
+
+  try {
+    const profile = await userService.getPublicProfileByUsername(username);
+    return formatSuccess({ user: profile });
+  } catch (err) {
+    return reply.code(404).send({
+      error: {
+        code: 'USER_NOT_FOUND',
+        message: 'User not found',
+        statusCode: 404
+      }
+    });
+  }
+});
+
    app.get('/api/auth/loggedIn', async (request, reply) => {
     try {
       const token =
