@@ -199,6 +199,7 @@ export function Profile(): HTMLElement {
     return main;
 }
 
+
 async function loadProfileData(
     picture: HTMLImageElement,
     loginLabel: HTMLElement,
@@ -222,21 +223,34 @@ async function loadProfileData(
         const user = data.data.user;
 
         picture.src = user.avatarUrl || "/imgs/avatar.png";
-        loginLabel.textContent = user.username;
+        loginLabel.textContent = user.username || "(nom inconnu)";
         emailLabel.textContent = user.email || "(email privé)";
 
-        stats.value =
-            `Informations du compte:\n\nID: ${user.id}\nCréé le: ${new Date(user.createdAt).toLocaleString()}`;
+        // Affichage complet des infos du profil
+        stats.value = `
+Informations du compte:
+
+ID: ${user.id || "(inconnu)"}
+Username: ${user.username || "(inconnu)"}
+Email: ${user.email || "(privé)"}
+Créé le: ${user.createdAt ? new Date(user.createdAt).toLocaleString() : "(inconnu)"}
+King Max Time: ${user.kingMaxTime ?? "(aucun)"} secondes
+King Max Rounds: ${user.kingMaxRounds ?? "(aucun)"}
+Friends Count: ${user.friendsCount ?? 0}
+Matches Won: ${user.matchesWonCount ?? 0}
+        `.trim();
 
         if (!viewedUsername && friendsList && requestsBox) {
             loadFriends(friendsList, requestsBox);
         }
     } catch (err) {
+        console.error("loadProfileData error:", err);
         loginLabel.textContent = "Erreur";
         emailLabel.textContent = "Profil inaccessible";
-        stats.value = "Une erreur est survenue.";
+        stats.value = "Une erreur est survenue lors du chargement du profil.";
     }
 }
+
 
 async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
     friendsList.innerHTML = "";

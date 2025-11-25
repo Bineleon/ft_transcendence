@@ -101,6 +101,22 @@ export function authController(
     return formatSuccess({ user: profile });
   });
 
+// app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => {
+//   try {
+//     const profile = await userService.getFullProfile(request.user!.userId);
+//     return formatSuccess({ user: profile }, 'Profile loaded successfully');
+//   } catch (err) {
+//     request.log.error(err, 'Failed to load profile');
+//     return reply.code(500).send({
+//       error: {
+//         code: 'PROFILE_LOAD_FAILED',
+//         message: 'Failed to load profile',
+//         statusCode: 500,
+//       },
+//     });
+//   }
+// });
+
   // --- Profile Public ---
   app.get('/api/profile/:username', async (request, reply) => {
   const { username } = request.params as { username: string };
