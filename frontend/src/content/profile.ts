@@ -2,24 +2,25 @@ import { el, text } from "./home";
 import { logout } from "../content/utils/logout.ts";
 import { deleteAccount } from "./utils/deleteAccount.ts";
 import { pongAlert } from "./utils/logchecks";
+import { getRouteTail } from "../router";
 
 export function Profile(): HTMLElement {
     const main = el("main", "p-4");
+
+    const viewedUsername = getRouteTail("/profile");
+    const isSelf = viewedUsername === "" || viewedUsername === undefined;
 
     const section = el("section", "grid grid-cols-1 md:grid-cols-2 gap-6");
 
     const picframe = el("div", "frame-photo relative flex items-center justify-center group");
     const picture = el("img", "frame-photo-img img-newspaper cursor-pointer") as HTMLImageElement;
 
-    // ⚡ Placeholder uniforme
     picture.src = "/imgs/avatar.png";
     picture.alt = "Avatar utilisateur";
     picture.loading = "lazy";
     picture.tabIndex = 0;
-    picture.setAttribute("role", "button");
-    picture.setAttribute("aria-label", "Changer la photo de profil");
+    picture.setAttribute("role", "img");
 
-    // ⚡ Éviter boucle infinie sur erreur
     picture.dataset.fallback = "false";
     picture.addEventListener("error", () => {
         if (picture.dataset.fallback === "false") {
@@ -42,50 +43,55 @@ export function Profile(): HTMLElement {
     hoverOverlay.textContent = "Click to change avatar";
 
     const MAX_SIZE = 2 * 1024 * 1024;
-
     function openFilePicker() { avatarInput.click(); }
 
-    picture.addEventListener("click", openFilePicker);
-    picture.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFilePicker(); }
-    });
+    if (isSelf) {
+        picture.setAttribute("aria-label", "Changer la photo de profil");
+        picture.addEventListener("click", openFilePicker);
+        picture.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFilePicker(); }
+        });
 
-    avatarInput.addEventListener("change", async () => {
-        const file = avatarInput.files?.[0];
-        if (!file) return;
-        if (!file.type.startsWith("image/")) { pongAlert("Fichier non supporté"); return; }
-        if (file.size > MAX_SIZE) { pongAlert("Image trop grosse (max 2MB)"); return; }
+        avatarInput.addEventListener("change", async () => {
+            const file = avatarInput.files?.[0];
+            if (!file) return;
+            if (!file.type.startsWith("image/")) { pongAlert("Fichier non supporté"); return; }
+            if (file.size > MAX_SIZE) { pongAlert("Image trop grosse (max 2MB)"); return; }
 
-        const tmpUrl = URL.createObjectURL(file);
-        picture.src = tmpUrl;
+            const tmpUrl = URL.createObjectURL(file);
+            picture.src = tmpUrl;
 
-        try {
-            const fd = new FormData();
-            fd.append("file", file);
-            const res = await fetch("/api/users/me/avatar", {
-                method: "POST",
-                body: fd,
-                credentials: "include",
-            });
-            const data = await res.json();
-            if (!data.success) throw new Error("Upload failed");
-            // ⚡ Charger seulement l’avatar, pas tout le profil
-            picture.src = data.data.avatarUrl || "/imgs/avatar.png";
-        } catch (err) {
-            console.error("Upload avatar error", err);
-            pongAlert("Erreur lors de l'envoi. Réessaye.");
-            picture.src = "/imgs/avatar.png";
-        } finally {
-            URL.revokeObjectURL(tmpUrl);
-            avatarInput.value = "";
-        }
-    });
+            try {
+                const fd = new FormData();
+                fd.append("file", file);
+                const res = await fetch("/api/users/me/avatar", {
+                    method: "POST",
+                    body: fd,
+                    credentials: "include",
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error("Upload failed");
+                picture.src = data.data.avatarUrl || "/imgs/avatar.png";
+            } catch (err) {
+                console.error("Upload avatar error", err);
+                pongAlert("Erreur lors de l'envoi. Réessaye.");
+                picture.src = "/imgs/avatar.png";
+            } finally {
+                URL.revokeObjectURL(tmpUrl);
+                avatarInput.value = "";
+            }
+        });
+    } else {
+        picture.classList.remove("cursor-pointer");
+        picture.style.pointerEvents = "none";
+        editHint.remove();
+        hoverOverlay.remove();
+    }
 
-    picframe.append(picture, avatarInput, editHint, hoverOverlay);
+    picframe.append(picture, avatarInput);
+    if (isSelf) picframe.append(editHint, hoverOverlay);
 
-    // ——— Info box ———
     const infoBox = el("div", "frame-photo p-9 flex flex-col");
-
     const loginLabel = el("h1", "title-profile mt-4");
     const emailLabel = el("h2", "p-4 font-royalvogue text-xl");
     infoBox.append(loginLabel, emailLabel);
@@ -97,34 +103,30 @@ export function Profile(): HTMLElement {
     stats.readOnly = true;
     infoBox.append(stats);
 
-    const logoutBtn = el(
-        "button",
-        "big-link"
-    );
-    logoutBtn.append(text("Logout"));
-    logoutBtn.onclick = () => logout();
-    infoBox.append(logoutBtn);
+    if (isSelf) {
+        const logoutBtn = el("button", "big-link");
+        logoutBtn.append(text("Logout"));
+        logoutBtn.onclick = () => logout();
+        infoBox.append(logoutBtn);
 
-    // ——— Bouton Delete Account ———
-    const deleteButton = el("button",
-        `big-link`
-    );
-    deleteButton.append(text("Supprimer mon compte"));
-    deleteButton.onclick = async () => {
-        const sure = confirm("Cette action est irréversible. Voulez-vous vraiment supprimer votre compte ?");
-        if (!sure) return;
-        const ok = await deleteAccount();
-        if (ok) window.location.href = "/#/login";
-        else alert("Impossible de supprimer le compte.");
-    };
-    infoBox.append(deleteButton);
+        const deleteButton = el("button", "big-link");
+        deleteButton.append(text("Supprimer mon compte"));
+        deleteButton.onclick = async () => {
+            const sure = confirm("Cette action est irréversible. Voulez-vous vraiment supprimer votre compte ?");
+            if (!sure) return;
+            const ok = await deleteAccount();
+            if (ok) window.location.href = "/#/login";
+            else alert("Impossible de supprimer le compte.");
+        };
+        infoBox.append(deleteButton);
+    }
 
     section.append(picframe, infoBox);
     main.append(section);
 
-    // ——— Friends Section ———
     const friendsSection = el("div", "grid grid-cols-1 md:grid-cols-2 gap-6 mt-8");
 
+    // --- Section Friends / Add Friend ---
     const list = el("div", "mx-[10%]");
     const friendsTitle = el("h2", "font-royalvogue text-4xl mb-4");
     friendsTitle.append(text("Friends"));
@@ -133,71 +135,122 @@ export function Profile(): HTMLElement {
     const friendsList = el("ul", "relative list-disc list-inside font-modern-type text-lg");
     list.append(friendsList);
 
-    const addFriendBox = el("div", "mt-4 flex items-center");
-    const addFriendInput = el("input", "border p-2 rounded flex-1 mr-2") as HTMLInputElement;
-    addFriendInput.placeholder = "Nom ou ID de l'ami";
+    if (isSelf) {
+        // Formulaire interne pour ajouter des amis
+        const addFriendBox = el("div", "mt-4 flex items-center");
+        const addFriendInput = el("input", "border p-2 rounded flex-1 mr-2") as HTMLInputElement;
+        addFriendInput.placeholder = "Nom ou ID de l'ami";
 
-    const addFriendBtn = el(
-        "button",
-        "text-black/60 hover:text-black/80 font-modern-type text-lg underline underline-offset-4 transition"
-    );
-    addFriendBtn.textContent = "Add Friend";
-    addFriendBtn.onclick = async () => {
-        const friendUsername = addFriendInput.value.trim();
-        if (!friendUsername) return;
-        try {
-            const res = await fetch("/api/friends/request", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ username: friendUsername })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert("Demande envoyée !");
-                addFriendInput.value = "";
-                loadFriends(friendsList, requestsBox);
-            } else alert("Impossible d'envoyer la demande.");
-        } catch {
-            alert("Erreur réseau.");
-        }
-    };
-    addFriendBox.append(addFriendInput, addFriendBtn);
-    list.append(addFriendBox);
+        const addFriendBtn = el(
+            "button",
+            "text-black/60 hover:text-black/80 font-modern-type text-lg underline underline-offset-4 transition"
+        );
+        addFriendBtn.textContent = "Add Friend";
+        addFriendBtn.onclick = async () => {
+            const friendUsername = addFriendInput.value.trim();
+            if (!friendUsername) return;
+            try {
+                const res = await fetch("/api/friends/request", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ username: friendUsername })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Demande envoyée !");
+                    addFriendInput.value = "";
+                    loadFriends(friendsList, requestsBox);
+                } else alert("Impossible d'envoyer la demande.");
+            } catch {
+                alert("Erreur réseau.");
+            }
+        };
+        addFriendBox.append(addFriendInput, addFriendBtn);
+        list.append(addFriendBox);
+    } else {
+        // Si on consulte un profil tiers, juste un bouton Add Friend
+        const addFriendBtn = el("button", "big-link mt-2");
+        addFriendBtn.append(text("Add Friend"));
+        addFriendBtn.onclick = async () => {
+            try {
+                const res = await fetch("/api/friends/request", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ username: viewedUsername })
+                });
+                const data = await res.json();
+                if (data.success) alert("Demande envoyée !");
+                else alert("Impossible d'envoyer la demande.");
+            } catch {
+                alert("Erreur réseau.");
+            }
+        };
+        list.append(addFriendBtn);
+    }
 
     const requestsBox = el("div", "mx-[10%]");
-    const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
-    requestsBox.append(requestsTitle);
-
     friendsSection.append(list, requestsBox);
     main.append(friendsSection);
 
-    // ⚡ Charger profil et amis une seule fois
-    loadProfileData(picture, loginLabel, emailLabel, stats, friendsList, requestsBox);
+    loadProfileData(picture, loginLabel, emailLabel, stats, friendsList, requestsBox, viewedUsername);
 
     return main;
 }
 
-export async function loadProfileData(picture: HTMLImageElement, loginLabel: HTMLElement, emailLabel: HTMLElement,
-    stats: HTMLTextAreaElement, friendsList: HTMLElement, requestsBox: HTMLElement
+
+async function loadProfileData(
+    picture: HTMLImageElement,
+    loginLabel: HTMLElement,
+    emailLabel: HTMLElement,
+    stats: HTMLTextAreaElement,
+    friendsList: HTMLElement | null,
+    requestsBox: HTMLElement | null,
+    viewedUsername: string
 ) {
     try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
+        let res;
+
+        if (viewedUsername) {
+            res = await fetch(`/api/profile/${viewedUsername}`, { credentials: "include" });
+        } else {
+            res = await fetch("/api/auth/me", { credentials: "include" });
+        }
+
         if (!res.ok) throw new Error("Impossible de charger le profil");
         const data = await res.json();
         const user = data.data.user;
+
         picture.src = user.avatarUrl || "/imgs/avatar.png";
-        loginLabel.textContent = user.username;
-        emailLabel.textContent = user.email;
-        stats.value =
-            `Informations du compte:\n\nID: ${user.id}\nCréé le: ${new Date(user.createdAt).toLocaleString()}\n\nStatistiques:\n(À connecter bientôt à la DB)`;
-        loadFriends(friendsList, requestsBox);
+        loginLabel.textContent = user.username || "(nom inconnu)";
+        emailLabel.textContent = user.email || "(email privé)";
+
+        // Affichage complet des infos du profil
+        stats.value = `
+Informations du compte:
+
+ID: ${user.id || "(inconnu)"}
+Username: ${user.username || "(inconnu)"}
+Email: ${user.email || "(privé)"}
+Créé le: ${user.createdAt ? new Date(user.createdAt).toLocaleString() : "(inconnu)"}
+King Max Time: ${user.kingMaxTime ?? "(aucun)"} secondes
+King Max Rounds: ${user.kingMaxRounds ?? "(aucun)"}
+Friends Count: ${user.friendsCount ?? 0}
+Matches Won: ${user.matchesWonCount ?? 0}
+        `.trim();
+
+        if (!viewedUsername && friendsList && requestsBox) {
+            loadFriends(friendsList, requestsBox);
+        }
     } catch (err) {
+        console.error("loadProfileData error:", err);
         loginLabel.textContent = "Erreur";
-        emailLabel.textContent = "Impossible de charger le profil";
-        stats.value = "Une erreur est survenue.";
+        emailLabel.textContent = "Profil inaccessible";
+        stats.value = "Une erreur est survenue lors du chargement du profil.";
     }
 }
+
 
 async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
     friendsList.innerHTML = "";
@@ -215,6 +268,7 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                 friendsList.append(li);
             });
         }
+
         const requestsRes = await fetch("/api/friends/requests", { credentials: "include" });
         const requestsData = await requestsRes.json();
         if (requestsData.success && Array.isArray(requestsData.data)) {
@@ -234,6 +288,7 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                     });
                     loadFriends(friendsList, requestsBox);
                 };
+
                 const declineBtn = el("button", "btn-click") as HTMLButtonElement;
                 declineBtn.textContent = "Decline";
                 declineBtn.onclick = async () => {
@@ -245,9 +300,12 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                     });
                     loadFriends(friendsList, requestsBox);
                 };
+
                 reqDiv.append(nameSpan, acceptBtn, declineBtn);
                 requestsBox.append(reqDiv);
             });
         }
-    } catch (err) { console.error("Erreur chargement amis :", err); }
+    } catch (err) {
+        console.error("Erreur chargement amis :", err);
+    }
 }

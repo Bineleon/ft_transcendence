@@ -145,4 +145,85 @@ export class UserService {
   async getTotalUsers(): Promise<number> {
     return this.prisma.user.count();
   }
+
+  async getPublicProfileByUsername(username: string): Promise<PublicUserProfile> {
+  const user = await this.prisma.user.findUnique({
+    where: { username },
+    select: {
+      id: true,
+      username: true,
+      avatarUrl: true,
+      createdAt: true
+    }
+  });
+
+  if (!user) throw new NotFoundError('User not found');
+
+  return {
+    id: user.id,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
+    createdAt: user.createdAt.toISOString()
+  };
+}
+
+// Récupère les infos étendues pour le profil
+async getFullProfile(userId: string) {
+  try {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        createdAt: true,
+        avatarUrl: true,
+        friends: {
+          where: { status: 'accepted' }
+        },
+        friendOf: {
+          where: { status: 'accepted' }
+        },
+        matchesWon: true,
+        createdTournaments: {
+          select: {
+            kingMaxTime: true,
+            kingMaxRounds: true
+          }
+        }
+      }
+    });
+
+    if (!user) throw new Error("User not found");
+
+    const kingMaxTime = user.createdTournaments?.length
+      ? Math.max(...user.createdTournaments.map(t => t.kingMaxTime ?? 0)) || undefined
+      : undefined;
+
+    const kingMaxRounds = user.createdTournaments?.length
+      ? Math.max(...user.createdTournaments.map(t => t.kingMaxRounds ?? 0)) || undefined
+      : undefined;
+
+    const friendsCount = (user.friends?.length || 0) + (user.friendOf?.length || 0);
+    const matchesWonCount = user.matchesWon?.length || 0;
+
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      createdAt: user.createdAt,
+      avatarUrl: user.avatarUrl,
+      kingMaxTime,
+      kingMaxRounds,
+      friendsCount,
+      matchesWonCount
+    };
+  } catch (err) {
+    console.error("getFullProfile error:", err);
+    throw err;
+  }
+}
+
+
+
 }

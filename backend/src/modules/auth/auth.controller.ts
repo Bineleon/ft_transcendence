@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { AuthService } from './auth.service.js';
 import type { UserService } from '../users/users.service.js';
 import type { RegisterRequest, LoginRequest } from './auth.model.js';
-import { formatPublicUser, formatSuccess, formatUser } from '../../shared/utils/formatters.js';
+import { formatPublicUser, formatSuccess } from '../../shared/utils/formatters.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { validateUserData } from './auth.policies.js';
 import { RefreshService } from './refresh.service.js';
@@ -95,12 +95,27 @@ export function authController(
   });
 
   // --- PROFILE ---
-  app.get('/api/auth/me', { preHandler: authenticate }, async (request) => {
-    const userId = request.user!.userId;
-    const profile = await userService.getOwnProfile(userId);
-    return formatSuccess({ user: profile });
+  app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => {
+	try {
+	  const profile = await userService.getFullProfile(request.user!.userId);
+	  return formatSuccess({ user: profile }, 'Profile loaded successfully');
+	} catch (err) {
+	  request.log.error(err, 'Failed to load profile');
+	  return reply.code(500).send({
+		error: {
+		  code: 'PROFILE_LOAD_FAILED',
+		  message: 'Failed to load profile',
+		  statusCode: 500,
+		},
+	  });
+	}
   });
-
+  //   app.get('/api/auth/me', { preHandler: authenticate }, async (request) => {
+  //     const userId = request.user!.userId;
+  //     const profile = await userService.getOwnProfile(userId);
+  //     return formatSuccess({ user: profile });
+  //   });
+  
   // --- PROFILE ---
   app.get('/api/auth/publicme', { preHandler: authenticate }, async (request) => {
     const userId = request.user!.userId;
@@ -111,6 +126,24 @@ export function authController(
       avatarUrl: profile.avatarUrl ?? undefined,
     });
   });
+
+  // --- Profile Public ---
+  app.get('/api/profile/:username', async (request, reply) => {
+  const { username } = request.params as { username: string };
+
+  try {
+    const profile = await userService.getPublicProfileByUsername(username);
+    return formatSuccess({ user: profile });
+  } catch (err) {
+    return reply.code(404).send({
+      error: {
+        code: 'USER_NOT_FOUND',
+        message: 'User not found',
+        statusCode: 404
+      }
+    });
+  }
+});
 
    app.get('/api/auth/loggedIn', async (request, reply) => {
     try {
