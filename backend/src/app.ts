@@ -2,95 +2,70 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
+import fs from 'node:fs';
 import { setupFriendsModule } from './modules/friends/index.js';
+import { setupAuthModule } from './modules/auth/index.js';
+import { avatarRoutes } from './modules/upload/upload.controller.js';
+import { setupErrorHandler } from './shared/middleware/index.js'; 
+import { getPrismaClient } from './shared/database/prisma.js';
+import { setupTournamentModule } from './modules/tournaments/index.js';
+
 
 // Configuration
 import { env } from './shared/config/environment.js';
 
-// Middleware
-import { setupErrorHandler } from './shared/middleware/index.js'; 
-
-// Database
-import { getPrismaClient } from './shared/database/prisma.js';
-
-// Modules
-import { setupAuthModule } from './modules/auth/index.js';
-
-/**
- * Créer et configurer l'application Fastify
- */
 export function createApp() {
-  
-  // ==========================================
-  // 1️⃣ CRÉER L'INSTANCE FASTIFY
-  // ==========================================
-  
   const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
-      // Formateur pretty pour le dev
       transport: env.NODE_ENV === 'development' 
         ? { target: 'pino-pretty', options: { colorize: true } }
         : undefined
     }
   });
 
-  // ==========================================
-  // 2️⃣ ENREGISTRER LES PLUGINS
-  // ==========================================
-  
-  // CORS - Autoriser les requêtes du frontend
+  // --- Plugins ---
   app.register(cors, {
     origin: env.FRONTEND_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
   });
 
-  // Cookies - Gérer les cookies HTTP
-  app.register(cookie, {
-    secret: env.COOKIE_SECRET
-  });
+  app.register(cookie, { secret: env.COOKIE_SECRET });
 
-  // Helmet - Sécurité (headers HTTP)
-  app.register(helmet, {
-    contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false
-  });
+  app.register(helmet, { contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false });
 
-  // ==========================================
-  // 3️⃣ GESTIONNAIRE D'ERREURS GLOBAL
-  // ==========================================
-  
+  // --- Error handler ---
   setupErrorHandler(app);
 
-  // ==========================================
-  // 4️⃣ BASE DE DONNÉES
-  // ==========================================
-  
+  // --- Database ---
   const prisma = getPrismaClient();
 
-  // ==========================================
-  // 5️⃣ MODULES (Services + Routes)
-  // ==========================================
-  
+  // --- Modules ---
   setupAuthModule(app, prisma);
   setupFriendsModule(app);
+  setupTournamentModule(app);
 
-  // ==========================================
-  // 6️⃣ ROUTE DE SANTÉ (Health check)
-  // ==========================================
-  
-  app.get('/health', async () => {
-    return { 
-      status: 'ok',
-      environment: env.NODE_ENV,
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    };
+  // --- Health check ---
+  app.get('/health', async () => ({
+    status: 'ok',
+    environment: env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  }));
+
+  // --- Multipart ---
+  app.register(multipart, {
+    limits: { fileSize: 2 * 1024 * 1024 } // 2 MB
   });
 
-  // ==========================================
-  // 7️⃣ RETOURNER L'APP
-  // ==========================================
-  
+  // --- Créer le dossier avatars si inexistant ---
+  const avatarDir = '/app/avatars';
+  if (!fs.existsSync(avatarDir)) fs.mkdirSync(avatarDir, { recursive: true });
+
+  // --- Upload controller ---
+  avatarRoutes(app);
+
   return app;
 }

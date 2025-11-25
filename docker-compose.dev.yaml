@@ -12,6 +12,7 @@ services:
       - ./backend:/app           # code backend
       - db-data:/app/database    # volume pour SQLite
       - /app/node_modules        # Protège node_modules
+      - avatars-data:/app/avatars   # <-- pour stocker les avatars
     environment:
       NODE_ENV: development
     networks:
@@ -47,10 +48,12 @@ services:
       - ./frontend:/usr/share/nginx/html
       - ./nginx/default.dev.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
+      - avatars-data:/app/avatars:ro   # lecture seule pour Nginx
     restart: unless-stopped
 
 volumes:
   db-data:
+  avatars-data:
 
 networks:
   app_network:   # ou app-network, mais assurer le même nom partout

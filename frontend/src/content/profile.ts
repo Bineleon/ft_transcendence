@@ -1,51 +1,49 @@
 import { el, text } from "./home";
 import { logout } from "../content/utils/logout.ts";
 import { deleteAccount } from "./utils/deleteAccount.ts";
-import { pongAlert } from "./utils/logchecks.ts";
+import { pongAlert } from "./utils/logchecks";
 
 export function Profile(): HTMLElement {
     const main = el("main", "p-4");
 
-    // ——— Structure principale ———
     const section = el("section", "grid grid-cols-1 md:grid-cols-2 gap-6");
 
-    // ——— Frame photo ———
-    // group permet d'utiliser group-hover:... sur l'overlay
     const picframe = el("div", "frame-photo relative flex items-center justify-center group");
     const picture = el("img", "frame-photo-img img-newspaper cursor-pointer") as HTMLImageElement;
-    // placeholder par défaut visible immédiatement
-    picture.src = "/public/imgs/avatar.png";
+
+    // ⚡ Placeholder uniforme
+    picture.src = "/imgs/avatar.png";
     picture.alt = "Avatar utilisateur";
     picture.loading = "lazy";
-    // fallback si le src fourni est cassé
-    picture.addEventListener("error", () => { picture.src = "/public/imgs/avatar.png"; });
-    // accessible, clickable
     picture.tabIndex = 0;
     picture.setAttribute("role", "button");
     picture.setAttribute("aria-label", "Changer la photo de profil");
 
-    // hidden file input
+    // ⚡ Éviter boucle infinie sur erreur
+    picture.dataset.fallback = "false";
+    picture.addEventListener("error", () => {
+        if (picture.dataset.fallback === "false") {
+            picture.src = "/imgs/avatar.png";
+            picture.dataset.fallback = "true";
+        }
+    });
+
     const avatarInput = document.createElement("input") as HTMLInputElement;
     avatarInput.type = "file";
     avatarInput.accept = "image/*";
     avatarInput.className = "hidden";
 
-    // small overlay icon (optional visual affordance)
-    const editHint = el("div", "absolute bottom-2 right-2 bg-white/80 rounded-full p-1 shadow pointer-events-none") as HTMLElement;
+    const editHint = el("div", "absolute bottom-2 right-2 bg-white/80 rounded-full p-1 shadow pointer-events-none");
     editHint.innerHTML = "✎";
 
-    // Hover tooltip overlay (visible on group-hover, pointer-events-none so it doesn't block clicks)
     const hoverOverlay = el("div",
-      "absolute inset-0 flex items-center font-jmh justify-center bg-black/40 text-stone-100 text-3xl opacity-0 transition-opacity duration-200 pointer-events-none group-hover:opacity-100"
+        "absolute inset-0 flex items-center font-jmh justify-center bg-black/40 text-stone-100 text-3xl opacity-0 transition-opacity duration-200 pointer-events-none group-hover:opacity-100"
     );
     hoverOverlay.textContent = "Click to change avatar";
 
-    // handlers
-    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const MAX_SIZE = 2 * 1024 * 1024;
 
-    function openFilePicker() {
-        avatarInput.click();
-    }
+    function openFilePicker() { avatarInput.click(); }
 
     picture.addEventListener("click", openFilePicker);
     picture.addEventListener("keydown", (e) => {
@@ -58,26 +56,26 @@ export function Profile(): HTMLElement {
         if (!file.type.startsWith("image/")) { pongAlert("Fichier non supporté"); return; }
         if (file.size > MAX_SIZE) { pongAlert("Image trop grosse (max 2MB)"); return; }
 
-        // preview
         const tmpUrl = URL.createObjectURL(file);
         picture.src = tmpUrl;
 
-        // upload (FormData) — adapte l'endpoint si besoin
         try {
             const fd = new FormData();
-            fd.append("avatar", file);
-            const res = await fetch("/api/auth/me/avatar", {
+            fd.append("file", file);
+            const res = await fetch("/api/users/me/avatar", {
                 method: "POST",
                 body: fd,
                 credentials: "include",
             });
-            if (!res.ok) throw new Error("Upload failed");
-            await loadProfileData(picture, loginLabel, emailLabel, stats, friendsList, requestsBox);
+            const data = await res.json();
+            if (!data.success) throw new Error("Upload failed");
+            // ⚡ Charger seulement l’avatar, pas tout le profil
+            picture.src = data.data.avatarUrl || "/imgs/avatar.png";
         } catch (err) {
             console.error("Upload avatar error", err);
             pongAlert("Erreur lors de l'envoi. Réessaye.");
+            picture.src = "/imgs/avatar.png";
         } finally {
-            // cleanup tmp url
             URL.revokeObjectURL(tmpUrl);
             avatarInput.value = "";
         }
@@ -99,7 +97,6 @@ export function Profile(): HTMLElement {
     stats.readOnly = true;
     infoBox.append(stats);
 
-    // ——— Bouton Logout ———
     const logoutBtn = el(
         "button",
         "big-link"
@@ -116,7 +113,6 @@ export function Profile(): HTMLElement {
     deleteButton.onclick = async () => {
         const sure = confirm("Cette action est irréversible. Voulez-vous vraiment supprimer votre compte ?");
         if (!sure) return;
-
         const ok = await deleteAccount();
         if (ok) window.location.href = "/#/login";
         else alert("Impossible de supprimer le compte.");
@@ -129,7 +125,6 @@ export function Profile(): HTMLElement {
     // ——— Friends Section ———
     const friendsSection = el("div", "grid grid-cols-1 md:grid-cols-2 gap-6 mt-8");
 
-    // Liste des amis
     const list = el("div", "mx-[10%]");
     const friendsTitle = el("h2", "font-royalvogue text-4xl mb-4");
     friendsTitle.append(text("Friends"));
@@ -138,7 +133,6 @@ export function Profile(): HTMLElement {
     const friendsList = el("ul", "relative list-disc list-inside font-modern-type text-lg");
     list.append(friendsList);
 
-    // ——— Add Friend ———
     const addFriendBox = el("div", "mt-4 flex items-center");
     const addFriendInput = el("input", "border p-2 rounded flex-1 mr-2") as HTMLInputElement;
     addFriendInput.placeholder = "Nom ou ID de l'ami";
@@ -151,7 +145,6 @@ export function Profile(): HTMLElement {
     addFriendBtn.onclick = async () => {
         const friendUsername = addFriendInput.value.trim();
         if (!friendUsername) return;
-
         try {
             const res = await fetch("/api/friends/request", {
                 method: "POST",
@@ -164,64 +157,40 @@ export function Profile(): HTMLElement {
                 alert("Demande envoyée !");
                 addFriendInput.value = "";
                 loadFriends(friendsList, requestsBox);
-            } else {
-                alert("Impossible d'envoyer la demande.");
-            }
+            } else alert("Impossible d'envoyer la demande.");
         } catch {
             alert("Erreur réseau.");
         }
     };
-
     addFriendBox.append(addFriendInput, addFriendBtn);
     list.append(addFriendBox);
 
-    // ——— Demandes d'amis ———
     const requestsBox = el("div", "mx-[10%]");
     const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
-    requestsTitle.append(text("Requests"));
     requestsBox.append(requestsTitle);
 
     friendsSection.append(list, requestsBox);
     main.append(friendsSection);
 
-    // ——— Charger dynamiquement le profil et les amis ———
+    // ⚡ Charger profil et amis une seule fois
     loadProfileData(picture, loginLabel, emailLabel, stats, friendsList, requestsBox);
 
     return main;
 }
 
-// ——— Fonction pour charger le profil ———
-async function loadProfileData(
-    picture: HTMLImageElement,
-    loginLabel: HTMLElement,
-    emailLabel: HTMLElement,
-    stats: HTMLTextAreaElement,
-    friendsList: HTMLElement,
-    requestsBox: HTMLElement
+async function loadProfileData(picture: HTMLImageElement, loginLabel: HTMLElement, emailLabel: HTMLElement,
+    stats: HTMLTextAreaElement, friendsList: HTMLElement, requestsBox: HTMLElement
 ) {
     try {
         const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) throw new Error("Impossible de charger le profil");
-
         const data = await res.json();
         const user = data.data.user;
-
-        picture.src = user.avatarUrl || "/public/imgs/avatar.png";
+        picture.src = user.avatarUrl || "/imgs/avatar.png";
         loginLabel.textContent = user.username;
         emailLabel.textContent = user.email;
         stats.value =
-            "Informations du compte:\n\n" +
-            `ID: ${user.id}\n` +
-            `Créé le: ${new Date(user.createdAt).toLocaleString()}\n\n` +
-            "Statistiques:\n" +
-            "(À connecter bientôt à la DB)";
-
-        // ajoute le nom dans le sessionStorage pour l'affichage global
-        try {
-            if (user.username) sessionStorage.setItem("userName", user.username);
-            window.dispatchEvent(new Event("auth-changed"));
-        } catch (e) { /* noop */ }
-
+            `Informations du compte:\n\nID: ${user.id}\nCréé le: ${new Date(user.createdAt).toLocaleString()}\n\nStatistiques:\n(À connecter bientôt à la DB)`;
         loadFriends(friendsList, requestsBox);
     } catch (err) {
         loginLabel.textContent = "Erreur";
@@ -230,17 +199,13 @@ async function loadProfileData(
     }
 }
 
-// ——— Fonction pour charger amis + demandes depuis le backend ———
 async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
     friendsList.innerHTML = "";
-    // garde le titre Requests
-    const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
-    requestsTitle.append(text("Requests"));
     requestsBox.innerHTML = "";
+    const requestsTitle = el("h3", "font-royalvogue text-4xl mb-4 text-right");
     requestsBox.append(requestsTitle);
 
     try {
-        // — Liste amis —
         const friendsRes = await fetch("/api/friends", { credentials: "include" });
         const friendsData = await friendsRes.json();
         if (friendsData.success && Array.isArray(friendsData.data)) {
@@ -250,15 +215,13 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                 friendsList.append(li);
             });
         }
-
-        // — Demandes reçues —
         const requestsRes = await fetch("/api/friends/requests", { credentials: "include" });
         const requestsData = await requestsRes.json();
         if (requestsData.success && Array.isArray(requestsData.data)) {
             requestsData.data.forEach((req: any) => {
                 const reqDiv = el("div", "flex items-center mb-2");
                 const nameSpan = el("span", "flex-1 font-modern-type text-lg");
-                nameSpan.textContent = req.user.username; // expéditeur
+                nameSpan.textContent = req.user.username;
 
                 const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;
                 acceptBtn.textContent = "Accept";
@@ -271,7 +234,6 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                     });
                     loadFriends(friendsList, requestsBox);
                 };
-
                 const declineBtn = el("button", "btn-click") as HTMLButtonElement;
                 declineBtn.textContent = "Decline";
                 declineBtn.onclick = async () => {
@@ -283,12 +245,9 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                     });
                     loadFriends(friendsList, requestsBox);
                 };
-
                 reqDiv.append(nameSpan, acceptBtn, declineBtn);
                 requestsBox.append(reqDiv);
             });
         }
-    } catch (err) {
-        console.error("Erreur chargement amis :", err);
-    }
+    } catch (err) { console.error("Erreur chargement amis :", err); }
 }
