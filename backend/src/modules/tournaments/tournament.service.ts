@@ -1,7 +1,6 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
 import type { TournamentMode, TournamentStatus } from '@prisma/client';
 import type { CreateTournamentDTO, TournamentResponse } from './tournament.model.js';
-import { request } from 'http';
 
 const prisma = getPrismaClient();
 
