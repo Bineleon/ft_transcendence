@@ -10,6 +10,7 @@ import { avatarRoutes } from './modules/upload/upload.controller.js';
 import { setupErrorHandler } from './shared/middleware/index.js'; 
 import { getPrismaClient } from './shared/database/prisma.js';
 import { setupTournamentModule } from './modules/tournaments/index.js';
+import { setupMatchModule } from './modules/matches/index.js';
 
 
 // Configuration
@@ -47,6 +48,7 @@ export function createApp() {
   setupFriendsModule(app);
   console.log("Setting up Tournament Module...");
   setupTournamentModule(app);
+  setupMatchModule(app);
 
   // --- Health check ---
   app.get('/health', async () => ({

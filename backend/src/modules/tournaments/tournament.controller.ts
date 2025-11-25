@@ -3,7 +3,7 @@ import { TournamentService } from './tournament.service.js';
 import type { CreateTournamentDTO } from './tournament.model.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { formatSuccess } from '../../shared/utils/formatters.js';
-import { formatGenericError } from '../../shared/errors/formatters.js'; // ⬅️ Utilise celle-ci
+import { formatGenericError } from '../../shared/errors/formatters.js';
 
 export function tournamentController(
   app: FastifyInstance,
