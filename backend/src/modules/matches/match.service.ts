@@ -1,0 +1,411 @@
+import { getPrismaClient } from '../../shared/database/prisma.js';
+import type { MatchStatus } from '@prisma/client';
+import type { CreateMatchDTO, UpdateMatchDTO, MatchResponse } from './match.model.js';
+
+const prisma = getPrismaClient();
+
+export class MatchService {
+  
+  // ==========================================
+  // CREATE - Créer un nouveau match
+  // ==========================================
+  
+  async create(data: CreateMatchDTO): Promise<MatchResponse> {
+    // Validation : vérifier que les joueurs existent
+    const p1Exists = await prisma.user.findUnique({ where: { id: data.p1UserId } });
+    const p2Exists = await prisma.user.findUnique({ where: { id: data.p2UserId } });
+    
+    if (!p1Exists) {
+      throw new Error(`Player 1 with id ${data.p1UserId} not found`);
+    }
+    if (!p2Exists) {
+      throw new Error(`Player 2 with id ${data.p2UserId} not found`);
+    }
+    
+    // Validation : si tournamentId, vérifier qu'il existe
+    if (data.tournamentId) {
+      const tournamentExists = await prisma.tournament.findUnique({
+        where: { id: data.tournamentId }
+      });
+      if (!tournamentExists) {
+        throw new Error(`Tournament with id ${data.tournamentId} not found`);
+      }
+    }
+
+    return await prisma.match.create({
+      data: {
+        tournamentId: data.tournamentId,
+        round: data.round,
+        gameIndex: data.gameIndex,
+        p1UserId: data.p1UserId,
+        p2UserId: data.p2UserId,
+        txHash: data.txHash,
+        status: 'SCHEDULED' as MatchStatus
+      },
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        }
+      }
+    });
+  }
+
+  // ==========================================
+  // READ - Récupérer un match par ID
+  // ==========================================
+  
+  async findById(id: string): Promise<MatchResponse | null> {
+    return await prisma.match.findUnique({
+      where: { id },
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true
+          }
+        },
+        tournament: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            mode: true
+          }
+        }
+      }
+    });
+  }
+
+  // ==========================================
+  // READ - Récupérer tous les matchs d'un tournoi
+  // ==========================================
+  
+  async findByTournament(tournamentId: string): Promise<MatchResponse[]> {
+    return await prisma.match.findMany({
+      where: { tournamentId },
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true
+          }
+        }
+      },
+      orderBy: [
+        { round: 'asc' },
+        { gameIndex: 'asc' }
+      ]
+    });
+  }
+
+  // ==========================================
+  // READ - Récupérer les matchs d'un joueur
+  // ==========================================
+  
+  async findByPlayer(userId: string): Promise<MatchResponse[]> {
+    return await prisma.match.findMany({
+      where: {
+        OR: [
+          { p1UserId: userId },
+          { p2UserId: userId }
+        ]
+      },
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true
+          }
+        },
+        tournament: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            mode: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  // ==========================================
+  // READ - Récupérer tous les matchs (avec filtres)
+  // ==========================================
+  
+  async findAll(status?: MatchStatus): Promise<MatchResponse[]> {
+    return await prisma.match.findMany({
+      where: status ? { status } : undefined,
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true
+          }
+        },
+        tournament: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            mode: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  // ==========================================
+  // UPDATE - Mettre à jour un match
+  // ==========================================
+  
+  async update(id: string, data: UpdateMatchDTO): Promise<MatchResponse> {
+    // Validation : si on déclare un gagnant, vérifier qu'il participe au match
+    if (data.winnerUserId) {
+      const match = await prisma.match.findUnique({
+        where: { id },
+        select: { p1UserId: true, p2UserId: true }
+      });
+
+      if (!match) {
+        throw new Error('Match not found');
+      }
+
+      if (data.winnerUserId !== match.p1UserId && data.winnerUserId !== match.p2UserId) {
+        throw new Error('Winner must be one of the match participants');
+      }
+    }
+
+    return await prisma.match.update({
+      where: { id },
+      data: {
+        status: data.status as MatchStatus | undefined,
+        p1Score: data.p1Score,
+        p2Score: data.p2Score,
+        winnerUserId: data.winnerUserId,
+        onchainAt: data.onchainAt,
+        txHash: data.txHash
+      },
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true
+          }
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true
+          }
+        },
+        tournament: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            mode: true
+          }
+        }
+      }
+    });
+  }
+
+  // ==========================================
+  // UPDATE - Démarrer un match
+  // ==========================================
+  
+  async start(id: string): Promise<MatchResponse> {
+    const match = await prisma.match.findUnique({ where: { id } });
+
+    if (!match) {
+      throw new Error('Match not found');
+    }
+
+    if (match.status !== 'SCHEDULED') {
+      throw new Error(`Cannot start match with status ${match.status}`);
+    }
+
+    return await this.update(id, { status: 'IN_PROGRESS' });
+  }
+
+  // ==========================================
+  // UPDATE - Terminer un match (déclarer un gagnant)
+  // ==========================================
+  
+  async finish(id: string, winnerUserId: string, p1Score?: number, p2Score?: number): Promise<MatchResponse> {
+    const match = await prisma.match.findUnique({
+      where: { id },
+      select: { status: true, p1UserId: true, p2UserId: true }
+    });
+
+    if (!match) {
+      throw new Error('Match not found');
+    }
+
+    if (match.status !== 'IN_PROGRESS') {
+      throw new Error(`Cannot finish match with status ${match.status}`);
+    }
+
+    // Vérifier que le gagnant est un participant
+    if (winnerUserId !== match.p1UserId && winnerUserId !== match.p2UserId) {
+      throw new Error('Winner must be one of the match participants');
+    }
+
+    return await this.update(id, {
+      status: 'CLOSED',
+      winnerUserId,
+      p1Score: p1Score ?? null,
+      p2Score: p2Score ?? null
+    });
+  }
+
+  // ==========================================
+  // DELETE - Supprimer un match
+  // ==========================================
+  
+  async delete(id: string): Promise<void> {
+    await prisma.match.delete({
+      where: { id }
+    });
+  }
+
+  // ==========================================
+  // UTILITIES - Statistiques d'un match
+  // ==========================================
+  
+  async getStats(id: string) {
+    const match = await this.findById(id);
+
+    if (!match) {
+      throw new Error('Match not found');
+    }
+
+    return {
+      match: {
+        id: match.id,
+        status: match.status,
+        round: match.round,
+        gameIndex: match.gameIndex
+      },
+      players: {
+        p1: {
+          id: match.p1?.id,
+          username: match.p1?.username,
+          score: match.p1Score
+        },
+        p2: {
+          id: match.p2?.id,
+          username: match.p2?.username,
+          score: match.p2Score
+        }
+      },
+      winner: match.winner ? {
+        id: match.winner.id,
+        username: match.winner.username
+      } : null,
+      tournament: match.tournament ? {
+        code: match.tournament.code,
+        name: match.tournament.name
+      } : null,
+      timestamps: {
+        createdAt: match.createdAt,
+        updatedAt: match.updatedAt
+      }
+    };
+  }
+}

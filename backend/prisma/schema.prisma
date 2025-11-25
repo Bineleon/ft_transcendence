@@ -74,14 +74,14 @@ model Tournament {
 
 model Match {
   id           String      @id @default(cuid())
-  tournamentId String      @map("tournament_id")
+  tournamentId String?      @map("tournament_id")
   gameCode     String      @default("pong") @map("game_code")
   round        Int?
   gameIndex    Int?        @map("game_index")
-  p1UserId     String      @map("p1_user_id")
+  p1UserId     String?      @map("p1_user_id")
   p1Ref        String?     @map("p1_ref")
   p1Score      Int?        @map("p1_score")
-  p2UserId     String      @map("p2_user_id")
+  p2UserId     String?      @map("p2_user_id")
   p2Ref        String?     @map("p2_ref")
   p2Score      Int?        @map("p2_score")
   winnerUserId String?     @map("winner_user_id")
@@ -93,9 +93,9 @@ model Match {
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at")
   winner       User?       @relation("Winner", fields: [winnerUserId], references: [id])
-  p2           User        @relation("P2", fields: [p2UserId], references: [id])
-  p1           User        @relation("P1", fields: [p1UserId], references: [id])
-  tournament   Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  p2           User?       @relation("P2", fields: [p2UserId], references: [id])
+  p1           User?       @relation("P1", fields: [p1UserId], references: [id])
+  tournament   Tournament?  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, round, gameIndex])
   @@index([tournamentId])
