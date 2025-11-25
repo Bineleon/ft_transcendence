@@ -1,4 +1,3 @@
-import { getRouteTail } from "../../router.ts";
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
 import { notLoggedIn, pongAlert, reLogAlert } from "../utils/logchecks.ts";

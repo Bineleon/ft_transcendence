@@ -1,6 +1,6 @@
 import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
-import { pongAlert, reLogAlert } from "./logchecks.ts";
+import { pongAlert } from "./logchecks.ts";
 import type { User } from "./types.ts";
 
 
