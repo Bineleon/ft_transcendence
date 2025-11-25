@@ -9,6 +9,10 @@ import { setupAuthModule } from './modules/auth/index.js';
 import { avatarRoutes } from './modules/upload/upload.controller.js';
 import { setupErrorHandler } from './shared/middleware/index.js'; 
 import { getPrismaClient } from './shared/database/prisma.js';
+import { setupTournamentModule } from './modules/tournaments/index.js';
+
+
+// Configuration
 import { env } from './shared/config/environment.js';
 
 export function createApp() {
@@ -41,6 +45,7 @@ export function createApp() {
   // --- Modules ---
   setupAuthModule(app, prisma);
   setupFriendsModule(app);
+  setupTournamentModule(app);
 
   // --- Health check ---
   app.get('/health', async () => ({
