@@ -2,6 +2,8 @@
 
 export interface KeyFlag { code: string; down: boolean; }
 
+export type PlayerId = "p1" | "p2";
+
 export interface Controls {
     p1Up: KeyFlag;
     p1Down: KeyFlag;
@@ -14,8 +16,12 @@ export interface Controls {
 export interface PlayersStats {
     p1Score: number;
     p2Score: number;
-    lastScorer?: 1 | 2;
+    lastScorer?: PlayerId;
     bounces: number;
+    p1Effects: number;
+    p2Effects: number;
+    p1MaxBounces: number;
+    p2MaxBounces: number;
 }
 
 export type  GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART" | "SCORED";
@@ -25,7 +31,7 @@ export interface Vec2 { x: number; y: number; }
 export interface Ball {
     pos: Vec2;
     vel: Vec2;
-    dir: Vec2;
+    velIncrement: Vec2;
     r: number;
 }
 
@@ -33,6 +39,7 @@ export interface Paddle {
     pos: Vec2;
     size: Vec2;
     speed: number;
+
 }
 
 export interface GameState {
@@ -41,6 +48,7 @@ export interface GameState {
     paddle1: Paddle;
     paddle2: Paddle;
     phase: GamePhase;
+    PrevPhase?: GamePhase;
     ready: { p1: boolean; p2: boolean };
     stats: PlayersStats;
 }

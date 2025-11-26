@@ -2,7 +2,7 @@ import type { SnakeViewWindow } from "./ui/view";
 import type { SnakeState, Controls, SnakePhase } from "./game/types";
 import { domOverlayManager } from "./ui/overlay";
 import { GameLoop } from "../pong/core/loop";
-import { createGameGuards, type GameGuards } from "../pong/game/guards"; 
+import { createGameGuards, type GameGuards } from "../pong/ui/guards"; 
 import { resizeSnake, COLS, ROWS, TILE } from "./core/canvas";
 import { randomLetter } from "./game/utils";
 import { stepSnake } from "./core/logic";

@@ -66,12 +66,12 @@ export function createGameViewWindow(): GameViewWindow {
     stage.append(canvas, overlayRoot);
 
     // 4) Terminal = zone de droite
-    const terminal = el("div", "text-white bg-black min-w-0 " +
-        "relative " +
-        "w-[500px] h-[300px] " +
-        "lg:w-[210px] lg:h-[420px] " +
-        "xl:w-[324px] xl:h-[648px] " +
-        "xxl:w-[450px] xxl:h-[900px] ");
+    const terminal = el("div", `text-white bg-black min-w-0
+        relative mix-blend-multiply
+        w-[500px] h-[700px]
+        lg:w-[210px] lg:h-[420px]
+        xl:w-[324px] xl:h-[648px]
+        xxl:w-[450px] xxl:h-[900px] `);
         
     // 5) Assemble
     main.append(stage, terminal);
