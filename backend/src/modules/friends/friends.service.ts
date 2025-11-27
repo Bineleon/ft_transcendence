@@ -147,54 +147,70 @@ export class FriendsService {
   /**
    * Liste des amis (avec online status).
    */
-  async getFriends(userId: string) {
-    const now = Date.now();
+async getFriends(userId: string) {
+  const now = Date.now();
 
-    const relations = await this.prisma.friend.findMany({
-      where: {
-        OR: [
-          { userId, status: 'accepted' },
-          { friendId: userId, status: 'accepted' },
-        ],
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            lastSeen: true,
-          },
-        },
-        friend: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            lastSeen: true,
-          },
+  const relations = await this.prisma.friend.findMany({
+    where: {
+      status: 'accepted',
+      OR: [
+        { userId },
+        { friendId: userId },
+      ],
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          lastSeen: true,
         },
       },
-    });
+      friend: {
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          lastSeen: true,
+        },
+      },
+    },
+  });
 
-    return relations.map((rel) => {
-      const friendUser =
-        rel.userId === userId ? rel.friend : rel.user;
+  const seen = new Set<string>();
+  const result: {
+    id: string;
+    username: string;
+    avatarUrl?: string | null;
+    online: boolean;
+  }[] = [];
 
-      const lastSeen = friendUser.lastSeen
-        ? friendUser.lastSeen.getTime()
-        : 0;
+  for (const rel of relations) {
+    // si je suis userId, l'ami est friend ; sinon l'ami est user
+    const friendUser = rel.userId === userId ? rel.friend : rel.user;
 
-      const online = now - lastSeen < ONLINE_THRESHOLD_MS;
+    if (!friendUser) continue;
+    if (seen.has(friendUser.id)) continue; // 👈 évite les doublons
 
-      return {
-        id: friendUser.id,
-        username: friendUser.username,
-        avatarUrl: friendUser.avatarUrl,
-        online,
-      };
+    seen.add(friendUser.id);
+
+    const lastSeen = friendUser.lastSeen
+      ? friendUser.lastSeen.getTime()
+      : 0;
+    const online = now - lastSeen < ONLINE_THRESHOLD_MS;
+
+    result.push({
+      id: friendUser.id,
+      username: friendUser.username,
+      avatarUrl: friendUser.avatarUrl,
+      online,
     });
   }
+
+  return result;
+}
+
 
   /**
    * Supprime une relation d'amitié (dans les deux sens).

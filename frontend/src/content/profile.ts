@@ -300,24 +300,21 @@ Matches Won: ${user.matchesWonCount ?? 0}
 function renderFriendItem(friend: FriendSummary): HTMLElement {
     const li = el("li", "flex items-center gap-2");
 
-    const name = el("span", "");
-    name.textContent = friend.username + " : ";
-
-    const statusText = el("span", "");
-    statusText.textContent = friend.online ? "Online" : "Offline";
-
+    // Pastille de statut
     const dot = el("span", "");
     dot.style.display = "inline-block";
     dot.style.width = "10px";
     dot.style.height = "10px";
     dot.style.borderRadius = "50%";
     dot.style.backgroundColor = friend.online ? "#22c55e" : "#9ca3af"; 
-    dot.style.marginLeft = "4px";
+    // vert → online, gris → offline
 
-    li.append(name, statusText, dot);
+    const label = el("span", "");
+    label.textContent = `${friend.username} – ${friend.online ? "Online" : "Offline"}`;
+
+    li.append(dot, label);
     return li;
 }
-
 
 async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
     friendsList.innerHTML = "";

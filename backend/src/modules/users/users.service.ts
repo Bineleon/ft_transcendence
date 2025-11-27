@@ -211,73 +211,92 @@ export class UserService {
   }
 
   // Récupère les infos étendues pour le profil
-  // Récupère les infos étendues pour le profil
-async getFullProfile(userId: string) {
-  try {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        createdAt: true,
-        avatarUrl: true,
-        lastSeen: true,
-        friends: {
-          where: { status: 'accepted' }
-        },
-        friendOf: {
-          where: { status: 'accepted' }
-        },
-        matchesWon: true,
-        createdTournaments: {
-          select: {
-            kingMaxTime: true,
-            kingMaxRounds: true
+  async getFullProfile(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          createdAt: true,
+          avatarUrl: true,
+          lastSeen: true,
+          friends: {
+            where: { status: 'accepted' },
+            select: {
+              userId: true,
+              friendId: true
+            }
+          },
+          friendOf: {
+            where: { status: 'accepted' },
+            select: {
+              userId: true,
+              friendId: true
+            }
+          },
+          matchesWon: true,
+          createdTournaments: {
+            select: {
+              kingMaxTime: true,
+              kingMaxRounds: true
+            }
           }
         }
+      });
+
+      if (!user) {
+        throw new Error('User not found');
       }
-    });
 
-    if (!user) {
-      throw new Error('User not found');
+      // On tape explicitement les tournois pour éviter l'implicit any sur `t`
+      type CreatedTournament = { kingMaxTime: number | null; kingMaxRounds: number | null };
+
+      const tournaments: CreatedTournament[] =
+        (user.createdTournaments ?? []) as CreatedTournament[];
+
+      const kingMaxTime = tournaments.length
+        ? Math.max(...tournaments.map((t: CreatedTournament) => t.kingMaxTime ?? 0)) ||
+          undefined
+        : undefined;
+
+      const kingMaxRounds = tournaments.length
+        ? Math.max(...tournaments.map((t: CreatedTournament) => t.kingMaxRounds ?? 0)) ||
+          undefined
+        : undefined;
+
+      // ✅ Compter les amis uniques (pour éviter le doublon friend / friendOf)
+      const friendIds = new Set<string>();
+
+      for (const f of user.friends ?? []) {
+        if (f.userId && f.userId !== user.id) friendIds.add(f.userId);
+        if (f.friendId && f.friendId !== user.id) friendIds.add(f.friendId);
+      }
+
+      for (const f of user.friendOf ?? []) {
+        if (f.userId && f.userId !== user.id) friendIds.add(f.userId);
+        if (f.friendId && f.friendId !== user.id) friendIds.add(f.friendId);
+      }
+
+      const friendsCount = friendIds.size;
+      const matchesWonCount = user.matchesWon?.length || 0;
+
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+        avatarUrl: user.avatarUrl,
+        kingMaxTime,
+        kingMaxRounds,
+        friendsCount,
+        matchesWonCount,
+        lastSeen: user.lastSeen ?? null
+      };
+    } catch (err) {
+      console.error('getFullProfile error:', err);
+      throw err;
     }
-
-    // On tape explicitement les tournois pour éviter l'implicit any sur `t`
-    type CreatedTournament = { kingMaxTime: number | null; kingMaxRounds: number | null };
-
-    const tournaments: CreatedTournament[] = (user.createdTournaments ?? []) as CreatedTournament[];
-
-    const kingMaxTime = tournaments.length
-      ? Math.max(
-          ...tournaments.map((t: CreatedTournament) => t.kingMaxTime ?? 0)
-        ) || undefined
-      : undefined;
-
-    const kingMaxRounds = tournaments.length
-      ? Math.max(
-          ...tournaments.map((t: CreatedTournament) => t.kingMaxRounds ?? 0)
-        ) || undefined
-      : undefined;
-
-    const friendsCount = (user.friends?.length || 0) + (user.friendOf?.length || 0);
-    const matchesWonCount = user.matchesWon?.length || 0;
-
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      createdAt: user.createdAt,
-      avatarUrl: user.avatarUrl,
-      kingMaxTime,
-      kingMaxRounds,
-      friendsCount,
-      matchesWonCount,
-      lastSeen: user.lastSeen ?? null
-    };
-  } catch (err) {
-    console.error('getFullProfile error:', err);
-    throw err;
   }
-}
 }
