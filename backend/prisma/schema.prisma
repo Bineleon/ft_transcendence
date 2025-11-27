@@ -41,6 +41,7 @@ model User {
   passwordHash       String?
   avatarUrl          String?        @map("avatar_url")
   playerRef          String?        @unique @map("player_ref")
+  lastSeen           DateTime?      @map("last_seen")
   TwoFactors         TwoFactor[]
   createdAt          DateTime       @default(now()) @map("created_at")
   updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at")
