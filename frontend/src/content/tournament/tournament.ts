@@ -1,7 +1,8 @@
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
 import { notLoggedIn, pongAlert, reLogAlert } from "../utils/logchecks.ts";
-import { createDBTournament, getLoggedID, getUserDatas } from "../utils/todb.ts";
+import { createDBTournament, getLoggedID, getTournamentDatas, getUserDatas, addUserAsPlayerToTournament } from "../utils/todb.ts";
+import type { Tournament } from "../utils/types.ts";
 
 
 export type tournamentMode = "KING" | "CLASSIC" | "GAUNTLET";
@@ -70,15 +71,30 @@ function generateTournamentCode(): string {
     return code;
 }
 
+// async function assignPlayersToTournament(tCode: string, userId: string): Promise<void> {
+//     const user = await getUserDatas(userId);
+//     if (!user) {
+//         console.error("Failed to assign user to tournament: User not found");
+//         return;
+//     }
+//     const tournament = getTournamentDatas(tCode);
+//     if (!tournament) {
+//         console.error("Failed to assign user to tournament: Tournament not found");
+//         return;
+//     }
+
+//     addUserAsPlayerToTournament(tournament, user);
+// }
+
 async function handleGenerateTournament(): Promise<void> {
     if (!formEls) return;
     
     if (((!formEls.nameInput.value.trim() || !formEls.participantsButton.value) && TMode !== "KING") || !TMode) {
-        pongAlert("Please fill in all required fields.", { title: "Incomplete Form", onClose: () => {} });
+        pongAlert("Please fill in all required fields.");
         return;
     }
     else if (TMode === "KING" && (!formEls.kingTimeHiddenInput.value || !formEls.kingRoundsHiddenInput.value)) {
-        pongAlert("Please select King of the Hill settings.", { title: "Incomplete Form", onClose: () => {} });
+        pongAlert("Please select King of the Hill settings.");
         return;
     }
 
@@ -91,6 +107,7 @@ async function handleGenerateTournament(): Promise<void> {
         maxParticipants: parseInt(formEls.participantsButton.value, 10),
     };
     createDBTournament(tCode, formDatas);
+    // assignPlayersToTournament(tCode, creatorId);
 }
 
 function setupKingRoundsSelector(): void {
@@ -393,9 +410,9 @@ export function setTournamentMode(mode: tournamentMode): void {
 }
 
 
-export function getTournamentMode(): tournamentMode | null {
-    return TMode;
-}
+// export function getTournamentMode(): tournamentMode | null {
+//     return TMode;
+// }
 
 export function ChoseTournament(): HTMLElement {
     const main = el("div", "grid grid-rows-[auto,1fr] gap-6 p-4");
@@ -425,10 +442,24 @@ export function ChoseTournament(): HTMLElement {
 // 3) Tournament Code        
     const tournamentCode = el("div", "box-dark img-newspaper text-white text-center text-2xl -m-4 font-im-double uppercase");
     tournamentCode.append(text(`Enter your Tournament Code Here`));
+    const inputAndBtn = el("div", "grid grid-cols-[70%_30%] flex justify-center items-center gap-2 mx-auto my-4");
     const codeInput = el("input", "btn-input") as HTMLInputElement;
     codeInput.type = "text";
     codeInput.placeholder = "Tournament Code";
-    tournamentCode.append(codeInput);
+    const codeSubmit = el("button", "btn-click") as HTMLButtonElement;
+    codeSubmit.type = "button";
+    codeSubmit.append(text("GO"));
+    codeSubmit.addEventListener("click", async () => {
+        const code = codeInput.value.trim().toUpperCase();
+        if (!code) {
+            pongAlert("Please enter a tournament code.");
+            return;
+        }
+        window.location.href = `#/tournament/classic/${code}`;
+    });
+    inputAndBtn.append(codeInput, codeSubmit);
+
+    tournamentCode.append(inputAndBtn);
     
     best.append(profilePic, bestPlayer, cupIcon);
     header.append(boxPlayed, best, tournamentCode);

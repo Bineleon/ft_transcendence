@@ -26,23 +26,22 @@ function listFt(label: string, extraClass = "", whithId?: string): HTMLLIElement
 
 // RENDERING FUNCTIONS ///
 export function renderBracket(t: Tournament): HTMLElement {
-    const wrapper = el("div", "flex mr-3");
+    const wrapper = el("div", "flex mr-3 mt-8");
 
-    const firstRound = renderFirstRoundColumn("round-1", 16, t, {
+    const firstRound = renderFirstRoundColumn("round-1", t.maxParticipants, {
         markAnchorOnIndex: 0,
         extraLiClass: "first-round"
     });
     wrapper.append(firstRound);
 
-    for (let players = 16 / 2; players >= 1; players /= 2) {
+    for (let nbPlayers = t.maxParticipants / 2; nbPlayers >= 1; nbPlayers /= 2) {
         // tu peux garder ton ID basé sur le nombre de joueurs restants si tu veux
-        const roundID = `round-${players}`;
-        console.log(`Rendering round: ${roundID} with ${players} slots`);
+        const roundID = `round-${nbPlayers}`;
+        console.log(`Rendering round: ${roundID} with ${nbPlayers} slots`);
 
         const roundColumn = renderNextRoundsColumns(
             roundID,
-            players - 1,          // ⬅ nombre de slots à dessiner pour CE round
-            t,
+            nbPlayers - 1,          // ⬅ nombre de slots à dessiner pour CE round
             {
                 markAnchorOnIndex: 0,
                 extraLiClass: ""
@@ -54,7 +53,7 @@ export function renderBracket(t: Tournament): HTMLElement {
     return wrapper;
 }
 
-function renderNextRoundsColumns(roundId: string, playersCount:number, t: Tournament,options?:
+function renderNextRoundsColumns(roundId: string, playersCount:number,options?:
 { markAnchorOnIndex?: number, extraLiClass?: string } ): HTMLOListElement {
     const ol = el("ol", `flex flex-1 flex-col justify-around round`);
     
@@ -68,7 +67,7 @@ function renderNextRoundsColumns(roundId: string, playersCount:number, t: Tourna
     return ol;
 }
 
-function renderFirstRoundColumn(roundId: string, playersCount: number, t: Tournament, options?:
+function renderFirstRoundColumn(roundId: string, playersCount: number, options?:
 { markAnchorOnIndex?: number, extraLiClass?: string } ): HTMLOListElement {
     const ol = el("ol", `flex flex-1 flex-col justify-around round`);
 
@@ -85,7 +84,7 @@ function renderFirstRoundColumn(roundId: string, playersCount: number, t: Tourna
 
 export function renderTournamentBrackets(tClassicDatas: Tournament): HTMLElement {
     // Implémentation du rendu des brackets du tournoi
-    const brackets = el("div", "brackets mt-4");
+    const brackets = el("div", "brackets");
 
     brackets.append(renderBracket(tClassicDatas));
 
