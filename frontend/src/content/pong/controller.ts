@@ -159,7 +159,6 @@ export class GameController {
                 this.startCountdown();
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 if (this.state.PrevPhase === "PAUSED") break;
-                launchBall(this.state, this.getNextServer(this.state), 500);
                 break;
 
             case "PLAYING":
@@ -183,6 +182,7 @@ export class GameController {
                 this.pausePlaying();
                 this.scoredCountdown();
                 initBoard(this.state);
+                launchBall(this.state, this.getNextServer(this.state), 500);
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
         }

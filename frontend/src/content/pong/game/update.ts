@@ -103,7 +103,7 @@ export function moreVelocity(state: GameState, gameController: GameController) {
     const IncrementX = state.ball.velIncrement.x;
     const IncrementY = state.ball.velIncrement.y;
 
-    const maxSpeed = 1500;
+    // const maxSpeed = 1500;
     let bounces = state.stats.bounces;
     const { p1Up, p1Down, p2Up, p2Down } = gameController.pongControls;
     const ballDir = getDirectionFromVec(state.ball.vel);
@@ -131,20 +131,24 @@ export function moreVelocity(state: GameState, gameController: GameController) {
     || p2Up.down && ballDir.includes("S") && ballSide === "p2" && !paddleIsAtEdge(p2Face)) {
         state.ball.vel.y += 20;
         state.ball.vel.x += 50;
-        state.stats.p1Effects++;
+        if (ballSide === "p1") state.stats.p1Effects++;
+        else  state.stats.p2Effects++;
     }
     
     // simple augmentation de la vitesse tous les 3 rebonds
-    if (bounces % 2 === 0 && bounces !== 0) {
-        if (state.ball.vel.x < maxSpeed) {
+    if (bounces % 3 === 0 && bounces !== 0) {
+        if (state.ball.vel.x > 0) {
             state.ball.vel.x += IncrementX;
+        } else {
+            state.ball.vel.x -= IncrementX;
         }
-        if (state.ball.vel.y < maxSpeed) {
+        if (state.ball.vel.y > 0) {
             state.ball.vel.y += IncrementY;
+        } else {
+            state.ball.vel.y -= IncrementY;
         }
         state.ball.velIncrement.x += 10;
         state.ball.velIncrement.y += 10;
-        state.stats.bounces++;
     }
 }
 

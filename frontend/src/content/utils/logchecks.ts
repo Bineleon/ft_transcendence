@@ -1,4 +1,4 @@
-import { el } from "../home";
+import { el, text } from "../home";
 import { logout } from "./logout";
 
 export async function notLoggedIn(): Promise<boolean> {
@@ -21,6 +21,12 @@ export async function notLoggedIn(): Promise<boolean> {
         throw error;
     }
 }
+
+export const closeOverlay = () => {
+    alertOverlay!.classList.add("hidden");
+    document.body.classList.remove("no-scroll");
+};
+
 
 export function redirectToLogin() {
     
@@ -100,18 +106,23 @@ let reInputLogin: HTMLInputElement | null = null;
 let reInputPassword: HTMLInputElement | null = null;
 let reInput2FA: HTMLInputElement | null = null;
 let reSubmitButton: HTMLButtonElement | null = null;
+let reOr: HTMLDivElement | null = null;
+let reRegisterButton: HTMLButtonElement | null = null;
 
 
 function createReLogAlertBox() {
     if (alertOverlay) return;
 
-    const overlay = el("div", "alert-overlay hidden") as HTMLDivElement;
+    const overlay = el("div", "alert-overlay whitespace-pre-line hidden") as HTMLDivElement;
     const box = el("div", "alert-box") as HTMLDivElement;
     const title = el("div", "alert-title") as HTMLDivElement;
     const inputLogin = el("input", "btn-input") as HTMLInputElement;
     const inputPassword = el("input", "btn-input") as HTMLInputElement;
     const submitButton = el("button", "alert-button") as HTMLButtonElement;
     const input2FA = el("input", "btn-input hidden") as HTMLInputElement;
+    const or = el("div", "alert-title text-center text-base my-2", text("OR"));
+    const googleSignIn = el("button", "alert-button") as HTMLButtonElement;
+    const registerButton = el("button", "alert-button") as HTMLButtonElement;
 
     inputLogin.type = "text";
     inputLogin.placeholder = "Login";
@@ -125,7 +136,20 @@ function createReLogAlertBox() {
     input2FA.type = "text";
     input2FA.placeholder = "Submit 2FA";
 
-    box.append(title, inputLogin, inputPassword, input2FA, submitButton);
+    googleSignIn.type = "button";
+    googleSignIn.textContent = "Sign in with Google";
+    googleSignIn.onclick = () => {
+        window.location.href = "/api/auth/google";
+    };
+
+    registerButton.type = "button";
+    registerButton.textContent = "Register";
+    registerButton.onclick = () => {
+        closeOverlay();
+        window.location.href = "#/login";
+    };
+
+    box.append(title, inputLogin, inputPassword, input2FA, submitButton, or, googleSignIn, or, registerButton);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 
@@ -136,13 +160,20 @@ function createReLogAlertBox() {
     reInputPassword = inputPassword;
     reSubmitButton = submitButton;
     reInput2FA = input2FA;
+    reOr = or;
+    reRegisterButton = registerButton;
 }
 
-export function reLogAlert(): void {
+export function reLogAlert(message?: string): void {
     createReLogAlertBox();
     
     if (!alertOverlay || !alertBox || !alertTitle || !reInputLogin || !reInputPassword || !reInput2FA || !reSubmitButton) return;
-    alertTitle.textContent = "Session Expired. Please log in again.";
+    if (message) {
+        alertTitle!.textContent = message;
+    } else {
+        alertTitle.textContent = `Session Expired.
+        Please log in again.`;
+    }
 
     reInputLogin.value = "";
     reInputPassword.value = "";
@@ -162,16 +193,14 @@ export function reLogAlert(): void {
 
     document.body.classList.add("no-scroll");
 
-    const closeOverlay = () => {
-        alertOverlay!.classList.add("hidden");
-        document.body.classList.remove("no-scroll");
-    };
-
     const handleSubmit = async (): Promise<void> => {
         try {
             // reSubmitButton!.disabled = true;
             // If 2FA input is visible, verify 2FA
             if (!reInput2FA!.classList.contains("hidden")) {
+                reOr!.classList.add("hidden");
+                reRegisterButton!.classList.add("hidden");
+                
                 const code = reInput2FA!.value.trim();
                 const userId = reInput2FA!.dataset.userId;
                 if (!code || !userId) {
@@ -189,11 +218,11 @@ export function reLogAlert(): void {
                 if (resp.ok) {
                     pongAlert("2FA verified! Login successful.");
                     closeOverlay();
-                    // refresh profile / app state
                     window.location.reload();
                 } else {
-                    const errMsg = data.error?.message || data.message || "Invalid 2FA code";
-                    pongAlert(`2FA verification failed: ${errMsg}`);
+                    closeOverlay();
+                    reLogAlert(`Wrong 2FA code.
+                        Please try again.`);
                     reSubmitButton!.disabled = false;
                 }
                 return;
@@ -222,10 +251,11 @@ export function reLogAlert(): void {
                 reInput2FA!.dataset.userId = data.data?.userId ?? "";
                 reInput2FA!.focus();
                 reSubmitButton!.textContent = "Submit";
-                pongAlert("Login successful! Please enter your 2FA code.");
+                pongAlert(`Login successful! Please enter your 2FA code.`);
             } else {
-                const errorMessage = data.error?.message || data.message || 'Login failed';
-                pongAlert(`Login failed: ${errorMessage}`);
+                closeOverlay();
+                reLogAlert(`Wrong Credentials.
+                    Please try again.`);
                 reSubmitButton!.disabled = false;
             }
         } catch (err) {
