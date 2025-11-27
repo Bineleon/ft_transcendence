@@ -8,9 +8,13 @@ function login(): HTMLElement {
     loginBox.append(text("WELCOME BACK"));
 
     const subTitle = el("h3", "font-ocean-type text-2xl text-center mb-6");
-    subTitle.append(text("Please login to access the game and continue your adventure! We missed you !"));
+    subTitle.append(
+        text(
+            "Please login to access the game and continue your adventure! We missed you !"
+        )
+    );
 
-    const form = el("form", "flex flex-col gap-4");
+    const form = el("form", "flex flex-col gap-4") as HTMLFormElement;
 
     // --- Inputs login / password ---
     const inputLogin = el("input", "btn-input") as HTMLInputElement;
@@ -46,17 +50,22 @@ function login(): HTMLElement {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ userId: input2FA.dataset.userId, code }),
-                    credentials: "include"
+                    credentials: "include",
                 });
                 const data = await response.json();
 
                 if (response.ok) {
                     pongAlert("2FA verified! Login successful.");
-                    try { window.dispatchEvent(new Event("auth-changed")); } catch (e) {}
+                    try {
+                        window.dispatchEvent(new Event("auth-changed"));
+                    } catch (_e) {}
+
                     const ID = inputLogin.value;
+                    // Pour l’instant on garde ton comportement existant :
+                    // redirection vers le profil de l’utilisateur
                     window.location.hash = `#/profile/${ID}`;
                 } else {
-                    const errorMessage = data.error?.message || data.message || 'Invalid 2FA code';
+                    const errorMessage = data.error?.message || data.message || "Invalid 2FA code";
                     pongAlert(`2FA verification failed: ${errorMessage}`);
                     inputSubmit.disabled = false;
                 }
@@ -75,7 +84,7 @@ function login(): HTMLElement {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                credentials: "include"
+                credentials: "include",
             });
             const data = await response.json();
 
@@ -85,14 +94,17 @@ function login(): HTMLElement {
                 input2FA.focus();
                 pongAlert("Login successful! Please enter your 2FA code sent by email.");
             } else {
-                const errorMessage = data.error?.message || data.message || 'Login failed';
+                const errorMessage = data.error?.message || data.message || "Login failed";
                 pongAlert(`Login failed: ${errorMessage}`);
                 inputSubmit.disabled = false;
             }
-
         } catch (error) {
             console.error("Login error:", error);
-            pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            pongAlert(
+                `An error occurred: ${
+                    error instanceof Error ? error.message : "Network error"
+                }`
+            );
             inputSubmit.disabled = false;
         }
     });
@@ -101,9 +113,20 @@ function login(): HTMLElement {
     const divider = el("div", "text-center text-sm text-gray-400 my-2");
     divider.textContent = "OR";
 
-    const googleBtn = el("a", "btn-click flex items-center justify-center gap-2") as HTMLAnchorElement;
-    googleBtn.href = "/api/auth/google";
+    // On ne met plus un href fixe, on construit l’URL avec le state côté JS
+    const googleBtn = el(
+        "button",
+        "btn-click flex items-center justify-center gap-2"
+    ) as HTMLButtonElement;
+    googleBtn.type = "button";
     googleBtn.textContent = "Sign in with Google";
+
+    googleBtn.addEventListener("click", () => {
+        // On prend la route courante (hash) comme state
+        const currentHash = window.location.hash || "#/";
+        const state = encodeURIComponent(currentHash);
+        window.location.href = `/api/auth/google?state=${state}`;
+    });
 
     form.append(inputLogin, inputPassword, input2FA, inputSubmit, divider, googleBtn);
     panel.append(loginBox, subTitle, form);
@@ -156,10 +179,12 @@ function register(): HTMLElement {
         event.preventDefault();
 
         if (!inputEmail.value || !inputLogin.value || !inputPassword.value) {
-            pongAlert("Please fill in all fields."); return;
+            pongAlert("Please fill in all fields.");
+            return;
         }
         if (inputPassword.value !== confirmPassword.value) {
-            pongAlert("Passwords do not match!"); return;
+            pongAlert("Passwords do not match!");
+            return;
         }
 
         submit.disabled = true;
@@ -170,7 +195,7 @@ function register(): HTMLElement {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                credentials: "include"
+                credentials: "include",
             });
             const data = await response.json();
 
@@ -179,16 +204,20 @@ function register(): HTMLElement {
                 window.location.hash = "#/login";
             } else {
                 const errorMessage =
-                    (Array.isArray(data?.error?.messages) && data.error.messages.join('\n')) ||
+                    (Array.isArray(data?.error?.messages) && data.error.messages.join("\n")) ||
                     data?.error?.message ||
                     data?.message ||
-                    'Unknown error';
+                    "Unknown error";
 
                 pongAlert(`Registration failed:\n${errorMessage}`);
             }
         } catch (error) {
             console.error("Registration error:", error);
-            pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            pongAlert(
+                `An error occurred: ${
+                    error instanceof Error ? error.message : "Network error"
+                }`
+            );
         } finally {
             submit.disabled = false;
         }

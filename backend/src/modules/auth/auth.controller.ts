@@ -94,29 +94,24 @@ export function authController(
     return formatSuccess(undefined, 'Logout successful');
   });
 
-  // --- PROFILE ---
+  // --- PROFILE (full) ---
   app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => {
-	try {
-	  const profile = await userService.getFullProfile(request.user!.userId);
-	  return formatSuccess({ user: profile }, 'Profile loaded successfully');
-	} catch (err) {
-	  request.log.error(err, 'Failed to load profile');
-	  return reply.code(500).send({
-		error: {
-		  code: 'PROFILE_LOAD_FAILED',
-		  message: 'Failed to load profile',
-		  statusCode: 500,
-		},
-	  });
-	}
+    try {
+      const profile = await userService.getFullProfile(request.user!.userId);
+      return formatSuccess({ user: profile }, 'Profile loaded successfully');
+    } catch (err) {
+      request.log.error(err, 'Failed to load profile');
+      return reply.code(500).send({
+        error: {
+          code: 'PROFILE_LOAD_FAILED',
+          message: 'Failed to load profile',
+          statusCode: 500,
+        },
+      });
+    }
   });
-  //   app.get('/api/auth/me', { preHandler: authenticate }, async (request) => {
-  //     const userId = request.user!.userId;
-  //     const profile = await userService.getOwnProfile(userId);
-  //     return formatSuccess({ user: profile });
-  //   });
-  
-  // --- PROFILE ---
+
+  // --- PROFILE (public / minimal) ---
   app.get('/api/auth/publicme', { preHandler: authenticate }, async (request) => {
     const userId = request.user!.userId;
     const profile = await userService.getOwnProfile(userId);
@@ -129,23 +124,24 @@ export function authController(
 
   // --- Profile Public ---
   app.get('/api/profile/:username', async (request, reply) => {
-  const { username } = request.params as { username: string };
+    const { username } = request.params as { username: string };
 
-  try {
-    const profile = await userService.getPublicProfileByUsername(username);
-    return formatSuccess({ user: profile });
-  } catch (err) {
-    return reply.code(404).send({
-      error: {
-        code: 'USER_NOT_FOUND',
-        message: 'User not found',
-        statusCode: 404
-      }
-    });
-  }
-});
+    try {
+      const profile = await userService.getPublicProfileByUsername(username);
+      return formatSuccess({ user: profile });
+    } catch (err) {
+      return reply.code(404).send({
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found',
+          statusCode: 404,
+        },
+      });
+    }
+  });
 
-   app.get('/api/auth/loggedIn', async (request, reply) => {
+  // --- Check loggedIn ---
+  app.get('/api/auth/loggedIn', async (request, reply) => {
     try {
       const token =
         request.cookies.token ||
@@ -157,8 +153,7 @@ export function authController(
         return reply.send(true);
       }
 
-      // Vérifie le token avec ta fonction custom
-      const decoded = await import('../../shared/utils/jwt.js').then(m => m.verifyToken(token));
+      const decoded = await import('../../shared/utils/jwt.js').then((m) => m.verifyToken(token));
 
       if (decoded) {
         return reply.send(false); // Token valide => utilisateur connecté
@@ -170,31 +165,28 @@ export function authController(
     }
   });
 
-// auth.controller.ts
-app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (request, reply) => {
-  try {
-    const userId = request.user!.userId;
+  // --- DELETE ACCOUNT ---
+  app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const userId = request.user!.userId;
 
-    // Supprime le compte
-    await userService.deleteUser(userId);
+      await userService.deleteUser(userId);
 
-    // Supprime les cookies pour logout
-    reply.clearCookie('token');
-    reply.clearCookie('refreshToken');
+      reply.clearCookie('token');
+      reply.clearCookie('refreshToken');
 
-    return { success: true, message: 'Account deleted successfully' };
-  } catch (err) {
-    request.log.error(err, 'Failed to delete account');
-    return reply.code(500).send({
-      error: {
-        code: 'DELETE_ACCOUNT_FAILED',
-        message: 'Failed to delete account',
-        statusCode: 500,
-      },
-    });
-  }
-});
-
+      return { success: true, message: 'Account deleted successfully' };
+    } catch (err) {
+      request.log.error(err, 'Failed to delete account');
+      return reply.code(500).send({
+        error: {
+          code: 'DELETE_ACCOUNT_FAILED',
+          message: 'Failed to delete account',
+          statusCode: 500,
+        },
+      });
+    }
+  });
 
   // ===============================
   //       GOOGLE OAUTH
@@ -216,6 +208,9 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
       });
     }
 
+    // On récupère le state envoyé par le front (hash courant), ou on met une valeur par défaut
+    const { state } = request.query as { state?: string };
+
     const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('redirect_uri', redirectUri);
@@ -223,13 +218,16 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
     url.searchParams.set('scope', 'openid email profile');
     url.searchParams.set('access_type', 'offline');
     url.searchParams.set('prompt', 'consent');
+    if (state) {
+      url.searchParams.set('state', state);
+    }
 
     return reply.redirect(url.toString());
   });
 
   // --- GOOGLE: CALLBACK ---
   app.get('/api/auth/google/callback', async (request, reply) => {
-    const { code } = request.query as { code?: string };
+    const { code, state } = request.query as { code?: string; state?: string };
 
     if (!code) {
       return reply.code(400).send({
@@ -316,8 +314,11 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
         path: '/',
       });
 
-      // Redirection vers le front déjà authentifié
-      return reply.redirect('/#/profile');
+      // On redirige vers le front avec le state dans la query string.
+      // Le front se chargera de remettre window.location.hash = state.
+      const redirectState = typeof state === 'string' && state.length > 0 ? state : '#/profile';
+      const encodedState = encodeURIComponent(redirectState);
+      return reply.redirect(`/?state=${encodedState}`);
     } catch (err) {
       request.log.error({ err }, 'Google OAuth callback failed');
       return reply.code(500).send({
@@ -328,6 +329,5 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
         },
       });
     }
-});
+  });
 }
-
