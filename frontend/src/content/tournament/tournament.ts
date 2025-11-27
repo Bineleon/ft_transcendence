@@ -90,11 +90,11 @@ async function handleGenerateTournament(): Promise<void> {
     if (!formEls) return;
     
     if (((!formEls.nameInput.value.trim() || !formEls.participantsButton.value) && TMode !== "KING") || !TMode) {
-        pongAlert("Please fill in all required fields.", { title: "Incomplete Form", onClose: () => {} });
+        pongAlert("Please fill in all required fields.");
         return;
     }
     else if (TMode === "KING" && (!formEls.kingTimeHiddenInput.value || !formEls.kingRoundsHiddenInput.value)) {
-        pongAlert("Please select King of the Hill settings.", { title: "Incomplete Form", onClose: () => {} });
+        pongAlert("Please select King of the Hill settings.");
         return;
     }
 
@@ -442,10 +442,24 @@ export function ChoseTournament(): HTMLElement {
 // 3) Tournament Code        
     const tournamentCode = el("div", "box-dark img-newspaper text-white text-center text-2xl -m-4 font-im-double uppercase");
     tournamentCode.append(text(`Enter your Tournament Code Here`));
+    const inputAndBtn = el("div", "grid grid-cols-[70%_30%] flex justify-center items-center gap-2 mx-auto my-4");
     const codeInput = el("input", "btn-input") as HTMLInputElement;
     codeInput.type = "text";
     codeInput.placeholder = "Tournament Code";
-    tournamentCode.append(codeInput);
+    const codeSubmit = el("button", "btn-click") as HTMLButtonElement;
+    codeSubmit.type = "button";
+    codeSubmit.append(text("GO"));
+    codeSubmit.addEventListener("click", async () => {
+        const code = codeInput.value.trim().toUpperCase();
+        if (!code) {
+            pongAlert("Please enter a tournament code.");
+            return;
+        }
+        window.location.href = `#/tournament/classic/${code}`;
+    });
+    inputAndBtn.append(codeInput, codeSubmit);
+
+    tournamentCode.append(inputAndBtn);
     
     best.append(profilePic, bestPlayer, cupIcon);
     header.append(boxPlayed, best, tournamentCode);

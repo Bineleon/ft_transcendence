@@ -5,10 +5,10 @@ import type { Tournament, User } from "./types.ts";
 
 
 /// ------        ADD ADD ADD        ------ //
-export async function addUserAsPlayerToTournament(tournament: Tournament, user: User): Promise<void> {
+export async function addUserAsPlayerToTournament(tCode: string, userName: string): Promise<void> {
     const payload = {
-        tournamentCode: tournament.tCode,
-        userId: user.userId,
+        tCode: tCode,
+        userId: userName,
     };    try {
         const response = await fetch("/api/tournament/players", {
             method: "POST",
@@ -186,10 +186,11 @@ export async function getTournamentDatas(code: string): Promise<Tournament> {
         }
     } catch (error) {
         console.error("Tournament fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament Fetch Error" });
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
         throw error;
     }
 }
+
 
 /*
 

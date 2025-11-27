@@ -555,10 +555,10 @@
 **************************************************/
   .alert-overlay {
     position: fixed !important;
-    inset: 0 !important;
+    inset: 0!important;
     margin: 0 !important;
     padding: 0 !important;
-    display: flex !important;
+    display: flex;
 
     align-items: center !important;
     justify-content: center !important;
@@ -571,6 +571,13 @@
   }
 
   .alert-box {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+
     @apply bg-white dark:bg-stone-800
           p-6 rounded-xl shadow-2xl
           flex flex-col gap-3 items-stretch;

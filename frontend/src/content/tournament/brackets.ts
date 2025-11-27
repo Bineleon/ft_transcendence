@@ -26,7 +26,7 @@ function listFt(label: string, extraClass = "", whithId?: string): HTMLLIElement
 
 // RENDERING FUNCTIONS ///
 export function renderBracket(t: Tournament): HTMLElement {
-    const wrapper = el("div", "flex mr-3");
+    const wrapper = el("div", "flex mr-3 mt-8");
 
     const firstRound = renderFirstRoundColumn("round-1", t.maxParticipants, {
         markAnchorOnIndex: 0,
@@ -84,7 +84,7 @@ function renderFirstRoundColumn(roundId: string, playersCount: number, options?:
 
 export function renderTournamentBrackets(tClassicDatas: Tournament): HTMLElement {
     // Implémentation du rendu des brackets du tournoi
-    const brackets = el("div", "brackets mt-4");
+    const brackets = el("div", "brackets");
 
     brackets.append(renderBracket(tClassicDatas));
 

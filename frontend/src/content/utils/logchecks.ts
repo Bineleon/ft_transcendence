@@ -1,5 +1,43 @@
 import { el, text } from "../home";
-import { logout } from "./logout";
+import { addUserAsPlayerToTournament, getLoggedName } from "./todb";
+
+// ALERT SIMPLE (message + bouton)
+type AlertOptions = {
+    title?: string;
+    onClose?: () => void; // in milliseconds
+    where?: string;
+};
+
+type SimpleAlertDOM = {
+    overlay: HTMLDivElement;
+    box: HTMLDivElement;
+    title: HTMLDivElement;
+    message: HTMLParagraphElement;
+    button: HTMLButtonElement;
+};
+let simpleAlertDOM: SimpleAlertDOM | null = null;
+
+// RELOG (login + password + 2FA + boutons)
+type ReLogDOM = {
+    overlay: HTMLDivElement;
+    box: HTMLDivElement;
+    title: HTMLDivElement;
+    tournamentRegLogged: HTMLButtonElement;
+    tournamentRegNew: HTMLButtonElement;
+    or: HTMLDivElement;
+    inputLogin: HTMLInputElement;
+    inputPassword: HTMLInputElement;
+    input2FA: HTMLInputElement;
+    submitButton: HTMLButtonElement;
+    googleSignIn: HTMLButtonElement;
+    registerButton: HTMLButtonElement;
+};
+let reLogDOM: ReLogDOM | null = null;
+
+export const closeOverlay = (overlay: HTMLDivElement) => {
+    overlay.classList.add("hidden");
+    document.body.classList.remove("no-scroll");
+};
 
 export async function notLoggedIn(): Promise<boolean> {
     try {
@@ -17,195 +55,159 @@ export async function notLoggedIn(): Promise<boolean> {
         }
     } catch (error) {
         console.error("Profile fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Profile Fetch Error" });
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
         throw error;
     }
 }
 
-export const closeOverlay = () => {
-    alertOverlay!.classList.add("hidden");
-    document.body.classList.remove("no-scroll");
-};
-
-
-export function redirectToLogin() {
-    
-    // createRouter("app", route: { "/login": LoginPage });
-}
-
-type AlertOptions = {
-    title: string;
-    onClose?: () => void; // in milliseconds
-};
-
-let alertOverlay: HTMLDivElement | null = null;
-let alertBox: HTMLDivElement | null = null;
-let alertTitle: HTMLDivElement | null = null;
-let alertMessage: HTMLParagraphElement | null = null;
-let alertButton: HTMLButtonElement | null = null;
-
-function createAlertBox() {
-    if (alertOverlay) return;
+function createSimpleAlertDOM(): SimpleAlertDOM {
+    if (simpleAlertDOM) return simpleAlertDOM;
 
     const overlay = el("div", "alert-overlay hidden") as HTMLDivElement;
     const box = el("div", "alert-box") as HTMLDivElement;
     const title = el("div", "alert-title") as HTMLDivElement;
     const message = el("p", "alert-message") as HTMLParagraphElement;
     const button = el("button", "alert-button") as HTMLButtonElement;
-
-    button.type = "button";
     button.textContent = "OK";
 
     box.append(title, message, button);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 
-    alertOverlay = overlay;
-    alertBox = box;
-    alertTitle = title;
-    alertMessage = message;
-    alertButton = button;
-
+    simpleAlertDOM = { overlay, box, title, message, button };
+    return simpleAlertDOM;
 }
 
 export function pongAlert(mess: string, options?: AlertOptions): void {
-    createAlertBox();
+    const { overlay, title, message, button } = createSimpleAlertDOM();
 
-    if (!alertOverlay || !alertBox || !alertTitle || !alertMessage || !alertButton) return;
+    title.textContent = options?.title ?? "Alert";
+    message.textContent = mess;
 
-    const title = options && options.title ? options.title : "Alert";
-
-    alertTitle.textContent = title;
-    alertMessage.textContent = mess;
-
-    alertOverlay.classList.remove("hidden");
-
-    const viewportCenterY = window.scrollY + window.innerHeight / 2;
-    alertBox.style.position = "absolute";
-    alertBox.style.left = "50%";
-    alertBox.style.top = `${viewportCenterY}px`;
-    alertBox.style.transform = "translate(-50%, -50%)";
-
+    overlay.classList.remove("hidden");
     document.body.classList.add("no-scroll");
 
-    const handleClick = (): void => {
-        alertOverlay!.classList.add("hidden");
-        document.body.classList.remove("no-scroll");
-        if (alertButton) {
-            alertButton.onclick = null;
+    button.onclick = () => {
+        closeOverlay(overlay);
+        if (options?.where) {
+            window.location.hash = options.where;
         }
-        if (options && options.onClose) {
+        if (options?.onClose) {
             options.onClose();
         }
-    }
-    alertButton.onclick = handleClick;
+    };
 }
 
-
-let reInputLogin: HTMLInputElement | null = null;
-let reInputPassword: HTMLInputElement | null = null;
-let reInput2FA: HTMLInputElement | null = null;
-let reSubmitButton: HTMLButtonElement | null = null;
-let reOr: HTMLDivElement | null = null;
-let reRegisterButton: HTMLButtonElement | null = null;
-
-
-function createReLogAlertBox() {
-    if (alertOverlay) return;
+// ----------- Re-Login / Register Alert Box ----------- //
+function createRelogRegisterDOM(mode: "RELOG" | "REGISTER"): ReLogDOM {
+    if (reLogDOM) return reLogDOM;
 
     const overlay = el("div", "alert-overlay whitespace-pre-line hidden") as HTMLDivElement;
     const box = el("div", "alert-box") as HTMLDivElement;
     const title = el("div", "alert-title") as HTMLDivElement;
-    const inputLogin = el("input", "btn-input") as HTMLInputElement;
-    const inputPassword = el("input", "btn-input") as HTMLInputElement;
-    const submitButton = el("button", "alert-button") as HTMLButtonElement;
-    const input2FA = el("input", "btn-input hidden") as HTMLInputElement;
-    const or = el("div", "alert-title text-center text-base my-2", text("OR"));
-    const googleSignIn = el("button", "alert-button") as HTMLButtonElement;
-    const registerButton = el("button", "alert-button") as HTMLButtonElement;
+    
+    const tournamentRegLogged = el("button", "alert-button hidden") as HTMLButtonElement;
+    tournamentRegLogged.type = "button";
+    tournamentRegLogged.textContent = "Register as Logged User";
+    const tournamentRegNew = el("button", "alert-button hidden") as HTMLButtonElement;
+    tournamentRegNew.type = "button";
+    tournamentRegNew.textContent = "Register as New User";
 
+    const inputLogin = el("input", "btn-input") as HTMLInputElement;
     inputLogin.type = "text";
     inputLogin.placeholder = "Login";
-
+    const inputPassword = el("input", "btn-input") as HTMLInputElement;
     inputPassword.type = "password";
     inputPassword.placeholder = "Password";
-
+    const submitButton = el("button", "alert-button") as HTMLButtonElement;
     submitButton.type = "button";
     submitButton.textContent = "Log In";
-
+    const input2FA = el("input", "btn-input hidden") as HTMLInputElement;
     input2FA.type = "text";
     input2FA.placeholder = "Submit 2FA";
 
+    const or = el("div", "alert-title text-center text-base my-2", text("OR")) as HTMLDivElement;
+
+    const googleSignIn = el("button", "alert-button") as HTMLButtonElement;
     googleSignIn.type = "button";
     googleSignIn.textContent = "Sign in with Google";
     googleSignIn.onclick = () => {
         window.location.href = "/api/auth/google";
     };
-
+    const registerButton = el("button", "alert-button") as HTMLButtonElement;
     registerButton.type = "button";
     registerButton.textContent = "Register";
     registerButton.onclick = () => {
-        closeOverlay();
+        closeOverlay(overlay);
         window.location.href = "#/login";
     };
 
-    box.append(title, inputLogin, inputPassword, input2FA, submitButton, or, googleSignIn, or, registerButton);
+    if (mode === "RELOG") {
+        tournamentRegLogged.classList.add("hidden");
+        tournamentRegNew.classList.add("hidden");
+        or.classList.add("hidden");
+        googleSignIn.classList.add("hidden");
+        registerButton.classList.add("hidden");
+    } else if (mode === "REGISTER") {
+        inputLogin.classList.add("hidden");
+        inputPassword.classList.add("hidden");
+        input2FA.classList.add("hidden");
+        submitButton.classList.add("hidden");
+    }
+
+
+    box.append(title, tournamentRegLogged, tournamentRegNew, inputLogin,
+            inputPassword, input2FA, submitButton, or, googleSignIn, registerButton);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 
-    alertOverlay = overlay;
-    alertBox = box;
-    alertTitle = title;
-    reInputLogin = inputLogin;
-    reInputPassword = inputPassword;
-    reSubmitButton = submitButton;
-    reInput2FA = input2FA;
-    reOr = or;
-    reRegisterButton = registerButton;
+    reLogDOM = { overlay, box, title, tournamentRegLogged, tournamentRegNew, or,
+        inputLogin, inputPassword, input2FA, submitButton, googleSignIn, registerButton };
+    return reLogDOM;
 }
 
 export function reLogAlert(message?: string): void {
-    createReLogAlertBox();
-    
-    if (!alertOverlay || !alertBox || !alertTitle || !reInputLogin || !reInputPassword || !reInput2FA || !reSubmitButton) return;
+    const { overlay, title, tournamentRegLogged, tournamentRegNew, or,
+        inputLogin, inputPassword, input2FA, submitButton, googleSignIn, registerButton } = createRelogRegisterDOM("RELOG");
+
     if (message) {
-        alertTitle!.textContent = message;
+        title.textContent = message;
     } else {
-        alertTitle.textContent = `Session Expired.
+        title.textContent = `Session Expired.
         Please log in again.`;
     }
 
-    reInputLogin.value = "";
-    reInputPassword.value = "";
-    reInput2FA.value = "";
-    reInput2FA.classList.add("hidden");
-    delete reInput2FA.dataset.userId;
-    reSubmitButton.textContent = "Log In";
-    reSubmitButton.disabled = false;
+    inputLogin.classList.remove("hidden");
+    inputPassword.classList.remove("hidden");
+    input2FA.classList.add("hidden");
+    inputLogin.value = "";
+    inputPassword.value = "";
+    input2FA.value = "";
+    delete input2FA.dataset.userId;
+    submitButton.classList.remove("hidden");
+    submitButton.disabled = false;
+    submitButton.textContent = "Log In";
+    or!.classList.add("hidden");
+    registerButton!.classList.add("hidden");
+    googleSignIn!.classList.remove("hidden");
 
-    alertOverlay.classList.remove("hidden");
+    tournamentRegLogged!.classList.add("hidden");
+    tournamentRegNew!.classList.add("hidden");
 
-    const viewportCenterY = window.scrollY + window.innerHeight / 2;
-    alertBox.style.position = "absolute";
-    alertBox.style.left = "50%";
-    alertBox.style.top = `${viewportCenterY}px`;
-    alertBox.style.transform = "translate(-50%, -50%)";
+    overlay.classList.remove("hidden");
 
-    document.body.classList.add("no-scroll");
-
+    // Handlers aux clics
     const handleSubmit = async (): Promise<void> => {
         try {
-            // reSubmitButton!.disabled = true;
-            // If 2FA input is visible, verify 2FA
-            if (!reInput2FA!.classList.contains("hidden")) {
-                reOr!.classList.add("hidden");
-                reRegisterButton!.classList.add("hidden");
+            if (!input2FA.classList.contains("hidden")) {
+                or.classList.add("hidden");
+                registerButton.classList.add("hidden");
                 
-                const code = reInput2FA!.value.trim();
-                const userId = reInput2FA!.dataset.userId;
+                const code = input2FA.value.trim();
+                const userId = input2FA.dataset.userId;
                 if (!code || !userId) {
                     pongAlert("Please enter the 2FA code.");
-                    reSubmitButton!.disabled = false;
+                    submitButton.disabled = false;
                     return;
                 }
                 const resp = await fetch("/api/auth/verify-2fa", {
@@ -214,26 +216,25 @@ export function reLogAlert(message?: string): void {
                     body: JSON.stringify({ userId, code }),
                     credentials: "include"
                 });
-                const data = await resp.json().catch(() => ({}));
                 if (resp.ok) {
                     pongAlert("2FA verified! Login successful.");
-                    closeOverlay();
+                    closeOverlay(overlay);
                     window.location.reload();
                 } else {
-                    closeOverlay();
+                    closeOverlay(overlay);
                     reLogAlert(`Wrong 2FA code.
                         Please try again.`);
-                    reSubmitButton!.disabled = false;
+                    submitButton.disabled = false;
                 }
                 return;
             }
 
             // Phase login
-            const username = reInputLogin!.value.trim();
-            const password = reInputPassword!.value;
+            const username = inputLogin.value.trim();
+            const password = inputPassword.value;
             if (!username || !password) {
                 pongAlert("Please fill in all fields.");
-                reSubmitButton!.disabled = false;
+                submitButton.disabled = false;
                 return;
             }
 
@@ -247,29 +248,116 @@ export function reLogAlert(message?: string): void {
 
             if (response.ok) {
                 // server asks for 2FA (same behavior as login.ts)
-                reInput2FA!.classList.remove("hidden");
-                reInput2FA!.dataset.userId = data.data?.userId ?? "";
-                reInput2FA!.focus();
-                reSubmitButton!.textContent = "Submit";
+                input2FA.classList.remove("hidden");
+                input2FA.dataset.userId = data.data?.userId ?? "";
+                input2FA.focus();
+                submitButton.textContent = "Submit";
                 pongAlert(`Login successful! Please enter your 2FA code.`);
             } else {
-                closeOverlay();
+                closeOverlay(overlay);
                 reLogAlert(`Wrong Credentials.
                     Please try again.`);
-                reSubmitButton!.disabled = false;
+                submitButton.disabled = false;
             }
         } catch (err) {
             console.error("reLogAlert submit error:", err);
             pongAlert(`An error occurred: ${err instanceof Error ? err.message : 'Network error'}`);
-            reSubmitButton!.disabled = false;
+            submitButton.disabled = false;
         }
     };
 
     // attach handler (remove previous to avoid duplicates)
-    reSubmitButton.onclick = handleSubmit;
+    submitButton.onclick = handleSubmit;
     // allow Enter on inputs to trigger submit
-    [reInputLogin, reInputPassword, reInput2FA].forEach((inp) => {
+    [inputLogin, inputPassword, input2FA].forEach((inp) => {
         if (!inp) return;
         inp.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmit(); } };
     });
+}
+
+export function registerAlertBox(tCode: string): void {
+    const { overlay, title, tournamentRegLogged, tournamentRegNew, or,
+        inputLogin, inputPassword, input2FA, submitButton, registerButton } = createRelogRegisterDOM("REGISTER");
+
+    title.textContent = `Register for Tournament ${tCode}`;
+
+    tournamentRegLogged.classList.remove("hidden");
+    tournamentRegNew.classList.remove("hidden");
+    or.classList.remove("hidden");
+    inputLogin.classList.add("hidden");
+    inputPassword.classList.add("hidden");
+    input2FA.classList.add("hidden");
+    submitButton.classList.add("hidden");
+    registerButton.classList.add("hidden");
+
+    overlay.classList.remove("hidden");
+
+    // Handlers aux clics
+    tournamentRegLogged.onclick = async () => {
+        closeOverlay(overlay);
+        const loggedName = await getLoggedName();
+        if (loggedName) {
+            await addUserAsPlayerToTournament(loggedName, tCode);
+        } else {
+            pongAlert("Could not retrieve logged user information.");
+        }
+        window.location.reload();
+    };
+
+    tournamentRegNew.onclick = () => {
+        tournamentRegLogged.classList.add("hidden");
+        tournamentRegNew.classList.add("hidden");
+        or.classList.add("hidden");
+        inputLogin.classList.remove("hidden");
+        inputPassword.classList.remove("hidden");
+        submitButton.classList.remove("hidden");
+        submitButton.disabled = false;
+        submitButton.textContent = "Register";
+        registerButton.classList.remove("hidden");
+
+        // New submit handler for registration
+        const handleRegister = async (): Promise<void> => {
+            try {
+                const username = inputLogin.value.trim();
+                const password = inputPassword.value;
+                if (!username || !password) {
+                    pongAlert("Please fill in all fields.");
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                const response = await fetch("/api/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password }),
+                    credentials: "include"
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok) {
+                    pongAlert("Registration successful! You are now logged in.");
+                    closeOverlay(overlay);
+                    await addUserAsPlayerToTournament(username, tCode);
+                    window.location.reload();
+                } else {
+                    closeOverlay(overlay);
+                    registerAlertBox(tCode);
+                    pongAlert(`Registration failed: ${data.error?.message || data.message || 'Unknown error'}`);
+                    submitButton.disabled = false;
+                }
+            } catch (err) {
+                console.error("registerAlertBox submit error:", err);
+                pongAlert(`An error occurred: ${err instanceof Error ? err.message : 'Network error'}`);
+                submitButton.disabled = false;
+            }
+        };
+        
+        // attach handler (remove previous to avoid duplicates)
+        submitButton.onclick = handleRegister;
+        // allow Enter on inputs to trigger submit
+        [inputLogin, inputPassword, input2FA].forEach((inp) => {
+            if (!inp) return;
+            inp.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); handleRegister(); } };
+        });
+    };
 }
