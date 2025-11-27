@@ -12,14 +12,18 @@ export class MatchService {
   
   async create(data: CreateMatchDTO): Promise<MatchResponse> {
     // Validation : vérifier que les joueurs existent
-    const p1Exists = await prisma.user.findUnique({ where: { id: data.p1UserId } });
-    const p2Exists = await prisma.user.findUnique({ where: { id: data.p2UserId } });
-    
-    if (!p1Exists) {
-      throw new Error(`Player 1 with id ${data.p1UserId} not found`);
+    if (data.p1UserId) {
+      const p1Exists = await prisma.user.findUnique({ where: { id: data.p1UserId } });
+      if (!p1Exists) {
+        throw new Error(`Player 1 with id ${data.p1UserId} not found`);
+      }
     }
-    if (!p2Exists) {
-      throw new Error(`Player 2 with id ${data.p2UserId} not found`);
+    
+    if (data.p2UserId) {
+      const p2Exists = await prisma.user.findUnique({ where: { id: data.p2UserId } });
+      if (!p2Exists) {
+        throw new Error(`Player 2 with id ${data.p2UserId} not found`);
+      }
     }
     
     // Validation : si tournamentId, vérifier qu'il existe
@@ -32,16 +36,20 @@ export class MatchService {
       }
     }
 
+    // ⬇️ Construire l'objet data sans undefined
+    const createData: any = {
+      status: 'SCHEDULED' as MatchStatus
+    };
+
+    if (data.tournamentId) createData.tournamentId = data.tournamentId;
+    if (data.round !== undefined) createData.round = data.round;
+    if (data.gameIndex !== undefined) createData.gameIndex = data.gameIndex;
+    if (data.p1UserId) createData.p1UserId = data.p1UserId;
+    if (data.p2UserId) createData.p2UserId = data.p2UserId;
+    if (data.txHash) createData.txHash = data.txHash;
+
     return await prisma.match.create({
-      data: {
-        tournamentId: data.tournamentId,
-        round: data.round,
-        gameIndex: data.gameIndex,
-        p1UserId: data.p1UserId,
-        p2UserId: data.p2UserId,
-        txHash: data.txHash,
-        status: 'SCHEDULED' as MatchStatus
-      },
+      data: createData,
       include: {
         p1: {
           select: {
@@ -62,7 +70,7 @@ export class MatchService {
       }
     });
   }
-
+  
   // ==========================================
   // READ - Récupérer un match par ID
   // ==========================================

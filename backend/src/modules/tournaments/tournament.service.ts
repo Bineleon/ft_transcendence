@@ -12,30 +12,34 @@ export class TournamentService {
   
   async create(data: CreateTournamentDTO): Promise<TournamentResponse> {
     // Validation pour le mode KING
-    console.log("Creating tournament with data:", data);
     if (data.mode === 'KING') {
       if (!data.kingMaxTime || !data.kingMaxRounds) {
         throw new Error('KING mode requires kingMaxTime and kingMaxRounds');
       }
     }
+
     // Vérifier que le code n'existe pas
     const exists = await this.codeExists(data.code);
     if (exists) {
       throw new Error('Tournament code already exists');
     }
 
-    // Si un creatorID est fourni, vérifier qu'il existe pour éviter la contrainte FK
+    // Vérifier que le créateur existe
     let createdByValue: string | undefined;
     if (data.creatorID) {
-      const user = await prisma.user.findUnique({ where: { id: data.creatorID }, select: { id: true } });
+      const user = await prisma.user.findUnique({ 
+        where: { id: data.creatorID } 
+      });
       if (!user) {
-        throw new Error(`Creator not found for id=${data.creatorID}`);
+        throw new Error('Creator not found');
       }
       createdByValue = data.creatorID;
     }
     
-    try {
-      return await prisma.tournament.create({
+    // TRANSACTION : Créer tournoi + matchs ensemble
+    return await prisma.$transaction(async (tx) => {
+      // 1. Créer le tournoi
+      const tournament = await tx.tournament.create({
         data: {
           code: data.code,
           name: data.name,
@@ -45,7 +49,23 @@ export class TournamentService {
           kingMaxTime: data.kingMaxTime,
           kingMaxRounds: data.kingMaxRounds,
           status: 'OPEN' as TournamentStatus
-        },
+        }
+      });
+
+      // 2. Générer tous les matchs vides
+      const matches = this.generateEmptyMatches(
+        tournament.id,
+        data.maxParticipants
+      );
+
+      // 3. Créer tous les matchs
+      if (matches.length > 0) {
+        await tx.match.createMany({ data: matches });
+      }
+
+      // 4. Retourner le tournoi avec matchs
+      return await tx.tournament.findUnique({
+        where: { id: tournament.id },
         include: {
           creator: {
             select: {
@@ -55,16 +75,38 @@ export class TournamentService {
             }
           }
         }
-      });
-    } catch (err) {
-      console.error("createTournament error:", err);
-      // si Prisma renvoie une erreur de FK, rendre le message plus lisible
-      if ((err as any).code === 'P2003') {
-        throw new Error('Foreign key constraint violated (invalid creator id)');
-      }
-      throw err;
-    }
+      }) as TournamentResponse;
+    });
   }
+
+  // ==========================================
+  // GÉNÉRER LES MATCHS (maxParticipants - 1)
+  // ==========================================
+  
+  private generateEmptyMatches(tournamentId: string, maxParticipants: number) {
+    const matches = [];
+    let remaining = maxParticipants;
+    let round = 1;
+
+    while (remaining > 1) {
+      const matchesInRound = Math.floor(remaining / 2);
+      
+      for (let i = 0; i < matchesInRound; i++) {
+        matches.push({
+          tournamentId,
+          round,
+          gameIndex: i,
+          status: 'SCHEDULED' as const,
+        });
+      }
+      
+      remaining = matchesInRound;
+      round++;
+    }
+    
+    return matches;
+  }
+
 
   // ==========================================
   // READ

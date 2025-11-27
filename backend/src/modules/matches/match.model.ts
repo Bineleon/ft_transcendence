@@ -4,8 +4,8 @@ export interface CreateMatchDTO {
   tournamentId?: string;
   round?: number;
   gameIndex?: number;
-  p1UserId: string;
-  p2UserId: string;
+  p1UserId?: string;
+  p2UserId?: string;
   txHash?: string;
 }
 
