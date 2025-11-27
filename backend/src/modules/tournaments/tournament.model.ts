@@ -25,7 +25,7 @@ export interface TournamentResponse {
     avatarUrl: string | null;
   } | null;                       
   matches?: any[];
-  // _count?: {                      // ⬅️ AJOUTER pour findAll()
+  // _count?: {                      // AJOUTER pour findAll()
   //   matches: number;
   // };
 }

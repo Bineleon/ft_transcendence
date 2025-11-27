@@ -84,7 +84,7 @@ export class TournamentService {
   // ==========================================
   
   private generateEmptyMatches(tournamentId: string, maxParticipants: number) {
-    const matches = [];
+    const matches: any[] = []; // TMP a modifier 
     let remaining = maxParticipants;
     let round = 1;
 
@@ -97,6 +97,12 @@ export class TournamentService {
           round,
           gameIndex: i,
           status: 'SCHEDULED' as const,
+          p1UserId: null,
+          p2UserId: null,
+          p1Score: null,
+          p2Score: null,
+          winnerUserId: null,
+          txHash: null
         });
       }
       
