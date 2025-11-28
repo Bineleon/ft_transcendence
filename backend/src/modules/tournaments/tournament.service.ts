@@ -219,6 +219,108 @@ export class TournamentService {
     });
   }
 
+   async join(code: string, userId: string): Promise<TournamentResponse> {
+    // 1. Vérifier que le tournoi existe et est ouvert
+    const tournament = await prisma.tournament.findUnique({
+      where: { code },
+      include: {
+        matches: {
+          where: { round: 1 },
+          orderBy: { gameIndex: 'asc' }
+        }
+      }
+    });
+
+    if (!tournament) {
+      throw new Error('Tournament not found');
+    }
+
+    if (tournament.status !== 'OPEN') {
+      throw new Error('Tournament is not open for registration');
+    }
+
+    // 2. Vérifier que l'utilisateur existe
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // 3. Vérifier que l'utilisateur n'est pas déjà inscrit
+    const alreadyJoined = tournament.matches.some(
+      match => match.p1UserId === userId || match.p2UserId === userId
+    );
+
+    if (alreadyJoined) {
+      throw new Error('User already joined this tournament');
+    }
+
+    // 4. Compter combien de places sont prises
+    const participants = new Set<string>();
+    tournament.matches.forEach(match => {
+      if (match.p1UserId) participants.add(match.p1UserId);
+      if (match.p2UserId) participants.add(match.p2UserId);
+    });
+
+    if (participants.size >= tournament.maxParticipants) {
+      throw new Error('Tournament is full');
+    }
+
+    // 5. Assigner le joueur au premier slot libre du Round 1
+    let assigned = false;
+    
+    for (const match of tournament.matches) {
+      if (!match.p1UserId) {
+        // Slot p1 libre
+        await prisma.match.update({
+          where: { id: match.id },
+          data: { p1UserId: userId }
+        });
+        assigned = true;
+        break;
+      } else if (!match.p2UserId) {
+        // Slot p2 libre
+        await prisma.match.update({
+          where: { id: match.id },
+          data: { p2UserId: userId }
+        });
+        assigned = true;
+        break;
+      }
+    }
+
+    if (!assigned) {
+      throw new Error('Could not assign player to a match');
+    }
+
+    // 6. Vérifier si le tournoi est plein → passer à RUNNING
+    const updatedTournament = await prisma.tournament.findUnique({
+      where: { code },
+      include: {
+        matches: {
+          where: { round: 1 }
+        }
+      }
+    });
+
+    const allSlotsFilled = updatedTournament!.matches.every(
+      match => match.p1UserId && match.p2UserId
+    );
+
+    if (allSlotsFilled) {
+      await prisma.tournament.update({
+        where: { code },
+        data: { status: 'RUNNING' }
+      });
+    }
+
+    // 7. Retourner le tournoi avec tous les matchs
+    return await this.findByCode(code) as TournamentResponse;
+  }
+
+
   async start(code: string): Promise<TournamentResponse> {
     // Vérifier que le tournoi existe et est OPEN
     const tournament = await prisma.tournament.findUnique({

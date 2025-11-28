@@ -51,6 +51,7 @@ model User {
   matchesAsP1        Match[]        @relation("P1")
   sessions           Session[]
   createdTournaments Tournament[]   @relation("UserCreatedTournaments")
+  tournaments        Tournament[]   @relation("TournamentParticipants")
   refreshTokens      RefreshToken[]
   googleId           String?        @unique
 }
@@ -68,6 +69,7 @@ model Tournament {
   createdAt         DateTime          @default(now()) @map("created_at")
   matches           Match[]
   creator           User?             @relation("UserCreatedTournaments", fields: [createdBy], references: [id])
+  participants      User[]            @relation("TournamentParticipants")
 
   @@index([status])
 }

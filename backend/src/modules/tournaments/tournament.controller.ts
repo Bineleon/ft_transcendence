@@ -120,6 +120,38 @@ export function tournamentController(
     }
   );
 
+
+  // ==========================================
+  // POST /api/tournaments/:code/join - Rejoindre un tournoi
+  // ==========================================
+  app.post<{ 
+    Params: { code: string };
+    Body: { userId: string };
+  }>(
+    '/api/tournaments/:code/join',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      try {
+        const { code } = request.params;
+        const { userId } = request.body;
+
+        if (!userId) {
+          const errorResponse = formatGenericError(new Error('userId is required'));
+          return reply.status(400).send(errorResponse);
+        }
+
+        const tournament = await tournamentService.join(code, userId);
+        return formatSuccess(tournament, 'Successfully joined tournament');
+        
+      } catch (error) {
+        const errorResponse = formatGenericError(
+          error instanceof Error ? error : new Error('Failed to join tournament')
+        );
+        return reply.status(errorResponse.error.statusCode).send(errorResponse);
+      }
+    }
+  );
+
   // ==========================================
   // POST /api/tournaments/:code/start - Démarrer un tournoi
   // ==========================================
