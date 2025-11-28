@@ -340,71 +340,65 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
             });
         }
 
-        // --- Demandes reçues ---
-        const requestsRes = await fetch("/api/friends/requests", {
-            credentials: "include",
-        });
-        const requestsData = await requestsRes.json();
-        if (requestsData.success && Array.isArray(requestsData.data)) {
-            (requestsData.data as FriendRequestSummary[]).forEach((req) => {
-                const reqDiv = el("div", "flex items-center mb-2 gap-2");
+// --- Demandes reçues ---
+const requestsRes = await fetch("/api/friends/requests", {
+    credentials: "include",
+});
+const requestsData = await requestsRes.json();
+if (requestsData.success && Array.isArray(requestsData.data)) {
+    (requestsData.data as FriendRequestSummary[]).forEach((req) => {
+        const reqDiv = el("div", "flex items-center mb-2 gap-2");
 
-                const left = el("div", "flex items-center gap-2 flex-1");
+        const left = el("div", "flex items-center gap-2 flex-1");
 
-                let avatar: HTMLElement;
-                if (req.avatarUrl) {
-                    avatar = el("img", "w-8 h-8 rounded-full object-cover") as HTMLImageElement;
-                    (avatar as HTMLImageElement).src = req.avatarUrl;
-                    (avatar as HTMLImageElement).alt = req.username;
-                } else {
-                    avatar = el(
-                        "div",
-                        "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs"
-                    );
-                    const initial = req.username[0]?.toUpperCase() ?? "?";
-                    avatar.append(text(initial));
-                }
-
-                const nameSpan = el("span", "font-modern-type text-lg");
-                nameSpan.textContent = req.username;
-
-                const statusDot = el(
-                    "span",
-                    `inline-block w-2 h-2 rounded-full ${req.online ? "bg-green-500" : "bg-gray-500"}`
-                );
-                const statusLabel = el("span", "text-xs text-slate-300");
-                statusLabel.textContent = req.online ? "Online" : "Offline";
-
-                left.append(avatar, nameSpan, statusDot, statusLabel);
-
-                const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;
-                acceptBtn.textContent = "Accept";
-                acceptBtn.onclick = async () => {
-                    await fetch(`/api/friends/${req.id}`, {
-                        method: "PATCH",
-                        credentials: "include",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "accept" }),
-                    });
-                    loadFriends(friendsList, requestsBox);
-                };
-
-                const declineBtn = el("button", "btn-click") as HTMLButtonElement;
-                declineBtn.textContent = "Decline";
-                declineBtn.onclick = async () => {
-                    await fetch(`/api/friends/${req.id}`, {
-                        method: "PATCH",
-                        credentials: "include",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "reject" }),
-                    });
-                    loadFriends(friendsList, requestsBox);
-                };
-
-                reqDiv.append(left, acceptBtn, declineBtn);
-                requestsBox.append(reqDiv);
-            });
+        let avatar: HTMLElement;
+        if (req.avatarUrl) {
+            avatar = el("img", "w-8 h-8 rounded-full object-cover") as HTMLImageElement;
+            (avatar as HTMLImageElement).src = req.avatarUrl;
+            (avatar as HTMLImageElement).alt = req.username;
+        } else {
+            avatar = el(
+                "div",
+                "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs"
+            );
+            const initial = req.username[0]?.toUpperCase() ?? "?";
+            avatar.append(text(initial));
         }
+
+        const nameSpan = el("span", "font-modern-type text-lg");
+        nameSpan.textContent = req.username;
+
+        // 🔥 ICI : on n'ajoute PLUS statusDot / statusLabel
+        left.append(avatar, nameSpan);
+
+        const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;
+        acceptBtn.textContent = "Accept";
+        acceptBtn.onclick = async () => {
+            await fetch(`/api/friends/${req.id}`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "accept" }),
+            });
+            loadFriends(friendsList, requestsBox);
+        };
+
+        const declineBtn = el("button", "btn-click") as HTMLButtonElement;
+        declineBtn.textContent = "Decline";
+        declineBtn.onclick = async () => {
+            await fetch(`/api/friends/${req.id}`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "reject" }),
+            });
+            loadFriends(friendsList, requestsBox);
+        };
+
+        reqDiv.append(left, acceptBtn, declineBtn);
+        requestsBox.append(reqDiv);
+    });
+}
     } catch (err) {
         console.error("Erreur chargement amis :", err);
     }

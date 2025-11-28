@@ -6,7 +6,7 @@ import {
   ValidationError,
 } from '../../shared/errors/index.js';
 
-const ONLINE_THRESHOLD_MS = 120_000; // 30 secondes
+const ONLINE_THRESHOLD_MS = 30_000; // 30 secondes
 
 export class FriendsService {
   private prisma: PrismaClient;
