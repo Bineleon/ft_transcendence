@@ -131,9 +131,13 @@ function createRelogRegisterDOM(mode: "RELOG" | "REGISTER"): ReLogDOM {
     const googleSignIn = el("button", "alert-button") as HTMLButtonElement;
     googleSignIn.type = "button";
     googleSignIn.textContent = "Sign in with Google";
-    googleSignIn.onclick = () => {
-        window.location.href = "/api/auth/google";
-    };
+
+    googleSignIn.addEventListener("click", () => {
+        // On prend la route courante (hash) comme state
+        const currentHash = window.location.hash || "#/";
+        const state = encodeURIComponent(currentHash);
+        window.location.href = `/api/auth/google?state=${state}`;
+    });
     const registerButton = el("button", "alert-button") as HTMLButtonElement;
     registerButton.type = "button";
     registerButton.textContent = "Register";

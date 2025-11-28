@@ -123,7 +123,7 @@ function login(): HTMLElement {
 
     googleBtn.addEventListener("click", () => {
         // On prend la route courante (hash) comme state
-        const currentHash = window.location.hash || "#/";
+        const currentHash = "/profile";
         const state = encodeURIComponent(currentHash);
         window.location.href = `/api/auth/google?state=${state}`;
     });
