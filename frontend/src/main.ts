@@ -9,7 +9,6 @@ import { ChoseTournament } from "./content/tournament/tournament";
 import { classicTournament } from "./content/tournament/classic";
 import { PlaySnake } from "./content/snake/snake";
 
-
 // Structure des routes de l'application
 const routes = {
   "/": Home,
@@ -24,5 +23,18 @@ const routes = {
   "/snake": PlaySnake,
 };
 
-// 
-createRouter("app", routes);  // le router écoute et rend tout seul
+// ✅ Gérer le state de Google OAuth AVANT d'initialiser le router
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  const state = params.get("state");
+
+  if (state) {
+    // On enlève ?state=... de l’URL pour garder un truc propre
+    window.history.replaceState({}, "", window.location.origin);
+    // On renvoie vers la route d’origine (#/...)
+    window.location.hash = state;
+  }
+
+  // Le router écoute et rend tout seul
+  createRouter("app", routes);
+})();
