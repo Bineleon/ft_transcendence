@@ -27,7 +27,10 @@ export class TournamentService {
     // Si un creatorID est fourni, vérifier qu'il existe pour éviter la contrainte FK
     let createdByValue: string | undefined;
     if (data.creatorID) {
-      const user = await prisma.user.findUnique({ where: { id: data.creatorID }, select: { id: true } });
+      const user = await prisma.user.findUnique({
+        where: { id: data.creatorID },
+        select: { id: true }
+      });
       if (!user) {
         throw new Error(`Creator not found for id=${data.creatorID}`);
       }
@@ -112,44 +115,6 @@ export class TournamentService {
       }
     });
   }
-
-  // async findAll(status?: TournamentStatus): Promise<TournamentResponse[]> {
-  //   return await prisma.tournament.findMany({
-  //     where: status ? { status } : undefined,
-  //     include: {
-  //       creator: {
-  //         select: {
-  //           id: true,
-  //           username: true,
-  //           avatarUrl: true
-  //         }
-  //       },
-  //       _count: {
-  //         select: { matches: true }
-  //       }
-  //     },
-  //     orderBy: { createdAt: 'desc' }
-  //   });
-  // }
-
-  // async findByCreator(userId: string): Promise<TournamentResponse[]> {
-  //   return await prisma.tournament.findMany({
-  //     where: { createdBy: userId },
-  //     include: {
-  //       creator: {
-  //         select: {
-  //           id: true,
-  //           username: true,
-  //           avatarUrl: true
-  //         }
-  //       },
-  //       _count: {
-  //         select: { matches: true }
-  //       }
-  //     },
-  //     orderBy: { createdAt: 'desc' }
-  //   });
-  // }
 
   // ==========================================
   // UPDATE
@@ -253,9 +218,13 @@ export class TournamentService {
 
     // Extraire les IDs uniques des joueurs
     const uniquePlayerIds = new Set<string>();
-    tournament.matches.forEach(match => {
-      uniquePlayerIds.add(match.p1UserId);
-      uniquePlayerIds.add(match.p2UserId);
+    tournament.matches.forEach((match) => {
+      if (match.p1UserId) {
+        uniquePlayerIds.add(match.p1UserId);
+      }
+      if (match.p2UserId) {
+        uniquePlayerIds.add(match.p2UserId);
+      }
     });
 
     return uniquePlayerIds.size;
