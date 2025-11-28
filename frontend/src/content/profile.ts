@@ -163,11 +163,11 @@ export function Profile(): HTMLElement {
     friendsTitle.append(text("Friends"));
     list.append(friendsTitle);
 
-	const friendsList = el(
-  	"ul",
-  	"list-disc list-inside font-modern-type text-lg space-y-1"
-	);    
-	list.append(friendsList);
+    const friendsList = el(
+        "ul",
+        "list-disc list-inside font-modern-type text-lg space-y-1"
+    );
+    list.append(friendsList);
 
     if (isSelf) {
         // Formulaire interne pour ajouter des amis
@@ -297,25 +297,6 @@ Matches Won: ${user.matchesWonCount ?? 0}
     }
 }
 
-function renderFriendItem(friend: FriendSummary): HTMLElement {
-    const li = el("li", "flex items-center gap-2");
-
-    // Pastille de statut
-    const dot = el("span", "");
-    dot.style.display = "inline-block";
-    dot.style.width = "10px";
-    dot.style.height = "10px";
-    dot.style.borderRadius = "50%";
-    dot.style.backgroundColor = friend.online ? "#22c55e" : "#9ca3af"; 
-    // vert → online, gris → offline
-
-    const label = el("span", "");
-    label.textContent = `${friend.username} – ${friend.online ? "Online" : "Offline"}`;
-
-    li.append(dot, label);
-    return li;
-}
-
 async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
     friendsList.innerHTML = "";
     requestsBox.innerHTML = "";
@@ -335,70 +316,115 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
         const friendsData = await friendsRes.json();
         if (friendsData.success && Array.isArray(friendsData.data)) {
             (friendsData.data as FriendSummary[]).forEach((friend) => {
-                const li = renderFriendItem(friend);
+                const li = el("li", "flex items-center justify-between gap-2");
+
+                // Bloc gauche : pastille + label
+                const left = el("div", "flex items-center gap-2");
+
+                const dot = el("span", "");
+                dot.style.display = "inline-block";
+                dot.style.width = "10px";
+                dot.style.height = "10px";
+                dot.style.borderRadius = "50%";
+                dot.style.backgroundColor = friend.online ? "#22c55e" : "#9ca3af";
+
+                const label = el("span", "");
+                label.textContent = `${friend.username} – ${
+                    friend.online ? "Online" : "Offline"
+                }`;
+
+                left.append(dot, label);
+
+                // Bouton Remove
+                const removeBtn = el("button", "btn-click ml-2") as HTMLButtonElement;
+                removeBtn.textContent = "Remove";
+                removeBtn.onclick = async () => {
+                    const sure = confirm(
+                        `Supprimer ${friend.username} de votre liste d'amis ?`
+                    );
+                    if (!sure) return;
+
+                    try {
+                        const res = await fetch(`/api/friends/${friend.id}`, {
+                            method: "DELETE",
+                            credentials: "include",
+                        });
+                        if (!res.ok) {
+                            console.error("Failed to remove friend", await res.text());
+                            alert("Impossible de supprimer cet ami.");
+                            return;
+                        }
+                        await loadFriends(friendsList, requestsBox);
+                    } catch (err) {
+                        console.error("Erreur suppression ami :", err);
+                        alert("Erreur réseau lors de la suppression.");
+                    }
+                };
+
+                li.append(left, removeBtn);
                 friendsList.append(li);
             });
         }
 
-// --- Demandes reçues ---
-const requestsRes = await fetch("/api/friends/requests", {
-    credentials: "include",
-});
-const requestsData = await requestsRes.json();
-if (requestsData.success && Array.isArray(requestsData.data)) {
-    (requestsData.data as FriendRequestSummary[]).forEach((req) => {
-        const reqDiv = el("div", "flex items-center mb-2 gap-2");
+        // --- Demandes reçues ---
+        const requestsRes = await fetch("/api/friends/requests", {
+            credentials: "include",
+        });
+        const requestsData = await requestsRes.json();
+        if (requestsData.success && Array.isArray(requestsData.data)) {
+            (requestsData.data as FriendRequestSummary[]).forEach((req) => {
+                const reqDiv = el("div", "flex items-center mb-2 gap-2");
 
-        const left = el("div", "flex items-center gap-2 flex-1");
+                const left = el("div", "flex items-center gap-2 flex-1");
 
-        let avatar: HTMLElement;
-        if (req.avatarUrl) {
-            avatar = el("img", "w-8 h-8 rounded-full object-cover") as HTMLImageElement;
-            (avatar as HTMLImageElement).src = req.avatarUrl;
-            (avatar as HTMLImageElement).alt = req.username;
-        } else {
-            avatar = el(
-                "div",
-                "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs"
-            );
-            const initial = req.username[0]?.toUpperCase() ?? "?";
-            avatar.append(text(initial));
+                let avatar: HTMLElement;
+                if (req.avatarUrl) {
+                    avatar = el("img", "w-8 h-8 rounded-full object-cover") as HTMLImageElement;
+                    (avatar as HTMLImageElement).src = req.avatarUrl;
+                    (avatar as HTMLImageElement).alt = req.username;
+                } else {
+                    avatar = el(
+                        "div",
+                        "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs"
+                    );
+                    const initial = req.username[0]?.toUpperCase() ?? "?";
+                    avatar.append(text(initial));
+                }
+
+                const nameSpan = el("span", "font-modern-type text-lg");
+                nameSpan.textContent = req.username;
+
+                // plus de statusDot / statusLabel ici
+                left.append(avatar, nameSpan);
+
+                const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;
+                acceptBtn.textContent = "Accept";
+                acceptBtn.onclick = async () => {
+                    await fetch(`/api/friends/${req.id}`, {
+                        method: "PATCH",
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "accept" }),
+                    });
+                    loadFriends(friendsList, requestsBox);
+                };
+
+                const declineBtn = el("button", "btn-click") as HTMLButtonElement;
+                declineBtn.textContent = "Decline";
+                declineBtn.onclick = async () => {
+                    await fetch(`/api/friends/${req.id}`, {
+                        method: "PATCH",
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "reject" }),
+                    });
+                    loadFriends(friendsList, requestsBox);
+                };
+
+                reqDiv.append(left, acceptBtn, declineBtn);
+                requestsBox.append(reqDiv);
+            });
         }
-
-        const nameSpan = el("span", "font-modern-type text-lg");
-        nameSpan.textContent = req.username;
-
-        // 🔥 ICI : on n'ajoute PLUS statusDot / statusLabel
-        left.append(avatar, nameSpan);
-
-        const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;
-        acceptBtn.textContent = "Accept";
-        acceptBtn.onclick = async () => {
-            await fetch(`/api/friends/${req.id}`, {
-                method: "PATCH",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "accept" }),
-            });
-            loadFriends(friendsList, requestsBox);
-        };
-
-        const declineBtn = el("button", "btn-click") as HTMLButtonElement;
-        declineBtn.textContent = "Decline";
-        declineBtn.onclick = async () => {
-            await fetch(`/api/friends/${req.id}`, {
-                method: "PATCH",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "reject" }),
-            });
-            loadFriends(friendsList, requestsBox);
-        };
-
-        reqDiv.append(left, acceptBtn, declineBtn);
-        requestsBox.append(reqDiv);
-    });
-}
     } catch (err) {
         console.error("Erreur chargement amis :", err);
     }
