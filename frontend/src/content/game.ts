@@ -97,12 +97,10 @@ export function Game(): HTMLElement {
   tournament.href = "#/tournament";
   tournament.setAttribute("aria-label", "Tournament Details");
   tournament.append(text(`
-    click here
-    to know more 
-    about tournaments
-    
-    
+    click here to
+    know more about
     `));
+  tournament.append(el("h1", "font-im-double text-3xl underline", text(`TOURNAMENTS\n\n\n`)));
   bottomDivider.append(centerBottom, tournament);
   //////////////////////////////////////////////////////
 

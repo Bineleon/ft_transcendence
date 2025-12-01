@@ -1,13 +1,13 @@
 import type { GameViewWindow}           from "./ui/view";
 import { GameLoop }                     from "./core/loop";
-import { initState, initBoard }         from "./game/state";
-import { update }                       from "./game/update";
+import { initState, initBoard, launchBall, initGame }         from "./game/state";
+import { update, type CardinalDirection }                       from "./game/update";
 import { render }                       from "./game/render";
 import type { GamePhase, GameState, Controls }    from "./game/types";
 import { domOverlayManager }            from "./ui/overlay";
+import { createGameGuards }             from "./ui/guards";
 import { setupCanvas }                  from "./core/canvas";
-import type { GameGuards }              from "./game/guards";
-import { createGameGuards }             from "./game/guards";
+import type { GameGuards }              from "./ui/guards";
 import { createPongStatsPanel }         from "./ui/terminal";
 
 // On implement carrement une classe en Typescript
@@ -115,7 +115,9 @@ export class GameController {
 
 // -----  Gestion des Phases de Jeu  ----- //
     public setPhase(phase: GamePhase) {
+        if (this.state.phase !== "COUNTDOWN") this.state.PrevPhase = this.state.phase;
         this.state.phase = phase;
+
         this.terminal.replaceChildren(createPongStatsPanel(this.state));
 
         if (phase === "PLAYING" || phase === "COUNTDOWN" || phase === "SCORED") {
@@ -139,10 +141,12 @@ export class GameController {
                 this.resetGame();
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 this.unwireControls();
+                initBoard(this.state);
+                launchBall(this.state, this.getNextServer(this.state), 500);
                 break;
 
             case "RESTART":
-                this.resetGame();
+                initBoard(this.state);
                 this.setPhase("WAITING");
                 break;
                 
@@ -154,10 +158,10 @@ export class GameController {
             case "COUNTDOWN":
                 this.startCountdown();
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
+                if (this.state.PrevPhase === "PAUSED") break;
                 break;
 
             case "PLAYING":
-                initBoard(this.state);
                 this.wireControls();
                 this.startPlaying();
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
@@ -178,11 +182,22 @@ export class GameController {
                 this.pausePlaying();
                 this.scoredCountdown();
                 initBoard(this.state);
+                launchBall(this.state, this.getNextServer(this.state), 500);
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
         }
     }
 
+    private getNextServer(state: GameState): CardinalDirection {
+        const last = state.stats.lastScorer;
+        if (last === "p1") return "SE";
+        if (last === "p2") return "SO";
+        // pas encore de point -> serveur random
+        const r = Math.random();
+        if (r < 0.5) return "SE";
+        return "SO";
+    }
+    
 // ----  Actions sur le Jeu  ----- //
     private startPlaying() {
         if (!this.loopCtrl) {

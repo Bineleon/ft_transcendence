@@ -1,7 +1,45 @@
-import type { GameState } from "./types";
+import type { Ball, GameState, PlayerId, PlayersStats } from "./types";
 import { GameController } from "../controller";
 import { createPongStatsPanel } from "../ui/terminal";
+import type { Vec2 } from "./types";
+import { getPaddleFacePoints, type PaddleFacePoints } from "./geometry";
 
+export type CardinalDirection = "NE" | "NO" | "SE" | "SO" | "CENTER";
+
+export interface GetDirOptions {
+  epsilon?: number;
+  invertY?: boolean;
+}
+
+/// ---- UTILS ---- ///
+
+// 1e-3 c'est pour eviter les erreurs d'arrondis
+// secu de velocite nulle
+//  et invertY pour les coordonnees ecran (false la balle monte quand y decroit, true l'inverse)
+export function getDirectionFromVec(vel: Vec2, opts: GetDirOptions = {}): CardinalDirection {
+  const { epsilon = 1e-3, invertY = false } = opts;
+  if (!vel) return "CENTER";
+
+  const dx = Math.abs(vel.x) < epsilon ? 0 : vel.x;
+  let dy = Math.abs(vel.y) < epsilon ? 0 : vel.y;
+  if (invertY) dy = -dy;
+
+  if (dx === 0 && dy === 0) return "CENTER";
+  if (dx > 0 && dy < 0) return "NE";
+  if (dx < 0 && dy < 0) return "NO";
+  if (dx < 0 && dy > 0) return "SO";
+  return "SE";
+}
+
+
+// Juste pour la lisibilte, transforme la velocite de la balle en direction cardinal ( NE, NO, SE, SO )
+export function getBallDirection(ball: Ball, opts: GetDirOptions = {}): CardinalDirection {
+  return getDirectionFromVec(ball.vel, opts);
+}
+
+export function getBallSide(ball: Ball): PlayerId {
+  return ball.pos.x < 750 ? "p1" : "p2";
+}
 
 export function collision(state: GameState, gameController: GameController) {
     const { ball, world, paddle1: p1, paddle2: p2 } = state;
@@ -10,42 +48,35 @@ export function collision(state: GameState, gameController: GameController) {
     const bW = ball.pos.x - ball.r;
     const bE = ball.pos.x + ball.r;
 
-
     // Collision avec les murs haut et bas
-    if (bN <= 0 || bS >= world.h)
-        ball.dir.y *= -1;
+    if (bN <= 0 || bS >= world.h) ball.vel.y *= -1;
     if (bN < 0) ball.pos.y = ball.r;
     if (bS > world.h) ball.pos.y = world.h - ball.r;
 
 
-    if (ball.dir.x < 0) { // balle va à gauche
+    if (ball.vel.x < 0) { // balle va à gauche
         const p1x = p1.pos.x + p1.size.x;
         const p1yN = p1.pos.y;
         const p1yS = p1.pos.y + p1.size.y;
 
-        if (bW <= p1x &&
-            bN <= p1yS &&
-            bS >= p1yN) {
-            ball.dir.x *= -1;
+        if (bW <= p1x && bN <= p1yS && bS >= p1yN) {
+            ball.vel.x *= -1;
             state.stats.bounces++;
             moreVelocity(state, gameController);
         }
     }
-    else if (ball.dir.x > 0) { // balle va à droite
+    else if (ball.vel.x > 0) { // balle va à droite
         const p2x = p2.pos.x;
         const p2yN = p2.pos.y;
         const p2yS = p2.pos.y + p2.size.y;
 
-        if (bE >= p2x &&
-            bN <= p2yS &&
-            bS >= p2yN) {
-            ball.dir.x *= -1;
+        if (bE >= p2x && bN <= p2yS && bS >= p2yN) { 
+            ball.vel.x *= -1;
             state.stats.bounces++;
             moreVelocity(state, gameController);
         }
     }
 }
-
 
 export function score(state: GameState): boolean {
     const bW = state.ball.pos.x - state.ball.r;
@@ -53,45 +84,71 @@ export function score(state: GameState): boolean {
 
     if (bW <= 0) {
         state.stats.p2Score += 1;
-        state.stats.lastScorer = 2;
+        state.stats.lastScorer = "p2";
+        if (state.stats.bounces > state.stats.p2MaxBounces)
+            state.stats.p2MaxBounces = state.stats.bounces;
         return true;    
     }
     if (bE >= state.world.w) {
         state.stats.p1Score += 1;
-        state.stats.lastScorer = 1;
+        state.stats.lastScorer = "p1";
+        if (state.stats.bounces > state.stats.p1MaxBounces)
+            state.stats.p1MaxBounces = state.stats.bounces;
         return true;
     }
     return false;
 }
 
 export function moreVelocity(state: GameState, gameController: GameController) {
-    let speedIncrement_x = 20;
-    let speedIncrement_y = 20;
-    const maxSpeed = 1500;
-    let bounces = state.stats.bounces;
+    const IncrementX = state.ball.velIncrement.x;
+    const IncrementY = state.ball.velIncrement.y;
 
-    console.log(`p1Up: ${gameController.pongControls.p1Up.down}, p1Down: ${gameController.pongControls.p1Down.down}, p2Up: ${gameController.pongControls.p2Up.down}, p2Down: ${gameController.pongControls.p2Down.down}`);
-    if ((gameController.pongControls.p1Up.down && state.ball.pos.x < 750) || 
-        (gameController.pongControls.p2Up.down && state.ball.pos.x >= 750)) {
-        speedIncrement_y -= 30;
-        console.log(`Increased ball speed to ${state.ball.vel.y}`);
+    // const maxSpeed = 1500;
+    let bounces = state.stats.bounces;
+    const { p1Up, p1Down, p2Up, p2Down } = gameController.pongControls;
+    const ballDir = getDirectionFromVec(state.ball.vel);
+    const ballSide = getBallSide(state.ball);
+    const p1Face = getPaddleFacePoints(state.paddle1, "p1");
+    const p2Face = getPaddleFacePoints(state.paddle2, "p2");
+
+    function paddleIsAtEdge(paddle: PaddleFacePoints): boolean {
+        return (paddle.top.y <= 0 || paddle.bottom.y >= state.world.h);
     }
-    if (gameController.pongControls.p1Down.down && state.ball.pos.x < 750 || 
-        (gameController.pongControls.p2Down.down && state.ball.pos.x >= 750)) {
-        state.ball.vel.y += 30;
-        console.log(`Increased ball speed to ${state.ball.vel.y}`);
+
+    // mmodification de l'angle en fonction des collisions avec les paddles
+    if (p1Up.down && ballDir.includes("N") && ballSide === "p1" && !paddleIsAtEdge(p1Face)
+    || p2Up.down && ballDir.includes("N") && ballSide === "p2" && !paddleIsAtEdge(p2Face)
+    || p1Down.down && ballDir.includes("S") && ballSide === "p1" && !paddleIsAtEdge(p1Face)
+    || p2Down.down && ballDir.includes("S") && ballSide === "p2" && !paddleIsAtEdge(p2Face)) {
+        state.ball.vel.y -= 20;
+        state.ball.vel.x += 50;
+        if (ballSide === "p1") state.stats.p1Effects++;
+        else state.stats.p2Effects++;
+    }
+    if (p1Down.down && ballDir.includes("N") && ballSide === "p1" && !paddleIsAtEdge(p1Face)
+    || p2Down.down && ballDir.includes("N") && ballSide === "p2" && !paddleIsAtEdge(p2Face)
+    || p1Up.down && ballDir.includes("S") && ballSide === "p1" && !paddleIsAtEdge(p1Face)
+    || p2Up.down && ballDir.includes("S") && ballSide === "p2" && !paddleIsAtEdge(p2Face)) {
+        state.ball.vel.y += 20;
+        state.ball.vel.x += 50;
+        if (ballSide === "p1") state.stats.p1Effects++;
+        else  state.stats.p2Effects++;
     }
     
-    if (bounces % 4 === 0 && bounces !== 0) {
-        if (state.ball.vel.x < maxSpeed) {
-            state.ball.vel.x += speedIncrement_x;
+    // simple augmentation de la vitesse tous les 3 rebonds
+    if (bounces % 3 === 0 && bounces !== 0) {
+        if (state.ball.vel.x > 0) {
+            state.ball.vel.x += IncrementX;
+        } else {
+            state.ball.vel.x -= IncrementX;
         }
-        if (state.ball.vel.y < maxSpeed) {
-            state.ball.vel.y += speedIncrement_y;
+        if (state.ball.vel.y > 0) {
+            state.ball.vel.y += IncrementY;
+        } else {
+            state.ball.vel.y -= IncrementY;
         }
-        speedIncrement_x += 30;
-        speedIncrement_y += 30;
-        state.stats.bounces++;
+        state.ball.velIncrement.x += 10;
+        state.ball.velIncrement.y += 10;
     }
 }
 
@@ -102,16 +159,18 @@ export function update(gameController: GameController, delta: number) {
     const controls = gameController.pongControls;
 
     collision(state, gameController);
-    if (score(state) && (state.stats.p1Score < 3 || state.stats.p2Score < 3)) gameController.setPhase("SCORED");
-    if (state.stats.p1Score >= 3 || state.stats.p2Score >= 3) {
-        gameController.setPhase("GAMEOVER");
+    if (score(state)) {
+        if (state.stats.p1Score >= 3 || state.stats.p2Score >= 3) {
+            gameController.setPhase("GAMEOVER");
+        } else {
+            gameController.setPhase("SCORED");
+        }
     }
-
     gameController.terminal.replaceChildren(createPongStatsPanel(state));
 
     const ball = state.ball;
-    ball.pos.x += ball.vel.x * ball.dir.x * delta;
-    ball.pos.y += ball.vel.y * ball.dir.y * delta;
+    ball.pos.x += ball.vel.x * delta;
+    ball.pos.y += ball.vel.y * delta;
 
     const v = state.paddle1.speed * delta;
     if (controls.p1Up.down) state.paddle1.pos.y -= v;

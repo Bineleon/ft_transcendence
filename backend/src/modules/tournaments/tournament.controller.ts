@@ -17,7 +17,6 @@ export function tournamentController(
     '/api/tournaments/form',
     { preHandler: authenticate },
     async (request, reply) => {
-      console.log("Received tournament creation request:", request.body);
       try {
         const tournament = await tournamentService.create(request.body);
         return formatSuccess(tournament, 'Tournament created successfully');
