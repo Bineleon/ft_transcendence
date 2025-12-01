@@ -5,7 +5,7 @@ import type { CreateMatchDTO, UpdateMatchDTO, MatchResponse } from './match.mode
 const prisma = getPrismaClient();
 
 export class MatchService {
-  
+
   // ==========================================
   // CREATE - Créer un nouveau match
   // ==========================================
@@ -36,7 +36,7 @@ export class MatchService {
       }
     }
 
-    // ⬇️ Construire l'objet data sans undefined
+    // Construire l'objet data sans undefined
     const createData: any = {
       status: 'SCHEDULED' as MatchStatus
     };
@@ -338,7 +338,14 @@ export class MatchService {
   async finish(id: string, winnerUserId: string, p1Score?: number, p2Score?: number): Promise<MatchResponse> {
     const match = await prisma.match.findUnique({
       where: { id },
-      select: { status: true, p1UserId: true, p2UserId: true }
+      select: { 
+        status: true, 
+        p1UserId: true, 
+        p2UserId: true,
+        tournamentId: true,
+        round: true,
+        gameIndex: true
+      }
     });
 
     if (!match) {
@@ -354,13 +361,109 @@ export class MatchService {
       throw new Error('Winner must be one of the match participants');
     }
 
-    return await this.update(id, {
-      status: 'CLOSED',
-      winnerUserId,
-      p1Score: p1Score ?? null,
-      p2Score: p2Score ?? null
+    // Utiliser une transaction pour garantir l'atomicité
+    return await prisma.$transaction(async (tx) => {
+      // 1. Mettre à jour le match
+      const updatedMatch = await tx.match.update({
+        where: { id },
+        data: {
+          status: 'CLOSED' as MatchStatus,
+          winnerUserId,
+          p1Score: p1Score ?? null,
+          p2Score: p2Score ?? null,
+        },
+        include: {
+          p1: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              playerRef: true
+            }
+          },
+          p2: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              playerRef: true
+            }
+          },
+          winner: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true
+            }
+          }
+        }
+      });
+
+      // 2. Si c'est un match de tournoi, avancer le gagnant
+      if (match.tournamentId && match.round !== null && match.gameIndex !== null) {
+        await this.advanceWinner(
+          tx, 
+          match.tournamentId, 
+          winnerUserId, 
+          match.round, 
+          match.gameIndex
+        );
+      }
+
+      return updatedMatch;
     });
   }
+
+  // ==========================================
+  // ADVANCE WINNER - Avancer le gagnant au round suivant
+  // ==========================================
+  
+  private async advanceWinner(
+  tx: any,
+  tournamentId: string,
+  winnerId: string,
+  currentRound: number,
+  currentGameIndex: number
+): Promise<void> {
+  const nextRound = currentRound + 1;
+  const nextGameIndex = Math.floor(currentGameIndex / 2);
+
+  console.log(`[advanceWinner] Winner ${winnerId} from Round ${currentRound}, Match ${currentGameIndex}`);
+  console.log(`[advanceWinner] → Moving to Round ${nextRound}, Match ${nextGameIndex}`);
+
+  const nextMatch = await tx.match.findFirst({
+    where: {
+      tournamentId,
+      round: nextRound,
+      gameIndex: nextGameIndex
+    }
+  });
+
+  if (!nextMatch) {
+    console.log(`[advanceWinner] 🏆 Tournament ${tournamentId} finished! Winner: ${winnerId}`);
+    
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { status: 'FINISHED' }
+    });
+    
+    return;
+  }
+
+  const isP1 = currentGameIndex % 2 === 0;
+  const slot = isP1 ? 'p1UserId' : 'p2UserId';
+
+  console.log(`[advanceWinner] → Assigning winner to ${slot} of next match`);
+
+  await tx.match.update({
+    where: { id: nextMatch.id },
+    data: {
+      [slot]: winnerId
+    }
+  });
+  
+  console.log(`[advanceWinner] ✅ Winner advanced successfully`);
+}
 
   // ==========================================
   // DELETE - Supprimer un match

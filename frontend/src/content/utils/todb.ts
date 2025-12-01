@@ -10,7 +10,7 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
         tCode: tCode,
         userId: userName,
     };    try {
-        const response = await fetch("/api/tournament/players", {
+        const response = await fetch(`/api/tournaments/${tCode}/join`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -21,11 +21,72 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
         if (!response.ok) {
             pongAlert(`Failed to add player to tournament: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Add Player Error" });
         }
+        pongAlert(`Successfully joined tournament ${tCode}!`, { title: "Success" });
     }
     catch (error) {
         console.error("Add player error:", error);
         pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Add Player Error" });
+        throw error;
     }
+}
+
+// -----        MATCH MATCH MATCH        ------ //
+
+export async function startMatch(matchId: string): Promise<void> {
+  try {
+    const response = await fetch(`/api/matches/${matchId}/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include"
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      pongAlert(`Failed to start match: ${data.error?.message || 'Unknown error'}`, { 
+        title: "Start Match Error" 
+      });
+      throw new Error(data.error?.message);
+    }
+    
+    pongAlert('Match started!', { title: "Success" });
+  } catch (error) {
+    console.error("Start match error:", error);
+    throw error;
+  }
+}
+
+
+export async function finishMatch(
+  matchId: string, 
+  winnerUserId: string, 
+  p1Score?: number, 
+  p2Score?: number
+): Promise<void> {
+  try {
+    const response = await fetch(`/api/matches/${matchId}/finish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ winnerUserId, p1Score, p2Score }),
+      credentials: "include"
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      pongAlert(`Failed to finish match: ${data.error?.message || 'Unknown error'}`, { 
+        title: "Finish Match Error" 
+      });
+      throw new Error(data.error?.message);
+    }
+    
+    pongAlert('Match finished! Winner advanced to next round.', { 
+      title: "Success" 
+    });
+  } catch (error) {
+    console.error("Finish match error:", error);
+    throw error;
+  }
 }
 
 /// ------        CREATE CREATE CREATE        ------ //

@@ -172,12 +172,7 @@ export function matchController(
           return reply.status(400).send(errorResponse);
         }
 
-        const match = await matchService.finish(
-          request.params.id,
-          winnerId,
-          p1Score,
-          p2Score
-        );
+        const match = await matchService.finish(request.params.id, winnerId, p1Score, p2Score);
         
         return formatSuccess(match, 'Match finished successfully');
       } catch (error) {
