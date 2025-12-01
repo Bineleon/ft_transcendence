@@ -5,7 +5,6 @@ import { GameController }           from "./controller";
 export function PlayPong(): HTMLElement {
     // Création de la fenêtre de jeu
     const view = createGameViewWindow();
-
     // Configuration du canvas Pong
     const context = setupCanvas(view.canvas);
 
@@ -14,7 +13,7 @@ export function PlayPong(): HTMLElement {
 
     controller.boot();
 
-    return view.main;
+    return view.root;
 }
 
 /*** MEMO **

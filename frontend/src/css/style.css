@@ -105,6 +105,134 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 }
 
+/* for /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/merchande_print_serif/MerchandePrintSerif-PERSONALUSEONLY.ttf */
+@font-face {
+  font-family: "MerchandePrintSerif"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/merchande_print_serif/MerchandePrintSerif-PERSONALUSEONLY.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+/* pour /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/oldprint_2/Oldprint Extravagant.ttf */
+@font-face {
+  font-family: "Oldprint_Extravagant"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/oldprint_2/Oldprint.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+} 
+
+/* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf */
+@font-face {
+  font-family: "Screenprint-Regular"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/Screenprint-Regular.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+/*/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/hello_gorgeous_print/HelloGorgeous-Print.ttf */
+@font-face {
+  font-family: "HelloGorgeous-Print"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/hello_gorgeous_print/HelloGorgeous-Print.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+@font-face {
+  font-family: "HelloGorgeous-Script";
+  src:
+    url("/fonts/hello_gorgeous_script/HelloGorgeous-Script.ttf")
+    format("truetype"); 
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/houston_sport/Houston Sport Free.ttf */
+@font-face {
+  font-family: "Houston_Sport"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/houston_sport/Houston Sport Free.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+/* NexaRust — exemples de déclarations pour différentes variantes */
+@font-face {
+  font-family: "NexaRust Sans";
+  src: url("/fonts/nexa_rust_slab/NexaRustSans-Trial-Black2.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NexaRust Sans";
+  src: url("/fonts/nexa_rust_slab/NexaRustSans-Trial-Shadow.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  /* shadow versions are visually different — tu peux choisir de leur donner une famille propre si tu veux */
+}
+
+/* Slab (weight Black, etc.) */
+@font-face {
+  font-family: "NexaRust Slab";
+  src: url("/fonts/nexa_rust_slab/NexaRustSlab-Trial-Black3.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Condensed / Extended — utilise font-stretch */
+@font-face {
+  font-family: "NexaRust Slab";
+  src: url("/fonts/nexa_rust_slab/NexaRustHandmade-Trial-Condensed.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-stretch: condensed; /* ou percentage ex: 80% */
+  font-display: swap;
+}
+@font-face {
+  font-family: "NexaRust Slab";
+  src: url("/fonts/nexa_rust_slab/NexaRustHandmade-Trial-Extended.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-stretch: expanded;
+  font-display: swap;
+}
+
+/* Script / Decorative : famille séparée souvent plus claire */
+@font-face {
+  font-family: "NexaRust Script";
+  src: url("/fonts/nexa_rust_slab/NexaRustScriptR-Trial-4.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+ /* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Origin Athletic TTF.ttf
+/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf */
+@font-face {
+  font-family: "Origin Athletic";
+  src: url("/fonts/Origin Athletic TTF.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 @theme {
 /**************** FONTS ****************/
@@ -121,8 +249,22 @@
   --font-royalvogue:  "RoyalVogue_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-mono:  Menlo, Consolas, "Courier New", monospace;
 
+  --font-merchande-serif: "MerchandePrintSerif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-oldprint-extravagant: "Oldprint_Extravagant", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-screenprint: "Screenprint-Regular", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
-/**************** BREAKPOINTS ****************/
+  --font-hello-gorgeous-print: "HelloGorgeous-Print", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-hello-gorgeous-script: "HelloGorgeous-Script", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --font-houston-sport: "Houston_Sport", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+
+  --font-nexa-rust-sans: "NexaRust Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  --font-nexa-rust-slab: "NexaRust Slab", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-nexa-rust-script: "NexaRust Script", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --font-origin-athletic: "Origin Athletic", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+
+  /**************** BREAKPOINTS ****************/
   /* Remets les valeurs qui te conviennent (en rem = tri fiable) */
   --breakpoint-xs: 30rem;   /* 480px */
   --breakpoint-sm: 36rem;   /* 576px */
@@ -136,7 +278,7 @@
   --text-hed-md: 2.488rem;   /* ~39.8px */
   --text-hed-lg: 2.074rem;   /* ~33.2px */
   --text-hed-xl: 1.728rem;   /* ~27.6px */
-  --text-hed-xxl: 1.44rem;    /* ~23.0px */
+  --text-hed-xxl: 2.6rem;    /* ~23.0px */
 
   /* === articles === */
   --text-article-xs: clamp(0.6rem, 1vw + 0.4rem, 0.7rem);
@@ -145,6 +287,8 @@
   --text-article-lg: clamp(0.9rem, 1vw + 0.7rem, 1rem);
   --text-article-xl: clamp(1rem, 1.2vw + 0.7rem, 1.15rem);
   --text-article-xxl: clamp(1.15rem, 1.5vw + 0.8rem, 1.3rem);
+  --text-article-3xl: clamp(1.3rem, 1.8vw + 0.9rem, 1.5rem);
+  --text-article-4xl: clamp(1.5rem, 2.2vw + 1rem, 1.8rem);
 
   --text-article-xs--line-height: 1.1;
   --text-article-sm--line-height: 1.2;
@@ -152,6 +296,8 @@
   --text-article-lg--line-height: 1.4;
   --text-article-xl--line-height: 1.5;
   --text-article-xxl--line-height: 1.6;
+  --text-article-3xl--line-height: 1.8;
+  --text-article-4xl--line-height: 2;
 
   /* === terminal === */
   --text-terminal-s1: clamp(0.2rem, 1vw + 0.3rem, 0.3rem);
@@ -200,6 +346,26 @@
            xl:text-article-md xl:text-article-md--line-height
            xxl:text-article-lg xxl:text-article-lg--line-height;
   }
+  .article2-base {
+    @apply font-ocean-type text-justify leading-relaxed
+           text-article-md text-article-md--line-height
+           lg:text-article-lg lg:text-article-lg--line-height
+           xl:text-article-xl xl:text-article-xl--line-height
+           xxl:text-article-xxl xxl:text-article-xxl--line-height;
+  }
+  .article-hed {
+    @apply font-nexa-rust-slab uppercase text-left
+           text-hed-md 
+           lg:text-hed-lg 
+           xl:text-hed-xl 
+           xxl:text-hed-xxl 
+           mb-4 tracking-widest
+           flex justify-start
+           font-bold whitespace-pre-line;
+           text-align: justify;
+           text-align-last: justify;
+           hyphens: auto;
+  }
   .title-hed {
     @apply font-im-great uppercase text-center 
            text-hed-md 
@@ -214,11 +380,19 @@
   }
   .subtitle-hed {
     @apply font-im-great text-center 
-           text-base
+           text-xl
            lg:text-lg
            xl:text-xl
            xxl:text-2xl 
            mb-8;
+  }
+  .subtitle-cat {
+    @apply font-origin-athletic text-center leading-relaxed tracking-widest
+           text-sm
+           lg:text-sm
+           xl:text-sm
+           xxl:text-2xl 
+           mb-2;
   }
   .form-title {
     @apply font-im-great text-xl uppercase my-2;
@@ -274,15 +448,16 @@
 /* --- Special text styles --- */
   .funfact {
     @apply italic text-center 
-           bg-stone-100 dark:bg-stone-700 
+           bg-stone-100 
            my-6 mx-8 p-4 rounded-lg
            mix-blend-multiply;
   }
   .dropcap {
     @apply first-line:tracking-widest 
-           first-letter:text-6xl first-letter:font-bold 
-           first-letter:text-stone-900 dark:first-letter:text-stone-100 
-           first-letter:me-2 first-letter:float-start;
+           first-letter:text-5xl first-letter:font-bold 
+           first-letter:text-stone-900 
+           first-letter:me-2 first-letter:float-left
+           first-letter:translate-y-[5px];
   }
   .article-link {
     @apply text-black underline decoration-4 hover:bg-black hover:text-white;
@@ -578,7 +753,7 @@
     bottom: auto !important;
     transform: none !important;
 
-    @apply bg-white dark:bg-stone-800
+    @apply bg-white
           p-6 rounded-xl shadow-2xl
           flex flex-col gap-3 items-stretch;
     max-width: 420px;

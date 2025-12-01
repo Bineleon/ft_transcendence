@@ -42,6 +42,7 @@ export function tournamentController(
           const errorResponse = formatGenericError(new Error('Tournament not found'));
           return reply.status(404).send(errorResponse);
         }
+        // console.log("Tournament retrieved:", tournament);
 
         return formatSuccess(tournament, 'Tournament retrieved successfully');
       } catch (error) {

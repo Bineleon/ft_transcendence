@@ -1,5 +1,6 @@
 import { el, text } from "../home";
-import { addUserAsPlayerToTournament, getLoggedName } from "./todb";
+import type { PlayerInfo } from "../pong/game/types";
+import { addUserAsPlayerToTournament, getLoggedName, getUserDatas } from "./todb";
 
 // ALERT SIMPLE (message + bouton)
 type AlertOptions = {
@@ -25,6 +26,7 @@ type ReLogDOM = {
     tournamentRegLogged: HTMLButtonElement;
     tournamentRegNew: HTMLButtonElement;
     or: HTMLDivElement;
+    inputGuest: HTMLInputElement;
     inputLogin: HTMLInputElement;
     inputPassword: HTMLInputElement;
     input2FA: HTMLInputElement;
@@ -41,14 +43,14 @@ export const closeOverlay = (overlay: HTMLDivElement) => {
 
 export async function notLoggedIn(): Promise<boolean> {
     try {
-        const response = await fetch(`/api/auth/loggedIn`, {
+        const resp = await fetch(`/api/auth/loggedIn`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
         });
-        const data = await response.json();
+        const data = await resp.json();
 
-        if (response.ok) {
+        if (resp.ok) {
             return data as boolean;
         } else {
             return true;
@@ -113,6 +115,10 @@ function createRelogRegisterDOM(mode: "RELOG" | "REGISTER"): ReLogDOM {
     tournamentRegNew.type = "button";
     tournamentRegNew.textContent = "Register as New User";
 
+    const inputGuest = el("input", "btn-input") as HTMLInputElement;
+    inputGuest.type = "text";
+    inputGuest.placeholder = "Guest Name";
+
     const inputLogin = el("input", "btn-input") as HTMLInputElement;
     inputLogin.type = "text";
     inputLogin.placeholder = "Login";
@@ -156,19 +162,19 @@ function createRelogRegisterDOM(mode: "RELOG" | "REGISTER"): ReLogDOM {
     }
 
 
-    box.append(title, tournamentRegLogged, tournamentRegNew, inputLogin,
+    box.append(title, tournamentRegLogged, tournamentRegNew, inputGuest, inputLogin,
             inputPassword, input2FA, submitButton, or, googleSignIn, registerButton);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
 
     reLogDOM = { overlay, box, title, tournamentRegLogged, tournamentRegNew, or,
-        inputLogin, inputPassword, input2FA, submitButton, googleSignIn, registerButton };
+        inputGuest, inputLogin, inputPassword, input2FA, submitButton, googleSignIn, registerButton };
     return reLogDOM;
 }
 
 export function reLogAlert(message?: string): void {
     const { overlay, title, tournamentRegLogged, tournamentRegNew, or,
-        inputLogin, inputPassword, input2FA, submitButton, googleSignIn, registerButton } = createRelogRegisterDOM("RELOG");
+        inputGuest, inputLogin, inputPassword, input2FA, submitButton, googleSignIn, registerButton } = createRelogRegisterDOM("RELOG");
 
     if (message) {
         title.textContent = message;
@@ -177,6 +183,8 @@ export function reLogAlert(message?: string): void {
         Please log in again.`;
     }
 
+
+    inputGuest.classList.add("hidden");
     inputLogin.classList.remove("hidden");
     inputPassword.classList.remove("hidden");
     input2FA.classList.add("hidden");
@@ -196,6 +204,27 @@ export function reLogAlert(message?: string): void {
 
     overlay.classList.remove("hidden");
 
+
+    if (message === "P1" || message === "P2") {
+        inputGuest.classList.remove("hidden");
+        inputLogin.classList.add("hidden");
+        inputPassword.classList.add("hidden");
+        submitButton.textContent = "Play as Guest";
+        or.classList.add("hidden");
+        registerButton.classList.add("hidden");
+        googleSignIn.classList.add("hidden");
+
+        const guestName = inputGuest.value.trim();
+        if (!guestName) {
+            pongAlert("Please enter a guest name.");
+            submitButton.disabled = false;
+        } else {
+            pongAlert(`Playing as Guest: ${guestName}`);
+            closeOverlay(overlay);
+        }
+    }
+
+
     // Handlers aux clics
     const handleSubmit = async (): Promise<void> => {
         try {
@@ -208,7 +237,6 @@ export function reLogAlert(message?: string): void {
                 if (!code || !userId) {
                     pongAlert("Please enter the 2FA code.");
                     submitButton.disabled = false;
-                    return;
                 }
                 const resp = await fetch("/api/auth/verify-2fa", {
                     method: "POST",
@@ -226,7 +254,6 @@ export function reLogAlert(message?: string): void {
                         Please try again.`);
                     submitButton.disabled = false;
                 }
-                return;
             }
 
             // Phase login
@@ -235,18 +262,17 @@ export function reLogAlert(message?: string): void {
             if (!username || !password) {
                 pongAlert("Please fill in all fields.");
                 submitButton.disabled = false;
-                return;
             }
 
-            const response = await fetch("/api/auth/login", {
+            const resp = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
                 credentials: "include"
             });
-            const data = await response.json().catch(() => ({}));
+            const data = await resp.json().catch(() => ({}));
 
-            if (response.ok) {
+            if (resp.ok) {
                 // server asks for 2FA (same behavior as login.ts)
                 input2FA.classList.remove("hidden");
                 input2FA.dataset.userId = data.data?.userId ?? "";
@@ -326,15 +352,15 @@ export function registerAlertBox(tCode: string): void {
                     return;
                 }
 
-                const response = await fetch("/api/auth/register", {
+                const resp = await fetch("/api/auth/join", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password }),
                     credentials: "include"
                 });
-                const data = await response.json().catch(() => ({}));
+                const data = await resp.json().catch(() => ({}));
 
-                if (response.ok) {
+                if (resp.ok) {
                     pongAlert("Registration successful! You are now logged in.");
                     closeOverlay(overlay);
                     await addUserAsPlayerToTournament(username, tCode);
@@ -360,4 +386,152 @@ export function registerAlertBox(tCode: string): void {
             inp.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); handleRegister(); } };
         });
     };
+    return;
+}
+
+export function matchAlert(mode: "sync" | "guest"): Promise<PlayerInfo | null> {
+    return new Promise((resolve) => {
+    const { overlay, title, tournamentRegLogged, tournamentRegNew, or,
+        inputGuest, inputLogin, inputPassword, input2FA, submitButton, registerButton, googleSignIn } = createRelogRegisterDOM("REGISTER");
+    if (mode === "sync") {
+        title.textContent = `Sync Profile for Match`;
+        tournamentRegLogged.classList.add("hidden");
+        tournamentRegNew.classList.add("hidden");
+        or.classList.add("hidden");
+        inputGuest.classList.add("hidden");
+        inputLogin.classList.remove("hidden");
+        inputPassword.classList.remove("hidden");
+        submitButton.classList.remove("hidden");
+        submitButton.disabled = false;
+        submitButton.textContent = "Sync Profile";
+        registerButton.classList.add("hidden");
+        googleSignIn!.classList.remove("hidden");
+        googleSignIn.textContent = "Sync with Google";
+    } else if (mode === "guest") {
+        title.textContent = `Play as Guest for Match`;
+        tournamentRegLogged.classList.add("hidden");
+        tournamentRegNew.classList.add("hidden");
+        or.classList.add("hidden");
+        inputGuest.classList.remove("hidden")
+        inputLogin.classList.add("hidden");
+        inputPassword.classList.add("hidden");
+        input2FA.classList.add("hidden");
+        submitButton.classList.remove("hidden");
+        submitButton.disabled = false;
+        submitButton.textContent = "Play as Guest";
+        registerButton.classList.add("hidden");
+        googleSignIn!.classList.add("hidden");
+    }
+
+    overlay.classList.remove("hidden");
+
+    function finish(info: PlayerInfo | null) {
+        closeOverlay(overlay);
+        resolve(info);
+    }
+
+    let currentUserId: string | null = null;   // ⬅️ au lieu de currentLogin uniquement
+    let currentLogin: string | null = null;
+
+    const handleSubmit = async (): Promise<void> => {
+        try {
+            submitButton.disabled = true;
+
+            const visible2FA = !input2FA.classList.contains("hidden");
+
+            // MODE GUEST
+            if (mode === "guest") {
+                const guestName = inputGuest.value.trim();
+                if (!guestName) {
+                    pongAlert("Please enter a valid guest name.");
+                    submitButton.disabled = false;
+                    return;
+                }
+                finish({ userName: guestName, avatarUrl: "/imgs/avatar.png" });
+                return;
+            }
+
+            // PHASE 1 : login/password (comme login.ts)
+            if (!visible2FA) {
+                const username = inputLogin.value.trim();
+                const password = inputPassword.value;
+
+                if (!username || !password) {
+                    pongAlert("Please fill in all fields.");
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                const resp = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password }),  // ⬅️ même payload que login.ts
+                    credentials: "include",
+                });
+
+                const data = await resp.json();
+
+                if (resp.ok) {
+                    currentLogin = username;
+                    currentUserId = data.data?.userId || null;     // ⬅️ récupérer userId
+                    input2FA.classList.remove("hidden");
+                    input2FA.dataset.userId = currentUserId || "";
+                    submitButton.textContent = "Submit";
+                    pongAlert("Login successful! Please enter your 2FA code sent by email.");
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                const errorMessage = data.error?.message || data.message || "Login failed";
+                pongAlert(`Login failed: ${errorMessage}`);
+                submitButton.disabled = false;
+                return;
+            }
+
+            // PHASE 2 : vérif 2FA (comme login.ts)
+            const code = input2FA.value.trim();
+            if (!code) {
+                pongAlert("Please enter the 2FA code.");
+                submitButton.disabled = false;
+                return;
+            }
+
+            if (!currentUserId) {
+                pongAlert("Missing userId, please try again.");
+                submitButton.disabled = false;
+                return;
+            }
+
+            const verifyResp = await fetch("/api/auth/verify-2fa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: currentUserId, code }),   // ⬅️ userId, pas login
+                credentials: "include",
+            });
+
+            const verifyData = await verifyResp.json();
+
+            if (verifyResp.ok) {
+                const user = await getUserDatas(currentLogin || "");
+                const info: PlayerInfo = {
+                    userName: user ? user.userName : (currentLogin || "Player"),
+                    avatarUrl: user?.avatarUrl || "/imgs/avatar.png",
+                };
+                pongAlert("2FA verified! Login Successful.");
+                finish(info);
+                return;
+            }
+
+            const errorMessage = verifyData.error?.message || verifyData.message || "Invalid 2FA code";
+            pongAlert(`2FA verification error: ${errorMessage}`);
+            submitButton.disabled = false;
+        } catch (err) {
+            console.error("matchAlert submit error:", err);
+            pongAlert("An error occurred. Please try again.");
+            submitButton.disabled = false;
+        }
+    };
+    // attach handler (remove previous to avoid duplicates)
+    submitButton.onclick = handleSubmit;
+});
 }

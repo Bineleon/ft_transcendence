@@ -1,14 +1,15 @@
 import type { GameViewWindow}           from "./ui/view";
 import { GameLoop }                     from "./core/loop";
-import { initState, initBoard, launchBall, initGame }         from "./game/state";
+import { initState, initBoard, launchBall, initPlayersInfo }         from "./game/state";
 import { update, type CardinalDirection }                       from "./game/update";
 import { render }                       from "./game/render";
-import type { GamePhase, GameState, Controls }    from "./game/types";
+import type { GamePhase, GameState, Controls, PlayerInfo, PlayerId }    from "./game/types";
 import { domOverlayManager }            from "./ui/overlay";
 import { createGameGuards }             from "./ui/guards";
 import { setupCanvas }                  from "./core/canvas";
 import type { GameGuards }              from "./ui/guards";
 import { createPongStatsPanel }         from "./ui/terminal";
+import { createPlayersBox, resetPlayersCache }             from "./ui/players";
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
@@ -38,6 +39,8 @@ export class GameController {
         this.state = initState();
         this.domOverlay = new domOverlayManager(this);
         this.gameGuards = createGameGuards(this.view.canvas);
+
+        document.addEventListener("playersUpdated", this.onPlayersUpdated);
     }
 
 ///////// METHODES /////////
@@ -113,12 +116,21 @@ export class GameController {
         this.clearKeys();
     }
 
+    private refreshTerminal() {
+        this.view.terminal.replaceChildren(createPongStatsPanel(this.state));
+    }
+
+    private onPlayersUpdated = (_e: Event) => {
+        this.refreshTerminal();
+    };
+
 // -----  Gestion des Phases de Jeu  ----- //
     public setPhase(phase: GamePhase) {
         if (this.state.phase !== "COUNTDOWN") this.state.PrevPhase = this.state.phase;
         this.state.phase = phase;
 
         this.terminal.replaceChildren(createPongStatsPanel(this.state));
+        this.view.playersBox.replaceChildren(createPlayersBox(this.state));
 
         if (phase === "PLAYING" || phase === "COUNTDOWN" || phase === "SCORED") {
             this.gameGuards.enable();
@@ -138,10 +150,14 @@ export class GameController {
         
         switch (phase) {
             case "START":
-                this.resetGame();
                 this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 this.unwireControls();
+
+                resetPlayersCache();
                 initBoard(this.state);
+                initPlayersInfo(this.state);
+
+                this.view.playersBox.replaceChildren(createPlayersBox(this.state));
                 launchBall(this.state, this.getNextServer(this.state), 500);
                 break;
 
@@ -196,6 +212,19 @@ export class GameController {
         const r = Math.random();
         if (r < 0.5) return "SE";
         return "SO";
+    }
+
+    public setPlayer(id: PlayerId, info: PlayerInfo | null): void {
+        if (id === "p1") {
+            this.state.p1 = info ? info : { userName: "P1", avatarUrl: "" };
+        } else {
+            this.state.p2 = info ? info : { userName: "P2", avatarUrl: "" };
+        }
+    };
+
+    public clearPlayers(): void {
+        this.state.p1 = { userName: "P1", avatarUrl: "" };
+        this.state.p2 = { userName: "P2", avatarUrl: "" };
     }
     
 // ----  Actions sur le Jeu  ----- //
