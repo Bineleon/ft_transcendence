@@ -133,11 +133,13 @@ export function Profile(): HTMLElement {
     infoBox.append(stats);
 
     if (isSelf) {
+        // --- Logout ---
         const logoutBtn = el("button", "big-link");
         logoutBtn.append(text("Logout"));
         logoutBtn.onclick = () => logout();
         infoBox.append(logoutBtn);
 
+        // --- Delete account ---
         const deleteButton = el("button", "big-link");
         deleteButton.append(text("Supprimer mon compte"));
         deleteButton.onclick = async () => {
@@ -150,6 +152,80 @@ export function Profile(): HTMLElement {
             else alert("Impossible de supprimer le compte.");
         };
         infoBox.append(deleteButton);
+
+        // --- GDPR / Privacy box ---
+        const privacyBox = el(
+            "div",
+            "mt-6 flex flex-col gap-2 border-t border-zinc-700 pt-4"
+        );
+
+        const privacyTitle = el("h3", "font-royalvogue text-2xl");
+        privacyTitle.textContent = "Privacy / Mes données";
+
+        // Voir mes données (rapport GDPR)
+        const viewDataBtn = el("button", "big-link") as HTMLButtonElement;
+        viewDataBtn.textContent = "Voir mes données personnelles";
+        viewDataBtn.onclick = async () => {
+            try {
+                const res = await fetch("/api/privacy/me", { credentials: "include" });
+                if (!res.ok) {
+                    alert("Impossible de charger le rapport de données.");
+                    return;
+                }
+                const body = await res.json();
+                const data = body.data;
+
+                alert(
+                    "Données de compte :\n" +
+                        JSON.stringify(data.user, null, 2) +
+                        "\n\nCompteurs :\n" +
+                        JSON.stringify(data.counts, null, 2)
+                );
+            } catch (err) {
+                console.error(err);
+                alert("Erreur réseau lors de la récupération des données.");
+            }
+        };
+
+        // Anonymiser mon compte
+        const anonymizeBtn = el("button", "big-link") as HTMLButtonElement;
+        anonymizeBtn.textContent = "Anonymiser mon compte";
+        anonymizeBtn.onclick = async () => {
+            const sure = confirm(
+                "Votre pseudonyme, email, avatar et identifiants seront anonymisés.\n" +
+                    "Vos matches et tournois resteront visibles, mais sous un nom générique.\n\n" +
+                    "Confirmer l'anonymisation ?"
+            );
+            if (!sure) return;
+
+            try {
+                const res = await fetch("/api/privacy/anonymize", {
+                    method: "POST",
+                    credentials: "include",
+                });
+                if (!res.ok) {
+                    alert("Impossible d'anonymiser le compte.");
+                    return;
+                }
+                alert("Compte anonymisé. Vous allez être déconnecté.");
+                window.location.href = "/#/login";
+            } catch (err) {
+                console.error(err);
+                alert("Erreur réseau lors de l'anonymisation.");
+            }
+        };
+
+        // Nettoyer les données locales du navigateur
+        const clearLocalBtn = el("button", "big-link") as HTMLButtonElement;
+        clearLocalBtn.textContent = "Supprimer mes données locales (navigateur)";
+        clearLocalBtn.onclick = () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert("localStorage / sessionStorage nettoyés.");
+        };
+
+        privacyBox.append(privacyTitle, viewDataBtn, anonymizeBtn, clearLocalBtn);
+        infoBox.append(privacyBox);
     }
 
     section.append(picframe, infoBox);
@@ -385,16 +461,13 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                 } else {
                     avatar = el(
                         "div",
-                        "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs"
+                        "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center"
                     );
-                    const initial = req.username[0]?.toUpperCase() ?? "?";
-                    avatar.append(text(initial));
                 }
 
                 const nameSpan = el("span", "font-modern-type text-lg");
                 nameSpan.textContent = req.username;
 
-                // plus de statusDot / statusLabel ici
                 left.append(avatar, nameSpan);
 
                 const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;

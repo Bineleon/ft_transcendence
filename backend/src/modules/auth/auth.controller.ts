@@ -18,45 +18,78 @@ export function authController(
   googleOAuth: GoogleOAuthService
 ) {
   // --- REGISTER ---
-  app.post<{ Body: RegisterRequest }>('/api/auth/register', async (request, reply) => {
-    const validated = await validateUserData(request, reply);
-    if (!validated) return;
+  app.post<{ Body: RegisterRequest }>(
+    '/api/auth/register',
+    {
+      config: {
+        rateLimit: {
+          max: 3,                // 3 créations de compte...
+          timeWindow: '10 minutes', // ...par 10 minutes / IP
+        },
+      },
+    },
+    async (request, reply) => {
+      const validated = await validateUserData(request, reply);
+      if (!validated) return;
 
-    const result = await authService.register(validated);
-    return formatSuccess(result, 'User created, 2FA required.');
-  });
+      const result = await authService.register(validated);
+      return formatSuccess(result, 'User created, 2FA required.');
+    }
+  );
 
   // --- LOGIN ---
-  app.post<{ Body: LoginRequest }>('/api/auth/login', async (request) => {
-    const result = await authService.login(request.body);
-    return formatSuccess(result, '2FA code sent.');
-  });
+  app.post<{ Body: LoginRequest }>(
+    '/api/auth/login',
+    {
+      config: {
+        rateLimit: {
+          max: 5,                // 5 tentatives...
+          timeWindow: '5 minutes', // ...par 5 minutes / IP
+        },
+      },
+    },
+    async (request) => {
+      const result = await authService.login(request.body);
+      return formatSuccess(result, '2FA code sent.');
+    }
+  );
 
   // --- VERIFY 2FA ---
-  app.post('/api/auth/verify-2fa', async (request, reply) => {
-    const { userId, code } = request.body as { userId: string; code: string };
-    const result = await authService.verify2FA(userId, code);
+  app.post(
+    '/api/auth/verify-2fa',
+    {
+      config: {
+        rateLimit: {
+          max: 10,                // 10 essais de code 2FA...
+          timeWindow: '10 minutes', // ...par 10 minutes / IP
+        },
+      },
+    },
+    async (request, reply) => {
+      const { userId, code } = request.body as { userId: string; code: string };
+      const result = await authService.verify2FA(userId, code);
 
-    const refreshToken = await refreshService.createRefreshToken(result.user.id);
+      const refreshToken = await refreshService.createRefreshToken(result.user.id);
 
-    reply.setCookie('token', result.token, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60,
-      path: '/',
-    });
+      reply.setCookie('token', result.token, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60,
+        path: '/',
+      });
 
-    reply.setCookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-    });
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      });
 
-    return formatSuccess(result, '2FA verified. Login successful.');
-  });
+      return formatSuccess(result, '2FA verified. Login successful.');
+    }
+  );
 
   // --- REFRESH ---
   app.post('/api/auth/refresh', async (request, reply) => {
@@ -140,6 +173,7 @@ export function authController(
     }
   });
 
+  
   // --- Check loggedIn ---
   app.get('/api/auth/loggedIn', async (request, reply) => {
     try {
@@ -184,6 +218,48 @@ export function authController(
           message: 'Failed to delete account',
           statusCode: 500,
         },
+      });
+    }
+  });
+
+    // --- GDPR: Privacy report ---
+  app.get('/api/privacy/me', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const userId = request.user!.userId;
+      const report = await userService.getPrivacyReport(userId);
+      return formatSuccess(report, 'Privacy report loaded successfully');
+    } catch (err) {
+      request.log.error(err, 'Failed to load privacy report');
+      return reply.code(500).send({
+        error: {
+          code: 'PRIVACY_REPORT_FAILED',
+          message: 'Failed to load privacy report',
+          statusCode: 500
+        }
+      });
+    }
+  });
+
+  // --- GDPR: Anonymize account ---
+  app.post('/api/privacy/anonymize', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const userId = request.user!.userId;
+
+      await userService.anonymizeUser(userId);
+
+      // On nettoie les cookies d'auth après anonymisation
+      reply.clearCookie('token');
+      reply.clearCookie('refreshToken');
+
+      return formatSuccess(undefined, 'Account anonymized successfully');
+    } catch (err) {
+      request.log.error(err, 'Failed to anonymize account');
+      return reply.code(500).send({
+        error: {
+          code: 'ANONYMIZE_ACCOUNT_FAILED',
+          message: 'Failed to anonymize account',
+          statusCode: 500
+        }
       });
     }
   });
@@ -314,8 +390,6 @@ export function authController(
         path: '/',
       });
 
-      // On redirige vers le front avec le state dans la query string.
-      // Le front se chargera de remettre window.location.hash = state.
       const redirectState = typeof state === 'string' && state.length > 0 ? state : '#/profile';
       const encodedState = encodeURIComponent(redirectState);
       return reply.redirect(`/?state=${encodedState}`);
