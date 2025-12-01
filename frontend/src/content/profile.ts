@@ -63,7 +63,7 @@ export function Profile(): HTMLElement {
     }
 
     if (isSelf) {
-        picture.setAttribute("aria-label", "Changer la photo de profil");
+        picture.setAttribute("aria-label", "Change avatar");
         picture.addEventListener("click", openFilePicker);
         picture.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -350,16 +350,16 @@ async function loadProfileData(
 
         // Affichage complet des infos du profil
         stats.value = `
-Informations du compte:
+        Informations du compte:
 
-ID: ${user.id || "(inconnu)"}
-Username: ${user.username || "(inconnu)"}
-Email: ${user.email || "(privé)"}
-Créé le: ${user.createdAt ? new Date(user.createdAt).toLocaleString() : "(inconnu)"}
-King Max Time: ${user.kingMaxTime ?? "(aucun)"} secondes
-King Max Rounds: ${user.kingMaxRounds ?? "(aucun)"}
-Friends Count: ${user.friendsCount ?? 0}
-Matches Won: ${user.matchesWonCount ?? 0}
+        ID: ${user.id || "(inconnu)"}
+        Username: ${user.username || "(inconnu)"}
+        Email: ${user.email || "(privé)"}
+        Créé le: ${user.createdAt ? new Date(user.createdAt).toLocaleString() : "(inconnu)"}
+        King Max Time: ${user.kingMaxTime ?? "(aucun)"} secondes
+        King Max Rounds: ${user.kingMaxRounds ?? "(aucun)"}
+        Friends Count: ${user.friendsCount ?? 0}
+        Matches Won: ${user.matchesWonCount ?? 0}
         `.trim();
 
         if (!viewedUsername && friendsList && requestsBox) {

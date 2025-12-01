@@ -5,16 +5,15 @@ import { addUserAsPlayerToTournament, getLoggedName, getTournamentDatas } from "
 import type { Tournament } from "../utils/types";
 import { renderTournamentBrackets } from "./brackets";
 
-
 function renderRegisterButtons(t: Tournament): HTMLElement {
-	let tCode = getRouteTail("/tournament/classic");
 
-	const div = el("div", "flex justify-center mb-4 gap-4");
+    let tCode = getRouteTail("/tournament/classic");
+
+    const div = el("div", "flex justify-center mb-4 gap-4");
     const registerTournamentBtn = el("button", "btn-click flex mb-4");
     registerTournamentBtn.textContent = "Register for Tournament";
     registerTournamentBtn.addEventListener("click", () => {
         registerAlertBox(tCode);
-        // window.location.reload();
     });
     const unregisterFromTournamentBtn = el("button", "btn-click flex mb-4");
     getLoggedName().then((who) => {
@@ -53,7 +52,8 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
 }
 
 function renderTournamentView(t: Tournament): HTMLElement {
-	let tCode = getRouteTail("/tournament/classic");
+    let tCode = getRouteTail("/tournament/classic");
+
     const main = el("div", "");
     const tCodeTitle = el("h1", `whitespace-pre-line title-hed text-center mb-6`);
     tCodeTitle.append(el("span", "", text("Welcome to Tournament:")));
@@ -88,18 +88,19 @@ export function classicTournament(): HTMLElement {
             container.append(errorDiv);
             return;
         }
+        console.log("Tournament datas loaded:", tClassicDatas);
 
         // On Add le user loggué en tant que joueur du tournoi
-        // getLoggedName().then((name) => {
-        //     if (name) {
-        //         addUserAsPlayerToTournament(tClassicDatas.tCode, name)
-        //             .catch((err) => {
-        //                 console.error("Error adding user to tournament:", err);
-        //             });
-        //     }
-        // }).catch((err) => {
-        //     console.error("Error getting logged name:", err);
-        // });
+        getLoggedName().then((name) => {
+            if (name) {
+                // addUserAsPlayerToTournament(tClassicDatas.tCode, name)
+                //     .catch((err) => {
+                //         console.error("Error adding user to tournament:", err);
+                //     });
+            }
+        }).catch((err) => {
+            console.error("Error getting logged name:", err);
+        });
 
         const view = renderTournamentView(tClassicDatas);
         container.append(view);

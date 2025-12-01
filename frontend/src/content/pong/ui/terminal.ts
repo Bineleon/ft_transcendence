@@ -1,6 +1,7 @@
 import { el, text } from "../../home";
 import type { GameState, PlayerId, Vec2 } from "../game/types";
-import { getDirectionFromVec, type GetDirOptions, type CardinalDirection } from "../game/update";
+import { getDirectionFromVec, type CardinalDirection } from "../game/update";
+import { areBothPlayersReady, arePlayersRegistered, areBothPlayersRegistered, arePlayersReady } from "./players";
 
 function arrowFromDirection(dir: CardinalDirection): string {
   switch (dir) {
@@ -55,10 +56,35 @@ export function createPongStatsPanel(state: GameState): HTMLElement {
   // ─────────────────────────────────────────────────────────────────────────────
   // Structure DOM
   // ─────────────────────────────────────────────────────────────────────────────
-  const root = el("div", "p-6 text-white ");
+  const root = el("div", "p-4 text-white ");
 
   const header = el("div", "terminal-header");
   header.textContent = hdr.join("\n");
+
+  root.append(header);
+  const registered = areBothPlayersRegistered(state);
+  const ready = areBothPlayersReady(state);
+
+  if (!registered) {
+    const hint = el("div", "mt-4 terminal-text text-sm text-center");
+    hint.textContent = "Sync your profile to record your data, or just register as a guest!";
+    root.append(hint);
+    return root;
+  }
+
+  if (!ready) {
+    const hint = el("div", "mt-4 terminal-text text-sm text-center whitespace-pre-line");
+    // si tu veux être plus fin, tu peux check qui manque :
+    hint.textContent = `Both players must be ready to start the match.
+
+    P1 must press "w"
+    P2 must press "ArrowUp"
+    
+    the Countdown will begin once both players are ready.`;
+    root.append(hint);
+    return root;
+  }
+
 
   const gameLiveStats = el("div", "m-4 terminal-text sm:h-auto");
 
@@ -97,12 +123,14 @@ export function createPongStatsPanel(state: GameState): HTMLElement {
 
   const PlayerHeader = el("div", "grid grid-cols-3 terminal-text");
   const p1Title = el("div", "font-bold text-left terminal-title");
-  p1Title.textContent = "ALPHA";
+  p1Title.textContent = state.p1?.userName || "P1";
   const vs = el("div", "text-center font-bold");
   vs.textContent = "VS";
   playersBox.append(vs);
   const p2Title = el("div", "font-bold text-right terminal-title");
-  p2Title.textContent = "OMEGA";
+  console.log(state);
+  console.log("Players info :", state.p1, state.p2);
+  p2Title.textContent = state.p2.userName || "P2";
   PlayerHeader.append(p1Title, vs, p2Title);
 
   const PlayersScores = el("div", "grid grid-cols-2 gap-2");

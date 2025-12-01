@@ -1,7 +1,6 @@
 import type { GameState } from "./types";
 import type { CardinalDirection } from "./update";
 
-
 export function launchBall(state: GameState, dir: CardinalDirection, speed: number) {
   const diag = speed / Math.sqrt(2);
 
@@ -36,10 +35,9 @@ export function initBoard(state: GameState) {
     state.stats.bounces = 0;
 }
 
-export function initGame(): GameState {
-  const state = initState();
-  initBoard(state);
-  return state;
+export function initPlayersInfo(state: GameState) {
+    state.p1 = { userName: "P1", avatarUrl: "" };
+    state.p2 = { userName: "P2", avatarUrl: "" };
 }
 
 export function initState(): GameState {
@@ -65,5 +63,6 @@ export function initState(): GameState {
     PrevPhase: undefined,
     ready: { p1: false, p2: false },
     stats: { p1Score: 0, p2Score: 0, lastScorer: undefined, bounces: 0, p1Effects: 0, p2Effects: 0, p1MaxBounces: 0, p2MaxBounces: 0 },
+    p1: { userName: "P1", avatarUrl: "" }, p2: { userName: "P2", avatarUrl: "" }
   } as GameState;
 }

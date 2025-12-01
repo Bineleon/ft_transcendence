@@ -6,9 +6,10 @@ export function stepSnake(controller: SnakeController): void {
   const head = controller.state.snake[0];
   const newX = head.x + controller.state.dir.x;
   const newY = head.y + controller.state.dir.y;
+  const { world } = controller.state;
 
   // collisions mur simple
-  if (newX < 0 || newX >= controller.state.world.w || newY < 0 || newY >= controller.state.world.h) {
+  if (newX < 0 || newX >= world.w || newY < 0 || newY >= world.h) {
     controller.setPhase("GAMEOVER");
     return;
   }
