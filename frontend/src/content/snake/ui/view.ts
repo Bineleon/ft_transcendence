@@ -10,7 +10,7 @@ export interface SnakeViewWindow {
 
 export function createSnakeView(): SnakeViewWindow {
     // 1) main layout: 1 colonne
-    const main = el("div", `grid grid-cols-1 gap-4 p-2
+    const main = el("div", `flex flex-col-1 aspect-square w-full max-w-[400px] m-auto p-2
         h-full
         place-items-center
         h-[300px]

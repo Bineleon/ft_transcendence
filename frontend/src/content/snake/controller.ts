@@ -2,7 +2,7 @@ import type { SnakeViewWindow } from "./ui/view";
 import type { SnakeState, Controls, SnakePhase } from "./game/types";
 import { domOverlayManager } from "./ui/overlay";
 import { GameLoop } from "../pong/core/loop";
-import { createGameGuards, type GameGuards } from "../pong/ui/guards"; 
+import { createGameGuards, type GameGuards } from "./ui/guards"; 
 import { resizeSnake, COLS, ROWS, TILE } from "./core/canvas";
 import { randomLetter } from "./game/utils";
 import { stepSnake } from "./core/logic";
@@ -43,9 +43,8 @@ export class SnakeController {
         this.overlay = new domOverlayManager(this);
         this.gameGuards = createGameGuards(this.view.canvas);
         
-        resizeSnake(this.view.canvas, this.view.snakeContainer, this.state);
         window.addEventListener("resize", () => {
-            resizeSnake(this.view.canvas, this.view.snakeContainer, this.state);
+            resizeSnake(this.view.canvas, this.view.main, this.state);
             this.draw();
         });
     }
@@ -58,13 +57,13 @@ export class SnakeController {
         if (e.key === c.down.code)  c.down.down = true;
         if (e.key === c.left.code)  c.left.down = true;
         if (e.key === c.right.code) c.right.down = true;
-        if (code === c.pause.code) c.pause.down = true;
-        if (code === c.escape.code)c.escape.down = true;
+        if (code === c.pause.code)  c.pause.down = true;
+        if (code === c.escape.code) c.escape.down = true;
 
-        if (c.up.down) this.state.dir = { x: 0, y: -1 };
-        if (c.down.down) this.state.dir = { x: 0, y: 1 };
-        if (c.left.down) this.state.dir = { x: -1, y: 0 };
-        if (c.right.down) this.state.dir = { x: 1, y: 0 };
+        if (c.up.down && this.state.dir.y !== 1) this.state.dir = { x: 0, y: -1 };
+        if (c.down.down && this.state.dir.y !== -1) this.state.dir = { x: 0, y: 1 };
+        if (c.left.down && this.state.dir.x !== 1) this.state.dir = { x: -1, y: 0 };
+        if (c.right.down && this.state.dir.x !== -1) this.state.dir = { x: 1, y: 0 };
 
         switch (this.state.phase) {
             case "PLAYING":
@@ -121,6 +120,7 @@ export class SnakeController {
                 this.unwireControls();
                 break;
             case "PLAYING":
+                resizeSnake(this.view.canvas, this.view.main, this.state);
                 this.wireControls();
                 this.startGame();
                 this.view.overlay.replaceChildren(this.overlay.bindHTMLElement(phase));

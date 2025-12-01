@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
+import rateLimit from '@fastify/rate-limit';
 import fs from 'node:fs';
 import { setupFriendsModule } from './modules/friends/index.js';
 import { setupAuthModule } from './modules/auth/index.js';
@@ -37,6 +38,13 @@ export function createApp() {
 
   app.register(helmet, { contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false });
 
+
+  // 🔐 Rate limiting global (sans DB, stockage en mémoire)
+  app.register(rateLimit, {
+    max: 100,              // 100 requêtes...
+    timeWindow: '1 minute' // ...par minute / IP
+  });
+
   // --- Error handler ---
   setupErrorHandler(app);
 
@@ -58,6 +66,7 @@ export function createApp() {
     uptime: process.uptime()
   }));
 
+  
   // --- Multipart ---
   app.register(multipart, {
     limits: { fileSize: 2 * 1024 * 1024 } // 2 MB

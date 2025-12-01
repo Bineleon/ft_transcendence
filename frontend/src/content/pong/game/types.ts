@@ -1,5 +1,14 @@
 // Un peu comme des structures en C
 
+export interface GameViewHooks {
+    onPlayerChange?: (id: PlayerId, info: PlayerInfo | null) => void;
+}
+
+export interface PlayerInfo {
+    userName: string;
+    avatarUrl: string;
+}
+
 export interface KeyFlag { code: string; down: boolean; }
 
 export type PlayerId = "p1" | "p2";
@@ -51,5 +60,7 @@ export interface GameState {
     PrevPhase?: GamePhase;
     ready: { p1: boolean; p2: boolean };
     stats: PlayersStats;
+    p1: PlayerInfo; 
+    p2: PlayerInfo;  
 }
 

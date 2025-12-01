@@ -18,10 +18,12 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
         });
         const data = await response.json();
 
+        console.log("Add player response data:", data);
         if (!response.ok) {
             pongAlert(`Failed to add player to tournament: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Add Player Error" });
+        } else {
+            pongAlert(`You have been added to the tournament.`, { title: "Success" });
         }
-        pongAlert(`Successfully joined tournament ${tCode}!`, { title: "Success" });
     }
     catch (error) {
         console.error("Add player error:", error);

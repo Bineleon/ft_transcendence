@@ -1,4 +1,4 @@
-import { el } from "../home.ts";
+import { el, text } from "../home.ts";
 import { notLoggedIn } from "./logchecks.ts";
 import { getLoggedName } from "./todb.ts";
 
@@ -34,7 +34,10 @@ export function logUI() {
             logBtn.onclick = () => { window.location.hash = "#/login"; };
         } else {
             const userName = await getLoggedName();
-            logStatus.textContent = `Logged in as ${userName || "User"}`;
+            const prompt = el("span", "", text("Logged in as "));
+            const nameLink = el("a", "article-link cursor-pointer decoration-1 decoration-wavy", text(userName)) as HTMLAnchorElement;
+            logStatus.onclick = () => { window.location.hash = `#/profile/${userName}`; };
+            logStatus.replaceChildren(prompt, nameLink);
             logBtn.textContent = "Log Out";
             logBtn.classList.add("hover:text-red-200");
             logBtn.onclick = async () => {

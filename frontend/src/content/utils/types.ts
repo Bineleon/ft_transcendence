@@ -25,6 +25,7 @@ interface Friend {
     createdAt: string;
     friend: User;
     user: User;
+	online: boolean;
 }
 
 

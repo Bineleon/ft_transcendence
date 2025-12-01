@@ -5,16 +5,18 @@ import { addUserAsPlayerToTournament, getLoggedName, getTournamentDatas } from "
 import type { Tournament } from "../utils/types";
 import { renderTournamentBrackets } from "./brackets";
 
-let tCode = getRouteTail("/tournament/classic");
-
 function renderRegisterButtons(t: Tournament): HTMLElement {
+
+    let tCode = getRouteTail("/tournament/classic");
+
     const div = el("div", "flex justify-center mb-4 gap-4");
+
     const registerTournamentBtn = el("button", "btn-click flex mb-4");
-    registerTournamentBtn.textContent = "Register for Tournament";
-    registerTournamentBtn.addEventListener("click", () => {
-        registerAlertBox(tCode);
-        // window.location.reload();
-    });
+    registerTournamentBtn.textContent = "Join Tournament";
+    //// Join instead of Register ////
+    registerTournamentBtn.addEventListener("click", () => { registerAlertBox(tCode); });
+
+
     const unregisterFromTournamentBtn = el("button", "btn-click flex mb-4");
     getLoggedName().then((who) => {
         if (!who) {
@@ -52,6 +54,8 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
 }
 
 function renderTournamentView(t: Tournament): HTMLElement {
+    let tCode = getRouteTail("/tournament/classic");
+
     const main = el("div", "");
     const tCodeTitle = el("h1", `whitespace-pre-line title-hed text-center mb-6`);
     tCodeTitle.append(el("span", "", text("Welcome to Tournament:")));
@@ -70,10 +74,12 @@ function renderTournamentView(t: Tournament): HTMLElement {
 
 export function classicTournament(): HTMLElement {
     // 1) On crée un container immédiat
+	let tCode = getRouteTail("/tournament/classic");
     const container = el("div", "");
     const loading = el("p", "article-base text-center", text("Loading tournament..."));
     container.append(loading);
 
+	console.log("tCode", tCode);
     // 2) On lance le fetch en async, mais SANS rendre la fonction async
     getTournamentDatas(tCode).then((tClassicDatas) => {
         container.innerHTML = "";
@@ -84,11 +90,12 @@ export function classicTournament(): HTMLElement {
             container.append(errorDiv);
             return;
         }
+        console.log("Tournament datas loaded:", tClassicDatas);
 
         // On Add le user loggué en tant que joueur du tournoi
         getLoggedName().then((name) => {
             if (name) {
-                addUserAsPlayerToTournament(tClassicDatas.tCode, name)
+                addUserAsPlayerToTournament(tCode, name)
                     .catch((err) => {
                         console.error("Error adding user to tournament:", err);
                     });

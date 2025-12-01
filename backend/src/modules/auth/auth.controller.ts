@@ -18,45 +18,78 @@ export function authController(
   googleOAuth: GoogleOAuthService
 ) {
   // --- REGISTER ---
-  app.post<{ Body: RegisterRequest }>('/api/auth/register', async (request, reply) => {
-    const validated = await validateUserData(request, reply);
-    if (!validated) return;
+  app.post<{ Body: RegisterRequest }>(
+    '/api/auth/register',
+    {
+      config: {
+        rateLimit: {
+          max: 3,                // 3 créations de compte...
+          timeWindow: '10 minutes', // ...par 10 minutes / IP
+        },
+      },
+    },
+    async (request, reply) => {
+      const validated = await validateUserData(request, reply);
+      if (!validated) return;
 
-    const result = await authService.register(validated);
-    return formatSuccess(result, 'User created, 2FA required.');
-  });
+      const result = await authService.register(validated);
+      return formatSuccess(result, 'User created, 2FA required.');
+    }
+  );
 
   // --- LOGIN ---
-  app.post<{ Body: LoginRequest }>('/api/auth/login', async (request) => {
-    const result = await authService.login(request.body);
-    return formatSuccess(result, '2FA code sent.');
-  });
+  app.post<{ Body: LoginRequest }>(
+    '/api/auth/login',
+    {
+      config: {
+        rateLimit: {
+          max: 5,                // 5 tentatives...
+          timeWindow: '5 minutes', // ...par 5 minutes / IP
+        },
+      },
+    },
+    async (request) => {
+      const result = await authService.login(request.body);
+      return formatSuccess(result, '2FA code sent.');
+    }
+  );
 
   // --- VERIFY 2FA ---
-  app.post('/api/auth/verify-2fa', async (request, reply) => {
-    const { userId, code } = request.body as { userId: string; code: string };
-    const result = await authService.verify2FA(userId, code);
+  app.post(
+    '/api/auth/verify-2fa',
+    {
+      config: {
+        rateLimit: {
+          max: 10,                // 10 essais de code 2FA...
+          timeWindow: '10 minutes', // ...par 10 minutes / IP
+        },
+      },
+    },
+    async (request, reply) => {
+      const { userId, code } = request.body as { userId: string; code: string };
+      const result = await authService.verify2FA(userId, code);
 
-    const refreshToken = await refreshService.createRefreshToken(result.user.id);
+      const refreshToken = await refreshService.createRefreshToken(result.user.id);
 
-    reply.setCookie('token', result.token, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60,
-      path: '/',
-    });
+      reply.setCookie('token', result.token, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60,
+        path: '/',
+      });
 
-    reply.setCookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-    });
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      });
 
-    return formatSuccess(result, '2FA verified. Login successful.');
-  });
+      return formatSuccess(result, '2FA verified. Login successful.');
+    }
+  );
 
   // --- REFRESH ---
   app.post('/api/auth/refresh', async (request, reply) => {
@@ -94,29 +127,24 @@ export function authController(
     return formatSuccess(undefined, 'Logout successful');
   });
 
-  // --- PROFILE ---
+  // --- PROFILE (full) ---
   app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => {
-	try {
-	  const profile = await userService.getFullProfile(request.user!.userId);
-	  return formatSuccess({ user: profile }, 'Profile loaded successfully');
-	} catch (err) {
-	  request.log.error(err, 'Failed to load profile');
-	  return reply.code(500).send({
-		error: {
-		  code: 'PROFILE_LOAD_FAILED',
-		  message: 'Failed to load profile',
-		  statusCode: 500,
-		},
-	  });
-	}
+    try {
+      const profile = await userService.getFullProfile(request.user!.userId);
+      return formatSuccess({ user: profile }, 'Profile loaded successfully');
+    } catch (err) {
+      request.log.error(err, 'Failed to load profile');
+      return reply.code(500).send({
+        error: {
+          code: 'PROFILE_LOAD_FAILED',
+          message: 'Failed to load profile',
+          statusCode: 500,
+        },
+      });
+    }
   });
-  //   app.get('/api/auth/me', { preHandler: authenticate }, async (request) => {
-  //     const userId = request.user!.userId;
-  //     const profile = await userService.getOwnProfile(userId);
-  //     return formatSuccess({ user: profile });
-  //   });
-  
-  // --- PROFILE ---
+
+  // --- PROFILE (public / minimal) ---
   app.get('/api/auth/publicme', { preHandler: authenticate }, async (request) => {
     const userId = request.user!.userId;
     const profile = await userService.getOwnProfile(userId);
@@ -129,23 +157,25 @@ export function authController(
 
   // --- Profile Public ---
   app.get('/api/profile/:username', async (request, reply) => {
-  const { username } = request.params as { username: string };
+    const { username } = request.params as { username: string };
 
-  try {
-    const profile = await userService.getPublicProfileByUsername(username);
-    return formatSuccess({ user: profile });
-  } catch (err) {
-    return reply.code(404).send({
-      error: {
-        code: 'USER_NOT_FOUND',
-        message: 'User not found',
-        statusCode: 404
-      }
-    });
-  }
-});
+    try {
+      const profile = await userService.getPublicProfileByUsername(username);
+      return formatSuccess({ user: profile });
+    } catch (err) {
+      return reply.code(404).send({
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found',
+          statusCode: 404,
+        },
+      });
+    }
+  });
 
-   app.get('/api/auth/loggedIn', async (request, reply) => {
+  
+  // --- Check loggedIn ---
+  app.get('/api/auth/loggedIn', async (request, reply) => {
     try {
       const token =
         request.cookies.token ||
@@ -157,8 +187,7 @@ export function authController(
         return reply.send(true);
       }
 
-      // Vérifie le token avec ta fonction custom
-      const decoded = await import('../../shared/utils/jwt.js').then(m => m.verifyToken(token));
+      const decoded = await import('../../shared/utils/jwt.js').then((m) => m.verifyToken(token));
 
       if (decoded) {
         return reply.send(false); // Token valide => utilisateur connecté
@@ -170,31 +199,70 @@ export function authController(
     }
   });
 
-// auth.controller.ts
-app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (request, reply) => {
-  try {
-    const userId = request.user!.userId;
+  // --- DELETE ACCOUNT ---
+  app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const userId = request.user!.userId;
 
-    // Supprime le compte
-    await userService.deleteUser(userId);
+      await userService.deleteUser(userId);
 
-    // Supprime les cookies pour logout
-    reply.clearCookie('token');
-    reply.clearCookie('refreshToken');
+      reply.clearCookie('token');
+      reply.clearCookie('refreshToken');
 
-    return { success: true, message: 'Account deleted successfully' };
-  } catch (err) {
-    request.log.error(err, 'Failed to delete account');
-    return reply.code(500).send({
-      error: {
-        code: 'DELETE_ACCOUNT_FAILED',
-        message: 'Failed to delete account',
-        statusCode: 500,
-      },
-    });
-  }
-});
+      return { success: true, message: 'Account deleted successfully' };
+    } catch (err) {
+      request.log.error(err, 'Failed to delete account');
+      return reply.code(500).send({
+        error: {
+          code: 'DELETE_ACCOUNT_FAILED',
+          message: 'Failed to delete account',
+          statusCode: 500,
+        },
+      });
+    }
+  });
 
+    // --- GDPR: Privacy report ---
+  app.get('/api/privacy/me', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const userId = request.user!.userId;
+      const report = await userService.getPrivacyReport(userId);
+      return formatSuccess(report, 'Privacy report loaded successfully');
+    } catch (err) {
+      request.log.error(err, 'Failed to load privacy report');
+      return reply.code(500).send({
+        error: {
+          code: 'PRIVACY_REPORT_FAILED',
+          message: 'Failed to load privacy report',
+          statusCode: 500
+        }
+      });
+    }
+  });
+
+  // --- GDPR: Anonymize account ---
+  app.post('/api/privacy/anonymize', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const userId = request.user!.userId;
+
+      await userService.anonymizeUser(userId);
+
+      // On nettoie les cookies d'auth après anonymisation
+      reply.clearCookie('token');
+      reply.clearCookie('refreshToken');
+
+      return formatSuccess(undefined, 'Account anonymized successfully');
+    } catch (err) {
+      request.log.error(err, 'Failed to anonymize account');
+      return reply.code(500).send({
+        error: {
+          code: 'ANONYMIZE_ACCOUNT_FAILED',
+          message: 'Failed to anonymize account',
+          statusCode: 500
+        }
+      });
+    }
+  });
 
   // ===============================
   //       GOOGLE OAUTH
@@ -216,6 +284,9 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
       });
     }
 
+    // On récupère le state envoyé par le front (hash courant), ou on met une valeur par défaut
+    const { state } = request.query as { state?: string };
+
     const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('redirect_uri', redirectUri);
@@ -223,14 +294,39 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
     url.searchParams.set('scope', 'openid email profile');
     url.searchParams.set('access_type', 'offline');
     url.searchParams.set('prompt', 'consent');
+    if (state) {
+      url.searchParams.set('state', state);
+    }
 
     return reply.redirect(url.toString());
   });
 
-  // --- GOOGLE: CALLBACK ---
+   // --- GOOGLE: CALLBACK ---
   app.get('/api/auth/google/callback', async (request, reply) => {
-    const { code } = request.query as { code?: string };
+    const { code, state, error } = request.query as {
+      code?: string;
+      state?: string;
+      error?: string;
+    };
 
+    // 1) Cas où l'utilisateur a annulé ou une erreur est renvoyée par Google
+    if (error) {
+      request.log.warn({ error, state }, 'Google OAuth error callback');
+
+      const redirectState =
+        typeof state === 'string' && state.length > 0 ? state : '#/login';
+      const encodedState = encodeURIComponent(redirectState);
+
+      if (error === 'access_denied') {
+        // L'utilisateur a cliqué sur "Annuler"
+        return reply.redirect(`/?state=${encodedState}&oauth=cancelled`);
+      }
+
+      // Autre erreur OAuth
+      return reply.redirect(`/?state=${encodedState}&oauth=error`);
+    }
+
+    // 2) Cas anormal : pas d'erreur mais pas de code
     if (!code) {
       return reply.code(400).send({
         error: {
@@ -316,8 +412,10 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
         path: '/',
       });
 
-      // Redirection vers le front déjà authentifié
-      return reply.redirect('/#/profile');
+      const redirectState =
+        typeof state === 'string' && state.length > 0 ? state : '#/profile';
+      const encodedState = encodeURIComponent(redirectState);
+      return reply.redirect(`/?state=${encodedState}`);
     } catch (err) {
       request.log.error({ err }, 'Google OAuth callback failed');
       return reply.code(500).send({
@@ -328,6 +426,5 @@ app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (requ
         },
       });
     }
-});
+  });
 }
-

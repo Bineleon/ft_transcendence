@@ -20,8 +20,8 @@ export interface UpdateMatchDTO {
 
 // ⬇️ Utiliser le type Prisma + les relations
 export type MatchResponse = Match & {
-  p1?: Pick<User, 'id' | 'username' | 'avatarUrl' | 'playerRef'>;
-  p2?: Pick<User, 'id' | 'username' | 'avatarUrl' | 'playerRef'>;
+  p1?: Pick<User, 'id' | 'username' | 'avatarUrl' | 'playerRef'> | null;
+  p2?: Pick<User, 'id' | 'username' | 'avatarUrl' | 'playerRef'> | null;
   winner?: Pick<User, 'id' | 'username' | 'avatarUrl'> | null;
   tournament?: Pick<Tournament, 'id' | 'code' | 'name' | 'mode'> | null;
 };

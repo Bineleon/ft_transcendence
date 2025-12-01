@@ -9,7 +9,6 @@ export function tournamentController(
   app: FastifyInstance,
   tournamentService: TournamentService
 ) {
-  
   // ==========================================
   // POST /api/tournaments/form - Créer un tournoi
   // ==========================================
@@ -37,11 +36,12 @@ export function tournamentController(
     async (request, reply) => {
       try {
         const tournament = await tournamentService.findByCode(request.params.code);
-        
+
         if (!tournament) {
           const errorResponse = formatGenericError(new Error('Tournament not found'));
           return reply.status(404).send(errorResponse);
         }
+        // console.log("Tournament retrieved:", tournament);
 
         return formatSuccess(tournament, 'Tournament retrieved successfully');
       } catch (error) {
@@ -52,53 +52,95 @@ export function tournamentController(
       }
     }
   );
-// // ==========================================
-//   // GET /api/tournaments - Lister tous les tournois
-//   // ==========================================
-//   app.get<{ Querystring: { status?: string } }>(
-//     '/api/tournaments',
-//     async (request, reply) => {
-//       try {
-//         const { status } = request.query;
-//         const tournaments = await tournamentService.findAll(
-//           status as any // TournamentStatus
-//         );
-        
-//         return formatSuccess(tournaments, 'Tournaments retrieved successfully');
-//       } catch (error) {
-//         const errorResponse = formatGenericError(
-//           error instanceof Error ? error : new Error('Failed to retrieve tournament')
-//         );
-//         return reply.status(errorResponse.error.statusCode).send(errorResponse);
-//       }
+
+  // ==========================================
+  // POST /api/tournaments/:code/register - Inscrire un joueur par username
+  // ==========================================
+// app.post<{
+//   Params: { code: string };
+//   Body: { username: string };
+// }>(
+//   '/api/tournaments/:code/join',
+//   { preHandler: authenticate },
+//   async (request, reply) => {
+//     const { code } = request.params;
+//     const { username } = request.body;
+// 	console.log("Code ", code);
+
+//     if (!username || typeof username !== 'string' || username.trim().length === 0) {
+//       const errorResponse = formatGenericError(
+//         new Error('Username is required to register to a tournament')
+//       );
+//       return reply.status(400).send(errorResponse);
 //     }
-//   );
+
+//     try {
+//       const result = await tournamentService.registerPlayerByUsername(
+//         code,
+//         username.trim()
+//       );
+
+//       return formatSuccess(
+//         result,
+//         `User "${username.trim()}" registered to tournament successfully`
+//       );
+//     } catch (error) {
+//       const errorResponse = formatGenericError(
+//         error instanceof Error ? error : new Error('Failed to register player to tournament')
+//       );
+//       return reply.status(errorResponse.error.statusCode).send(errorResponse);
+//     }
+//   }
+// );
+
+
+  // // ==========================================
+  // // GET /api/tournaments - Lister tous les tournois
+  // // ==========================================
+  // app.get<{ Querystring: { status?: string } }>(
+  //   '/api/tournaments',
+  //   async (request, reply) => {
+  //     try {
+  //       const { status } = request.query;
+  //       const tournaments = await tournamentService.findAll(
+  //         status as any // TournamentStatus
+  //       );
+
+  //       return formatSuccess(tournaments, 'Tournaments retrieved successfully');
+  //     } catch (error) {
+  //       const errorResponse = formatGenericError(
+  //         error instanceof Error ? error : new Error('Failed to retrieve tournament')
+  //       );
+  //       return reply.status(errorResponse.error.statusCode).send(errorResponse);
+  //     }
+  //   }
+  // );
 
   // ==========================================
   // GET /api/tournaments/user/:userId - Tournois d'un utilisateur
   // ==========================================
-//   app.get<{ Params: { userId: string } }>(
-//     '/api/tournaments/user/:userId',
-//     { preHandler: authenticate },
-//     async (request, reply) => {
-//       try {
-//         const tournaments = await tournamentService.findByCreator(request.params.userId);
-//         return formatSuccess(tournaments, 'User tournaments retrieved successfully');
-//       } catch (error) {
-//         const errorResponse = formatGenericError(
-//           error instanceof Error ? error : new Error('Failed to retrieve user tournaments')
-//         );
-//         return reply.status(errorResponse.error.statusCode).send(errorResponse);
-//       }
-//     }
-//   );
+  // app.get<{ Params: { userId: string } }>(
+  //   '/api/tournaments/user/:userId',
+  //   { preHandler: authenticate },
+  //   async (request, reply) => {
+  //     try {
+  //       const tournaments = await tournamentService.findByCreator(request.params.userId);
+  //       return formatSuccess(tournaments, 'User tournaments retrieved successfully');
+  //     } catch (error) {
+  //       const errorResponse = formatGenericError(
+  //         error instanceof Error ? error : new Error('Failed to retrieve user tournaments')
+  //       );
+  //       return reply.status(errorResponse.error.statusCode).send(errorResponse);
+  //     }
+  //   }
+  // );
 
   // ==========================================
   // PATCH /api/tournaments/:code/status - Changer le statut
   // ==========================================
-  app.patch<{ 
-    Params: { code: string }
-    Body: { status: string }
+  app.patch<{
+    Params: { code: string };
+    Body: { status: string };
   }>(
     '/api/tournaments/:code/status',
     { preHandler: authenticate },
@@ -108,7 +150,7 @@ export function tournamentController(
           request.params.code,
           request.body.status as any // TournamentStatus
         );
-        
+
         return formatSuccess(tournament, 'Tournament status updated successfully');
       } catch (error) {
         const errorResponse = formatGenericError(
