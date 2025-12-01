@@ -301,10 +301,32 @@ export function authController(
     return reply.redirect(url.toString());
   });
 
-  // --- GOOGLE: CALLBACK ---
+   // --- GOOGLE: CALLBACK ---
   app.get('/api/auth/google/callback', async (request, reply) => {
-    const { code, state } = request.query as { code?: string; state?: string };
+    const { code, state, error } = request.query as {
+      code?: string;
+      state?: string;
+      error?: string;
+    };
 
+    // 1) Cas où l'utilisateur a annulé ou une erreur est renvoyée par Google
+    if (error) {
+      request.log.warn({ error, state }, 'Google OAuth error callback');
+
+      const redirectState =
+        typeof state === 'string' && state.length > 0 ? state : '#/login';
+      const encodedState = encodeURIComponent(redirectState);
+
+      if (error === 'access_denied') {
+        // L'utilisateur a cliqué sur "Annuler"
+        return reply.redirect(`/?state=${encodedState}&oauth=cancelled`);
+      }
+
+      // Autre erreur OAuth
+      return reply.redirect(`/?state=${encodedState}&oauth=error`);
+    }
+
+    // 2) Cas anormal : pas d'erreur mais pas de code
     if (!code) {
       return reply.code(400).send({
         error: {
@@ -390,7 +412,8 @@ export function authController(
         path: '/',
       });
 
-      const redirectState = typeof state === 'string' && state.length > 0 ? state : '#/profile';
+      const redirectState =
+        typeof state === 'string' && state.length > 0 ? state : '#/profile';
       const encodedState = encodeURIComponent(redirectState);
       return reply.redirect(`/?state=${encodedState}`);
     } catch (err) {
