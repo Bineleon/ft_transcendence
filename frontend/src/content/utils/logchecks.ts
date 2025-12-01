@@ -330,7 +330,7 @@ export function registerAlertBox(tCode: string): void {
                     return;
                 }
 
-                const response = await fetch("/api/auth/register", {
+                const response = await fetch(`/api/tournament/${tCode}/join`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password }),

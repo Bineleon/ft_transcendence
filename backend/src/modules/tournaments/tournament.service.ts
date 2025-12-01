@@ -1,8 +1,10 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
-import type { TournamentMode, TournamentStatus } from '@prisma/client';
+import type { TournamentMode, TournamentStatus, MatchStatus } from '@prisma/client';
 import type { CreateTournamentDTO, TournamentResponse } from './tournament.model.js';
 
+
 const prisma = getPrismaClient();
+
 
 export class TournamentService {
   
@@ -198,6 +200,91 @@ export class TournamentService {
     return !!tournament;
   }
 
+  /**
+   * Inscrit un joueur à un tournoi à partir de son username.
+   * On modélise l'inscription comme un "match" spécial en status DB_ONLY,
+   * ce qui permet de réutiliser getParticipantsCount (basé sur les matches).
+   */
+  async registerPlayerByUsername(code: string, username: string) {
+    // 1) Vérifier que le tournoi existe
+    const tournament = await prisma.tournament.findUnique({
+      where: { code },
+      select: {
+        id: true,
+        status: true,
+        maxParticipants: true,
+      },
+    });
+
+    if (!tournament) {
+      throw new Error('Tournament not found');
+    }
+
+    // On n'autorise l'inscription que si le tournoi est encore OPEN
+    if (tournament.status !== 'OPEN') {
+      throw new Error(`Tournament is not open for registration (status=${tournament.status})`);
+    }
+
+    // 2) Vérifier que l'utilisateur existe
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // 3) Vérifier si déjà inscrit (en tant que p1 ou p2 dans un match du tournoi)
+    const already = await prisma.match.findFirst({
+      where: {
+        tournamentId: tournament.id,
+        OR: [
+          { p1UserId: user.id },
+          { p2UserId: user.id },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (already) {
+      throw new Error('User already registered to this tournament');
+    }
+
+    // 4) Vérifier si le tournoi est plein
+    const isFull = await this.isFull(code);
+    if (isFull) {
+      throw new Error('Tournament is full');
+    }
+
+    // 5) Créer une "inscription" sous forme de match spécial DB_ONLY
+    //    - pas de round / gameIndex / scores
+    //    - juste un lien tournamentId + p1UserId
+    const registrationMatch = await prisma.match.create({
+      data: {
+        tournamentId: tournament.id,
+        p1UserId: user.id,
+        status: 'DB_ONLY' as MatchStatus,
+      },
+    });
+
+    // On peut renvoyer un petit objet propre plutôt que le match brut
+    return {
+      participant: {
+        userId: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl ?? null,
+      },
+      tournamentCode: code,
+      registrationMatchId: registrationMatch.id,
+    };
+  }
+
+  
   async getParticipantsCount(code: string): Promise<number> {
     // Récupérer le tournament avec ses matches
     const tournament = await prisma.tournament.findUnique({
