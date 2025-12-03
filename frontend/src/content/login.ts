@@ -1,5 +1,5 @@
 import { el, text } from "./home";
-import { pongAlert } from "./utils/logchecks";
+import { pongAlert } from "./utils/alertBox";
 import { apiFetch } from "./utils/apiFetch";
 
 /* Fonction Login */

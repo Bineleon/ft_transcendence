@@ -1,6 +1,6 @@
 // src/content/utils/apiFetch.ts
 
-import { pongAlert } from "./logchecks";
+import { pongAlert } from "./alertBox";
 
 /**
  * Wrapper autour de fetch qui :
