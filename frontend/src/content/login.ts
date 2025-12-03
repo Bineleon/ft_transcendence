@@ -121,11 +121,12 @@ function login(): HTMLElement {
     ) as HTMLButtonElement;
     googleBtn.type = "button";
     googleBtn.textContent = "Sign in with Google";
+    const ID = inputLogin.value;
 
     googleBtn.addEventListener("click", () => {
         // On prend la route courante (hash) comme state
-        const currentHash = "/profile";
-        const state = encodeURIComponent(currentHash);
+        window.location.hash = `#/profile/${ID}`;
+        const state = encodeURIComponent(window.location.hash);
         window.location.href = `/api/auth/google?state=${state}`;
     });
 

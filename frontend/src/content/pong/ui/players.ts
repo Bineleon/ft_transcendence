@@ -98,14 +98,18 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
             
             getUserDatas(name).then((user) => {
                 if (!user) return;
-                state.p1.userName = user.data.user.username;
-                state.p1.avatarUrl = user.data.user.avatarUrl || "";
-                applyPlayerInfoToBox(PBox, state.p1, player, state);
+                // Robustly handle either: User OR { data: { user: User } }
+                const resolvedUser: any = (user as any)?.data?.user ?? user;
+                const username = resolvedUser?.username ?? resolvedUser?.userName ?? name;
+                const avatar   = resolvedUser?.avatarUrl ?? resolvedUser?.avatar ?? "";
 
+                state.p1.userName = username;
+                state.p1.avatarUrl = avatar || "";
+                applyPlayerInfoToBox(PBox, state.p1, player, state);
                 document.dispatchEvent(new CustomEvent("playersUpdated", { detail: { state } }));
-            }).catch((err) => {
-                console.error("getUserDatas error:", err);
-            });
+             }).catch((err) => {
+                 console.error("getUserDatas error:", err);
+             });
         }).catch((err) => {
             console.error("getLoggedName error:", err);
         });

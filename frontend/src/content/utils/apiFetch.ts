@@ -26,6 +26,9 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
     return res;
   }
 
+  if (window.location.href = "/#/playpong")
+    return;
+
   // Tentative de refresh
   try {
     const refreshRes = await fetch("/api/auth/refresh", {

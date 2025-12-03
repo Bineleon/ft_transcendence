@@ -72,7 +72,7 @@ export function pongAlert(mess: string, kind?: AlertKind, options?: AlertOptions
     message.textContent = mess;
 
     overlay.classList.remove("hidden");
-    document.body.classList.add("no-scroll");
+    // document.body.classList.add("no-scroll");
 
     button.onclick = () => {
         closeOverlay(overlay);
@@ -413,7 +413,7 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
                         kind: "join",
                         userName: guestName,
                         userId: guestName,
-                        avatarUrl: "/imgs/avatar_guest.png",
+                        avatarUrl: "/imgs/avatar.png",
                     });
                     return;
                 }
