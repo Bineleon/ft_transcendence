@@ -1,8 +1,8 @@
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
-import { notLoggedIn, pongAlert, reLogAlert } from "../utils/logchecks.ts";
-import { createDBTournament, getLoggedID, getTournamentDatas, getUserDatas, addUserAsPlayerToTournament } from "../utils/todb.ts";
-import type { Tournament } from "../utils/types.ts";
+import { pongAlert, runAuthBox } from "../utils/alertBox.ts";
+import { createDBTournament, getLoggedID, notLoggedIn, getTournamentDatas, getUserDatas, addUserAsPlayerToTournament } from "../utils/todb.ts";
+import type { Tournament } from "./uiTypes.ts";
 
 
 export type tournamentMode = "KING" | "CLASSIC" | "GAUNTLET";
@@ -615,7 +615,9 @@ export function ChoseTournament(): HTMLElement {
             const loginPrompt = el("div", "article-base text-center text-2xl");
             const loginlink = el("a", "article-link cursor-pointer", text("log in"));
             loginlink.addEventListener("click", () => {
-                reLogAlert();
+                runAuthBox("LOGIN", { onClick: () => {
+                    document.body.classList.remove("no-scroll");
+                } });
             });
             loginPrompt.append(text(`Please `), loginlink, text(` to create or join a tournament.`));
             subscriptionSection.append(loginPrompt);

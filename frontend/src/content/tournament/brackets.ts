@@ -1,4 +1,4 @@
-import type { Tournament } from "../utils/types";
+import type { Tournament } from "./uiTypes";
 import { el, text } from "../home";
 
 /// HELPERS ///
@@ -28,7 +28,7 @@ function listFt(label: string, extraClass = "", whithId?: string): HTMLLIElement
 export function renderBracket(t: Tournament): HTMLElement {
     const wrapper = el("div", "flex mr-3 mt-8");
 
-    const firstRound = renderFirstRoundColumn("round-1", t.maxParticipants, {
+    const firstRound = renderFirstRoundColumn(t, "round-1", t.maxParticipants, {
         markAnchorOnIndex: 0,
         extraLiClass: "first-round"
     });
@@ -42,10 +42,7 @@ export function renderBracket(t: Tournament): HTMLElement {
         const roundColumn = renderNextRoundsColumns(
             roundID,
             nbPlayers - 1,          // ⬅ nombre de slots à dessiner pour CE round
-            {
-                markAnchorOnIndex: 0,
-                extraLiClass: ""
-            }
+            { markAnchorOnIndex: 0, extraLiClass: "" }
         );
         wrapper.append(roundColumn);
     }
@@ -67,24 +64,51 @@ function renderNextRoundsColumns(roundId: string, playersCount:number,options?:
     return ol;
 }
 
-function renderFirstRoundColumn(roundId: string, playersCount: number, options?:
-{ markAnchorOnIndex?: number, extraLiClass?: string } ): HTMLOListElement {
-    const ol = el("ol", `flex flex-1 flex-col justify-around round`);
+function renderFirstRoundColumn(t: Tournament, roundId: string, playersCount: number,
+    options?: { markAnchorOnIndex?: number; extraLiClass?: string }): HTMLOListElement {
+    const ol = el("ol", "flex flex-1 flex-col justify-around round");
 
+    // 1. On ne prend que les matchs du round 1 (ou le round que tu veux)
+    const firstRoundMatches = t.matches.filter((m) => m.round === 1);
+    console.log("First round matches:", firstRoundMatches);
+
+    // 2. On prépare une liste "flat" de slots (un slot = un joueur potentiel)
+    const slots: string[] = [];
+
+    for (const match of firstRoundMatches) {
+        slots.push(match.p1User?.user?.userName ?? "Unassigned");
+        slots.push(match.p2User?.user?.userName ?? "Unassigned");
+    }
+
+    // Si on n’a pas assez de slots, on complète
+    while (slots.length < playersCount) {
+        slots.push("Unassigned");
+    }
+
+    // 3. On génère les <li> à partir de slots[i]
     for (let i = 0; i < playersCount; i++) {
         const isAnchor = options?.markAnchorOnIndex === i;
         const liId = isAnchor && roundId ? roundId : undefined;
-        
-        let userName = "Unassigned";
-        const li = listFt(userName, `font-royalvogue ${options?.extraLiClass ?? ""}`, liId);
+
+        const userName = slots[i] ?? "Unassigned";
+
+        const li = listFt(
+            userName,
+            `font-royalvogue ${options?.extraLiClass ?? ""}`,
+            liId
+        );
+
         ol.append(li);
-    }    
+    }
+
     return ol;
 }
 
 export function renderTournamentBrackets(tClassicDatas: Tournament): HTMLElement {
     // Implémentation du rendu des brackets du tournoi
     const brackets = el("div", "brackets");
+
+    console.log("Rendering tournament brackets for:", tClassicDatas);
 
     brackets.append(renderBracket(tClassicDatas));
 

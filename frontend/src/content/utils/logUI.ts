@@ -1,6 +1,5 @@
 import { el, text } from "../home.ts";
-import { notLoggedIn } from "./logchecks.ts";
-import { getLoggedName } from "./todb.ts";
+import { getLoggedName, notLoggedIn } from "./todb.ts";
 
 let _bound = false;
 

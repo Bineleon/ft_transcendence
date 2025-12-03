@@ -150,7 +150,7 @@ export function Home(): HTMLElement {
     const col2SubGrid = el(
         "div",
         `grid grid-cols-1 gap-4
-        md:grid-cols-[50%_50%] md:gap-6`
+        md:grid-cols-[45%_45%] md:gap-6`
     );
 
     // Sous-colonne A : mini portrait / focus
@@ -180,7 +180,7 @@ export function Home(): HTMLElement {
     subA.append(subATitle, subAP);
 
     // Sous-colonne B : encart “tech” / humour
-    const subB = el("article", "space-y-2 funfact");
+    const subB = el("article", "space-y-2 funfact m-1");
     const subBTitle = el(
         "h3",
         "subtitle-hed mb-4"

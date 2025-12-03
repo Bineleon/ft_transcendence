@@ -1,11 +1,36 @@
 import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
-import { pongAlert } from "./logchecks.ts";
-import type { Tournament, User } from "./types.ts";
+import { pongAlert } from "./alertBox.ts";
+import type { Tournament, User } from "../tournament/uiTypes.ts";
+import type { ApiTournament } from "../tournament/apiTypes.ts";
+import { tournamentFromApi } from "../tournament/mapper.ts";
 
+
+/// ------      CHECK CHECK CHECK       ------ ///
+export async function notLoggedIn(): Promise<boolean> {
+    try {
+        const resp = await fetch(`/api/auth/loggedIn`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+        });
+        const data = await resp.json();
+
+        if (resp.ok) {
+            return data as boolean;
+        } else {
+            return true;
+        }
+    } catch (error) {
+        console.error("Profile fetch error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+        throw error;
+    }
+}
 
 /// ------        ADD ADD ADD        ------ //
-export async function addUserAsPlayerToTournament(tCode: string, userName: string): Promise<void> {
+export async function addUserAsPlayerToTournament(tCode: string, userName: string, t: Tournament): Promise<void> {
+
     const payload = {
         tCode: tCode,
         userId: userName,
@@ -18,16 +43,16 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
         });
         const data = await response.json();
 
-        console.log("Add player response data:", data);
         if (!response.ok) {
-            pongAlert(`Failed to add player to tournament: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Add Player Error" });
+            pongAlert(`Failed to add player to tournament: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Add Player Error" });
         } else {
-            pongAlert(`You have been added to the tournament.`, { title: "Success" });
+            pongAlert(`You have been added to the tournament.`, "success");
+            document.dispatchEvent(new CustomEvent("tournamentUpdated"));
         }
     }
     catch (error) {
         console.error("Add player error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Add Player Error" });
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error" , { title: "Add Player Error" });
         throw error;
     }
 }
@@ -45,13 +70,11 @@ export async function startMatch(matchId: string): Promise<void> {
     const data = await response.json();
     
     if (!response.ok) {
-      pongAlert(`Failed to start match: ${data.error?.message || 'Unknown error'}`, { 
-        title: "Start Match Error" 
-      });
+      pongAlert(`Failed to start match: ${data.error?.message || 'Unknown error'}`, "error", { title: "Start Match Error" });
       throw new Error(data.error?.message);
     }
     
-    pongAlert('Match started!', { title: "Success" });
+    pongAlert('Match started!', "success");
   } catch (error) {
     console.error("Start match error:", error);
     throw error;
@@ -76,18 +99,14 @@ export async function finishMatch(
     const data = await response.json();
     
     if (!response.ok) {
-      pongAlert(`Failed to finish match: ${data.error?.message || 'Unknown error'}`, { 
-        title: "Finish Match Error" 
-      });
+      pongAlert(`Failed to finish match: ${data.error?.message || 'Unknown error'}`, "error", { title: "Finish Match Error" });
       throw new Error(data.error?.message);
     }
     
-    pongAlert('Match finished! Winner advanced to next round.', { 
-      title: "Success" 
-    });
-  } catch (error) {
-    console.error("Finish match error:", error);
-    throw error;
+    pongAlert('Match finished! Winner advanced to next round.', "success");
+    } catch (error) {
+      console.error("Finish match error:", error);
+      throw error;
   }
 }
 
@@ -113,41 +132,14 @@ export async function createDBTournament(code: string, datas: TournamentFormData
         if (response.ok) {
             window.location.hash = `#/tournament/${datas.tMode.toLowerCase()}/${code}`;
         } else {
-            pongAlert(`Failed to create tournament: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Tournament Creation Error" });
+            pongAlert(`Failed to create tournament: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Tournament Creation Error" });
         }
     }
     catch (error) {
         console.error("Tournament creation error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament Creation Error" });
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Tournament Creation Error" });
     }
 }
-
-// export async function createMatches(tournamentCode: string, datas: TournamentFormDatas): Promise<void> {
-//     const payload = {
-//         tournamentCode: tournamentCode,
-//         mode: datas.tMode,
-//         maxParticipants: datas.maxParticipants,
-//     };
-//     try {
-//         const response = await fetch("/api/tournament/matches", {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify(payload),
-//             credentials: "include"
-//         });
-//         const data = await response.json();
-
-//         if (!response.ok) {
-//             pongAlert(`Failed to create matches: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Match Creation Error" });
-//         }
-//     }
-//     catch (error) {
-//         console.error("Match creation error:", error);
-//         pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Match Creation Error" });
-//     }
-// }
-
-
 
 // ------        GET GET GET        ------ //
 export function getUserNameByIdTEMP(id: string, users: User[]): string {
@@ -163,7 +155,6 @@ export async function getLoggedID(): Promise<string> {
         headers: { "Content-Type": "application/json" }
     });
     if (!userDatas.ok) {
-        // reLogAlert();
         return "";
     }
     return (await userDatas.json()).id;
@@ -176,7 +167,6 @@ export async function getLoggedName(): Promise<string> {
         headers: { "Content-Type": "application/json" }
     });
     if (!userDatas.ok) {
-        // reLogAlert();
         return "";
     }
     return (await userDatas.json()).username;
@@ -196,19 +186,19 @@ export async function getUserNameById(id: string): Promise<string> {
         if (response.ok) {
             return data.username as string;
         } else {
-            pongAlert(`Failed to fetch username: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Username Fetch Error" });
+            pongAlert(`Failed to fetch username: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Username Fetch Error" });
             throw new Error(data.error?.message || data.message || 'Unknown error');
         }
     } catch (error) {
         console.error("Username fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Username Fetch Error" });
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Username Fetch Error" });
         throw error;
     }
 }
 
-export async function getUserDatas(id: string): Promise<User> {
+export async function getUserDatas(userName: string): Promise<User> {
     try {
-        const response = await fetch(`/api/profile/${id}`, {
+        const response = await fetch(`/api/profile/${userName}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
@@ -218,38 +208,38 @@ export async function getUserDatas(id: string): Promise<User> {
         if (response.ok) {
             return data as User;
         } else {
-            pongAlert(`Failed to fetch profile: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Profile Fetch Error" });
+            pongAlert(`Failed to fetch profile: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Profile Fetch Error" });
             throw new Error(data.error?.message || data.message || 'Unknown error');
         }
     } catch (error) {
         console.error("Profile fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Profile Fetch Error" });
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Profile Fetch Error" });
         throw error;
     }
 }
 
 export async function getTournamentDatas(code: string): Promise<Tournament> {
     try {
-        const response = await fetch(`/api/tournaments/${code}`, {
+        const resp = await fetch(`/api/tournaments/${code}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
         });
-        const raw = await response.text();
+        const raw = await resp.json();
 
-        let data: any;
-        try { data = raw ? JSON.parse(raw) : {}; } catch (e) { data = { raw }; }
-
-        if (response.ok) {
-            // unwrappe le wrapper standard { success, message, data }
-            return data?.data ?? data;
-        } else {
-            pongAlert(`Failed to fetch profile: ${data.error?.message || data.message || raw || 'Unknown error'}`, { title: "Profile Fetch Error" });
-            throw new Error(data.error?.message || data.message || raw || 'Unknown error');
+        if (!resp.ok) {
+            throw new Error(raw.error?.message || raw.message || 'Unknown error');
         }
+
+        const apiT: ApiTournament = raw.data ?? raw;
+        const data: Tournament = tournamentFromApi(apiT);
+
+        console.log("Fetched tournament data:", data);
+        console.log("API tournament data:", apiT);
+        return data;
     } catch (error) {
         console.error("Tournament fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
         throw error;
     }
 }

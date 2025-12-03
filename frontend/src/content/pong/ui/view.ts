@@ -1,4 +1,5 @@
 import { el }         from "../../home";
+import type { Tournament } from "../../tournament/uiTypes";
 import type { PlayerId } from "../game/metrics";
 import type { PlayerInfo, GameViewHooks } from "../game/types";
 

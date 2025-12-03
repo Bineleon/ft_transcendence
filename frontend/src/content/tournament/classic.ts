@@ -1,8 +1,8 @@
 import { getRouteTail } from "../../router";
 import { el, text } from "../home";
-import { pongAlert, registerAlertBox, reLogAlert } from "../utils/logchecks";
+import { pongAlert, runAuthBox} from "../utils/alertBox";
 import { addUserAsPlayerToTournament, getLoggedName, getTournamentDatas } from "../utils/todb";
-import type { Tournament } from "../utils/types";
+import type { Tournament } from "./uiTypes";
 import { renderTournamentBrackets } from "./brackets";
 
 function renderRegisterButtons(t: Tournament): HTMLElement {
@@ -14,7 +14,7 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
     const registerTournamentBtn = el("button", "btn-click flex mb-4");
     registerTournamentBtn.textContent = "Join Tournament";
     //// Join instead of Register ////
-    registerTournamentBtn.addEventListener("click", () => { registerAlertBox(tCode); });
+    registerTournamentBtn.addEventListener("click", () => { runAuthBox("JOIN"); });
 
 
     const unregisterFromTournamentBtn = el("button", "btn-click flex mb-4");
@@ -22,7 +22,7 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
         if (!who) {
             unregisterFromTournamentBtn.textContent = "Log in to Unregister";
             unregisterFromTournamentBtn.addEventListener("click", () => {
-                reLogAlert("Please Log in to unregister from a tournament.");
+                runAuthBox("LOGIN", { tCode: t.tCode });
             });
         } else {
             unregisterFromTournamentBtn.textContent = `Unregister as ${who}`;
@@ -64,7 +64,6 @@ function renderTournamentView(t: Tournament): HTMLElement {
     tCodeTitle.append(el("span", "", text(` (Code: ${tCode})`)));
 
     const tournamentBrackets = renderTournamentBrackets(t) as HTMLElement;
-
     const registerUnregisterDiv = renderRegisterButtons(t) as HTMLElement;
     
 
@@ -72,14 +71,35 @@ function renderTournamentView(t: Tournament): HTMLElement {
     return main;
 }
 
+function getAllPlayerNames(t: Tournament): string[] {
+    const allPlayers: string[] = [];
+
+    for (const match of t.matches) {
+        allPlayers.push(match.p1User?.user?.userName ?? "Unassigned");
+        allPlayers.push(match.p2User?.user?.userName ?? "Unassigned");
+    }
+    return allPlayers;
+}
+
 export function classicTournament(): HTMLElement {
     // 1) On crée un container immédiat
-	let tCode = getRouteTail("/tournament/classic");
+    let tCode = getRouteTail("/tournament/classic");
     const container = el("div", "");
     const loading = el("p", "article-base text-center", text("Loading tournament..."));
     container.append(loading);
 
-	console.log("tCode", tCode);
+    // Attach listener early so we don't miss events
+    document.addEventListener("tournamentUpdated", async () => {
+        try {
+            const updated = await getTournamentDatas(tCode);
+            container.innerHTML = "";
+            container.append(renderTournamentView(updated));
+            console.log("Tournament updated event received.");
+        } catch (err) {
+            console.error("Failed to refresh tournament after update:", err);
+        }
+    });
+
     // 2) On lance le fetch en async, mais SANS rendre la fonction async
     getTournamentDatas(tCode).then((tClassicDatas) => {
         container.innerHTML = "";
@@ -90,29 +110,33 @@ export function classicTournament(): HTMLElement {
             container.append(errorDiv);
             return;
         }
-        console.log("Tournament datas loaded:", tClassicDatas);
 
         // On Add le user loggué en tant que joueur du tournoi
-        getLoggedName().then((name) => {
-            if (name) {
-                addUserAsPlayerToTournament(tCode, name)
-                    .catch((err) => {
-                        console.error("Error adding user to tournament:", err);
-                    });
+        // rendre la callback async permet d'utiliser await ici sans rendre classicTournament async
+        getLoggedName().then(async (name) => {
+            if (!name) return;
+            if (getAllPlayerNames(tClassicDatas).includes(name)) return;
+
+            try {
+                await addUserAsPlayerToTournament(tCode, name, tClassicDatas);
+                // Optionnel : re-fetch et re-render immédiatement après ajout
+                const updated = await getTournamentDatas(tCode);
+                container.innerHTML = "";
+                container.append(renderTournamentView(updated));
+            } catch (err) {
+                console.error("Error adding user to tournament:", err);
             }
-        }).catch((err) => {
-            console.error("Error getting logged name:", err);
         });
 
         const view = renderTournamentView(tClassicDatas);
         container.append(view);
+
+        // NOTE: listener already attached above (ne le ré-attache pas ici)
     }).catch((err) => {
         console.error(err);
         container.innerHTML = "";
         container.append(text("Error while loading tournament."));
     });
 
-
-    // 3) On renvoie un DOM SYNCHRONE
     return container;
 }

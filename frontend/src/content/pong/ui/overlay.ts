@@ -1,7 +1,7 @@
 import type { GamePhase, GameState }        from "../game/types";
 import { el, text }                         from "../../home";
 import { GameController }                   from "../controller";
-import { pongAlert }                        from "../../utils/logchecks.ts"
+import { pongAlert }                        from "../../utils/alertBox.ts"
 import { areBothPlayersRegistered }         from "./players";
 
 export class domOverlayManager {
