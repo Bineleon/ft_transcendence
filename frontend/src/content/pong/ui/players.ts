@@ -1,6 +1,6 @@
 import { el }         from "../../home";
 import type { GameState } from "../game/types";
-import { matchAlert } from "../../utils/logchecks";
+import { matchAlert } from "../../utils/alertBox";
 import { getLoggedName, getUserDatas } from "../../utils/todb";
 import type { PlayerId, PlayerInfo } from "../game/types";
 

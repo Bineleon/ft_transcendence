@@ -1,7 +1,7 @@
 import { el, text } from "./home";
 import { logout } from "../content/utils/logout.ts";
 import { deleteAccount } from "./utils/deleteAccount.ts";
-import { pongAlert } from "./utils/logchecks";
+import { pongAlert } from "./utils/alertBox.ts";
 import { getRouteTail } from "../router";
 import { apiFetch } from "./utils/apiFetch";
 

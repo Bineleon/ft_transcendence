@@ -10,6 +10,8 @@ import { setupCanvas }                  from "./core/canvas";
 import type { GameGuards }              from "./ui/guards";
 import { createPongStatsPanel }         from "./ui/terminal";
 import { createPlayersBox, resetPlayersCache }             from "./ui/players";
+import type { Tournament }               from "../tournament/uiTypes";
+
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
@@ -30,15 +32,17 @@ export class GameController {
         pause:  { code: "Space",        down: false },
         escape: { code: "Escape",       down: false }
     };
+    private tournament: Tournament | undefined;
 
 ///////// CONSTRUCTEUR /////////
-    constructor(opts: { context: CanvasRenderingContext2D; view: GameViewWindow }) {
+    constructor(opts: { context: CanvasRenderingContext2D; view: GameViewWindow, t?: Tournament }) {
         this.context = opts.context;
         this.view = opts.view;
         this.terminal = this.view.terminal;
         this.state = initState();
         this.domOverlay = new domOverlayManager(this);
         this.gameGuards = createGameGuards(this.view.canvas);
+        this.tournament = opts.t || undefined;
 
         document.addEventListener("playersUpdated", this.onPlayersUpdated);
     }

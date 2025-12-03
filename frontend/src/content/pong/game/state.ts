@@ -20,7 +20,7 @@ export function launchBall(state: GameState, dir: CardinalDirection, speed: numb
 export function initBoard(state: GameState) {
     state.ball.pos = { x: 750, y: 450 };
     state.ball.vel = { x: 0, y: 0 };
-    state.ball.r = 15;
+    state.ball.r = 40;
 
     state.paddle1 = {
         pos: { x: 5, y: 325 },
