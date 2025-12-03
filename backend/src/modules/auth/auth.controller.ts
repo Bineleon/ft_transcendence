@@ -183,21 +183,57 @@ export function authController(
           ? request.headers.authorization.split(' ')[1]
           : null);
 
-      if (!token) {
+      // 1) Si on a déjà un token, on le vérifie
+      if (token) {
+        const decoded = await import('../../shared/utils/jwt.js').then((m) => m.verifyToken(token));
+
+        if (decoded) {
+          // Token valide => utilisateur connecté
+          return reply.send(false);
+        }
+      }
+
+      // 2) Ici, pas de token ou token invalide.
+      // On tente d'utiliser le refreshToken si présent.
+      const refreshToken = request.cookies.refreshToken;
+      if (!refreshToken) {
+        // Pas de refresh => vraiment déconnecté
         return reply.send(true);
       }
 
-      const decoded = await import('../../shared/utils/jwt.js').then((m) => m.verifyToken(token));
+      try {
+        const tokens = await refreshService.rotateRefreshToken(refreshToken);
 
-      if (decoded) {
-        return reply.send(false); // Token valide => utilisateur connecté
+        // On remet à jour les cookies comme dans /api/auth/refresh
+        reply.setCookie('token', tokens.accessToken, {
+          httpOnly: true,
+          secure: env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 15 * 60,
+          path: '/',
+        });
+
+        reply.setCookie('refreshToken', tokens.refreshToken, {
+          httpOnly: true,
+          secure: env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60,
+          path: '/',
+        });
+
+        // Après refresh réussi → l'utilisateur est connecté
+        return reply.send(false);
+      } catch (err) {
+        // Refresh impossible ou invalide -> session morte
+        request.log.warn({ err }, 'Refresh failed in /loggedIn');
+        return reply.send(true);
       }
-
+    } catch (err) {
+      request.log.error({ err }, 'loggedIn check failed');
       return reply.send(true); // Par défaut, pas connecté
-    } catch {
-      return reply.send(true); // Erreur => token invalide => pas connecté
     }
   });
+
 
   // --- DELETE ACCOUNT ---
   app.delete('/api/auth/delete-account', { preHandler: authenticate }, async (request, reply) => {

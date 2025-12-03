@@ -3,6 +3,7 @@ import { logout } from "../content/utils/logout.ts";
 import { deleteAccount } from "./utils/deleteAccount.ts";
 import { pongAlert } from "./utils/logchecks";
 import { getRouteTail } from "../router";
+import { apiFetch } from "./utils/apiFetch";
 
 type FriendSummary = {
     id: string;
@@ -90,7 +91,7 @@ export function Profile(): HTMLElement {
             try {
                 const fd = new FormData();
                 fd.append("file", file);
-                const res = await fetch("/api/users/me/avatar", {
+                const res = await apiFetch("/api/users/me/avatar", {
                     method: "POST",
                     body: fd,
                     credentials: "include",
@@ -174,7 +175,7 @@ export function Profile(): HTMLElement {
         viewDataBtn.textContent = "Voir mes données personnelles";
         viewDataBtn.onclick = async () => {
             try {
-                const res = await fetch("/api/privacy/me", { credentials: "include" });
+                const res = await apiFetch("/api/privacy/me", { credentials: "include" });
                 if (!res.ok) {
                     alert("Impossible de charger le rapport de données.");
                     return;
@@ -206,7 +207,7 @@ export function Profile(): HTMLElement {
             if (!sure) return;
 
             try {
-                const res = await fetch("/api/privacy/anonymize", {
+                const res = await apiFetch("/api/privacy/anonymize", {
                     method: "POST",
                     credentials: "include",
                 });
@@ -270,7 +271,7 @@ export function Profile(): HTMLElement {
             const friendUsername = addFriendInput.value.trim();
             if (!friendUsername) return;
             try {
-                const res = await fetch("/api/friends/request", {
+                const res = await apiFetch("/api/friends/request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -294,7 +295,7 @@ export function Profile(): HTMLElement {
         addFriendBtn.append(text("Add Friend"));
         addFriendBtn.onclick = async () => {
             try {
-                const res = await fetch("/api/friends/request", {
+                const res = await apiFetch("/api/friends/request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -340,11 +341,11 @@ async function loadProfileData(
         let res: Response;
 
         if (viewedUsername) {
-            res = await fetch(`/api/profile/${viewedUsername}`, {
+            res = await apiFetch(`/api/profile/${viewedUsername}`, {
                 credentials: "include",
             });
         } else {
-            res = await fetch("/api/auth/me", { credentials: "include" });
+            res = await apiFetch("/api/auth/me", { credentials: "include" });
         }
 
         if (!res.ok) throw new Error("Impossible de charger le profil");
@@ -393,7 +394,7 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
 
     try {
         // --- Friends (acceptés) ---
-        const friendsRes = await fetch("/api/friends", {
+        const friendsRes = await apiFetch("/api/friends", {
             credentials: "include",
         });
         const friendsData = await friendsRes.json();
@@ -428,7 +429,7 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                     if (!sure) return;
 
                     try {
-                        const res = await fetch(`/api/friends/${friend.id}`, {
+                        const res = await apiFetch(`/api/friends/${friend.id}`, {
                             method: "DELETE",
                             credentials: "include",
                         });
@@ -450,7 +451,7 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
         }
 
         // --- Demandes reçues ---
-        const requestsRes = await fetch("/api/friends/requests", {
+        const requestsRes = await apiFetch("/api/friends/requests", {
             credentials: "include",
         });
         const requestsData = await requestsRes.json();
@@ -480,7 +481,7 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                 const acceptBtn = el("button", "btn-click mr-2") as HTMLButtonElement;
                 acceptBtn.textContent = "Accept";
                 acceptBtn.onclick = async () => {
-                    await fetch(`/api/friends/${req.id}`, {
+                    await apiFetch(`/api/friends/${req.id}`, {
                         method: "PATCH",
                         credentials: "include",
                         headers: { "Content-Type": "application/json" },
@@ -492,7 +493,7 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
                 const declineBtn = el("button", "btn-click") as HTMLButtonElement;
                 declineBtn.textContent = "Decline";
                 declineBtn.onclick = async () => {
-                    await fetch(`/api/friends/${req.id}`, {
+                    await apiFetch(`/api/friends/${req.id}`, {
                         method: "PATCH",
                         credentials: "include",
                         headers: { "Content-Type": "application/json" },

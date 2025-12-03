@@ -1,7 +1,9 @@
 // utils/deleteAccount.ts
+import { apiFetch } from "../utils/apiFetch";
+
 export async function deleteAccount(): Promise<boolean> {
   try {
-    const response = await fetch('/api/auth/delete-account', {
+    const response = await apiFetch('/api/auth/delete-account', {
       method: 'DELETE',
       credentials: 'include',
       headers: {} // pas de Content-Type

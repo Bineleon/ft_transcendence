@@ -1,5 +1,6 @@
 import { el, text } from "./home";
 import { pongAlert } from "./utils/logchecks";
+import { apiFetch } from "./utils/apiFetch";
 
 /* Fonction Login */
 function login(): HTMLElement {
@@ -46,7 +47,7 @@ function login(): HTMLElement {
             // --- Phase 2: envoi du code 2FA ---
             if (!input2FA.classList.contains("hidden")) {
                 const code = input2FA.value;
-                const response = await fetch("/api/auth/verify-2fa", {
+                const response = await apiFetch("/api/auth/verify-2fa", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ userId: input2FA.dataset.userId, code }),
@@ -80,7 +81,7 @@ function login(): HTMLElement {
             }
 
             const payload = { username: inputLogin.value, password: inputPassword.value };
-            const response = await fetch("/api/auth/login", {
+            const response = await apiFetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -191,7 +192,7 @@ function register(): HTMLElement {
         const payload = { email: inputEmail.value, username: inputLogin.value, password: inputPassword.value };
 
         try {
-            const response = await fetch("/api/auth/register", {
+            const response = await apiFetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),

@@ -4,6 +4,7 @@ import { pongAlert, registerAlertBox, reLogAlert } from "../utils/logchecks";
 import { addUserAsPlayerToTournament, getLoggedName, getTournamentDatas } from "../utils/todb";
 import type { Tournament } from "../utils/types";
 import { renderTournamentBrackets } from "./brackets";
+import { apiFetch } from "../utils/apiFetch";
 
 function renderRegisterButtons(t: Tournament): HTMLElement {
 
@@ -28,7 +29,7 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
             unregisterFromTournamentBtn.textContent = `Unregister as ${who}`;
             unregisterFromTournamentBtn.addEventListener("click", async () => {
                 try {
-                    const response = await fetch("/api/tournament/players", {
+                    const response = await apiFetch("/api/tournament/players", {
                         method: "DELETE",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ tournamentCode: t.tCode }),
@@ -80,7 +81,7 @@ export function classicTournament(): HTMLElement {
     container.append(loading);
 
 	console.log("tCode", tCode);
-    // 2) On lance le fetch en async, mais SANS rendre la fonction async
+    // 2) On lance le apiFetch en async, mais SANS rendre la fonction async
     getTournamentDatas(tCode).then((tClassicDatas) => {
         container.innerHTML = "";
 

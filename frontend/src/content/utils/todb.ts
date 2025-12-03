@@ -2,7 +2,7 @@ import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
 import { pongAlert } from "./logchecks.ts";
 import type { Tournament, User } from "./types.ts";
-
+import { apiFetch } from "./apiFetch";
 
 /// ------        ADD ADD ADD        ------ //
 export async function addUserAsPlayerToTournament(tCode: string, userName: string): Promise<void> {
@@ -10,7 +10,7 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
         tCode: tCode,
         userId: userName,
     };    try {
-        const response = await fetch(`/api/tournaments/${tCode}/join`, {
+        const response = await apiFetch(`/api/tournaments/${tCode}/join`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -36,7 +36,7 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
 
 export async function startMatch(matchId: string): Promise<void> {
   try {
-    const response = await fetch(`/api/matches/${matchId}/start`, {
+    const response = await apiFetch(`/api/matches/${matchId}/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include"
@@ -66,7 +66,7 @@ export async function finishMatch(
   p2Score?: number
 ): Promise<void> {
   try {
-    const response = await fetch(`/api/matches/${matchId}/finish`, {
+    const response = await apiFetch(`/api/matches/${matchId}/finish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ winnerUserId, p1Score, p2Score }),
@@ -101,7 +101,7 @@ export async function createDBTournament(code: string, datas: TournamentFormData
         maxParticipants: datas.maxParticipants,
     };
     try {
-        const response = await fetch("/api/tournaments/form", {
+        const response = await apiFetch("/api/tournaments/form", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -129,7 +129,7 @@ export async function createDBTournament(code: string, datas: TournamentFormData
 //         maxParticipants: datas.maxParticipants,
 //     };
 //     try {
-//         const response = await fetch("/api/tournament/matches", {
+//         const response = await apiFetch("/api/tournament/matches", {
 //             method: "POST",
 //             headers: { "Content-Type": "application/json" },
 //             body: JSON.stringify(payload),
@@ -157,7 +157,7 @@ export function getUserNameByIdTEMP(id: string, users: User[]): string {
 }
 
 export async function getLoggedID(): Promise<string> {
-    const userDatas = await fetch ("/api/auth/me", {
+    const userDatas = await apiFetch ("/api/auth/me", {
         method: "GET",
         credentials: "include",
         headers: { "Content-Type": "application/json" }
@@ -170,7 +170,7 @@ export async function getLoggedID(): Promise<string> {
 }
 
 export async function getLoggedName(): Promise<string> {
-    const userDatas = await fetch ("/api/auth/publicme", {
+    const userDatas = await apiFetch ("/api/auth/publicme", {
         method: "GET",
         credentials: "include",
         headers: { "Content-Type": "application/json" }
@@ -186,7 +186,7 @@ export async function getLoggedName(): Promise<string> {
 export async function getUserNameById(id: string): Promise<string> {
     const IDHere = getRouteTail("/profile");
     try {
-        const response = await fetch(`/api/profile/${IDHere}`, {
+        const response = await apiFetch(`/api/profile/${IDHere}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
@@ -196,19 +196,19 @@ export async function getUserNameById(id: string): Promise<string> {
         if (response.ok) {
             return data.username as string;
         } else {
-            pongAlert(`Failed to fetch username: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Username Fetch Error" });
+            pongAlert(`Failed to apiFetch username: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Username apiFetch Error" });
             throw new Error(data.error?.message || data.message || 'Unknown error');
         }
     } catch (error) {
-        console.error("Username fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Username Fetch Error" });
+        console.error("Username apiFetch error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Username apiFetch Error" });
         throw error;
     }
 }
 
 export async function getUserDatas(id: string): Promise<User> {
     try {
-        const response = await fetch(`/api/profile/${id}`, {
+        const response = await apiFetch(`/api/profile/${id}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
@@ -218,19 +218,19 @@ export async function getUserDatas(id: string): Promise<User> {
         if (response.ok) {
             return data as User;
         } else {
-            pongAlert(`Failed to fetch profile: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Profile Fetch Error" });
+            pongAlert(`Failed to apiFetch profile: ${data.error?.message || data.message || 'Unknown error'}`, { title: "Profile apiFetch Error" });
             throw new Error(data.error?.message || data.message || 'Unknown error');
         }
     } catch (error) {
-        console.error("Profile fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Profile Fetch Error" });
+        console.error("Profile apiFetch error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Profile apiFetch Error" });
         throw error;
     }
 }
 
 export async function getTournamentDatas(code: string): Promise<Tournament> {
     try {
-        const response = await fetch(`/api/tournaments/${code}`, {
+        const response = await apiFetch(`/api/tournaments/${code}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
@@ -244,12 +244,12 @@ export async function getTournamentDatas(code: string): Promise<Tournament> {
             // unwrappe le wrapper standard { success, message, data }
             return data?.data ?? data;
         } else {
-            pongAlert(`Failed to fetch profile: ${data.error?.message || data.message || raw || 'Unknown error'}`, { title: "Profile Fetch Error" });
+            pongAlert(`Failed to apiFetch profile: ${data.error?.message || data.message || raw || 'Unknown error'}`, { title: "Profile apiFetch Error" });
             throw new Error(data.error?.message || data.message || raw || 'Unknown error');
         }
     } catch (error) {
-        console.error("Tournament fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
+        console.error("Tournament apiFetch error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, { title: "Tournament apiFetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
         throw error;
     }
 }

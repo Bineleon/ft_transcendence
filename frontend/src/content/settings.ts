@@ -1,5 +1,6 @@
 import { el, text } from "./home";
 import { pongAlert } from "./utils/logchecks";
+import { apiFetch } from "./utils/apiFetch";
 
 export function Settings(): HTMLElement {
     const main = el("main", "p-4 max-w-xl mx-auto space-y-6");
@@ -19,7 +20,7 @@ export function Settings(): HTMLElement {
         const value = usernameInput.value.trim();
         if (!value) return pongAlert("Username required");
 
-        const res = await fetch("/api/users/me/username", {
+        const res = await apiFetch("/api/users/me/username", {
             method: "PATCH",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -44,7 +45,7 @@ export function Settings(): HTMLElement {
         const value = emailInput.value.trim();
         if (!value) return pongAlert("Email required");
 
-        const res = await fetch(`/api/users/me`, {
+        const res = await apiFetch(`/api/users/me`, {
             method: "PUT",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -70,7 +71,7 @@ export function Settings(): HTMLElement {
         if (!currentInput.value || !newInput.value)
             return pongAlert("All fields required");
 
-        const res = await fetch(`/api/users/me/password`, {
+        const res = await apiFetch(`/api/users/me/password`, {
             method: "PUT",
             credentials: "include",
             headers: { "Content-Type": "application/json" },

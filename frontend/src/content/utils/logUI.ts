@@ -1,6 +1,7 @@
 import { el, text } from "../home.ts";
 import { notLoggedIn } from "./logchecks.ts";
 import { getLoggedName } from "./todb.ts";
+import { apiFetch } from "./apiFetch";
 
 let _bound = false;
 
@@ -42,7 +43,7 @@ export function logUI() {
             logBtn.classList.add("hover:text-red-200");
             logBtn.onclick = async () => {
                 try {
-                    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+                    await apiFetch("/api/auth/logout", { method: "POST", credentials: "include" });
                 } catch (error) {
                     console.error("Logout error:", error);
                 }

@@ -1,6 +1,7 @@
 import { el, text } from "../home";
 import type { PlayerInfo } from "../pong/game/types";
 import { addUserAsPlayerToTournament, getLoggedName, getUserDatas } from "./todb";
+import { apiFetch } from "../utils/apiFetch";
 
 // ALERT SIMPLE (message + bouton)
 type AlertOptions = {
@@ -43,7 +44,7 @@ export const closeOverlay = (overlay: HTMLDivElement) => {
 
 export async function notLoggedIn(): Promise<boolean> {
     try {
-        const resp = await fetch(`/api/auth/loggedIn`, {
+        const resp = await apiFetch(`/api/auth/loggedIn`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
@@ -56,7 +57,7 @@ export async function notLoggedIn(): Promise<boolean> {
             return true;
         }
     } catch (error) {
-        console.error("Profile fetch error:", error);
+        console.error("Profile apiFetch error:", error);
         pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
         throw error;
     }
@@ -246,7 +247,7 @@ export function reLogAlert(message?: string): void {
                     pongAlert("Please enter the 2FA code.");
                     submitButton.disabled = false;
                 }
-                const resp = await fetch("/api/auth/verify-2fa", {
+                const resp = await apiFetch("/api/auth/verify-2fa", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ userId, code }),
@@ -272,7 +273,7 @@ export function reLogAlert(message?: string): void {
                 submitButton.disabled = false;
             }
 
-            const resp = await fetch("/api/auth/login", {
+            const resp = await apiFetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
@@ -374,7 +375,7 @@ export function registerAlertBox(tCode: string): void {
                         return;
                     }
 
-                    const resp = await fetch(`/api/tournament/${tCode}/join`, {
+                    const resp = await apiFetch(`/api/tournament/${tCode}/join`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ username, password }),
@@ -404,7 +405,7 @@ export function registerAlertBox(tCode: string): void {
                     return;
                 }
 
-                const verifyResp = await fetch("/api/auth/verify-2fa", {
+                const verifyResp = await apiFetch("/api/auth/verify-2fa", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ userId: currentUserId, code }),
@@ -519,7 +520,7 @@ export function matchAlert(mode: "sync" | "guest"): Promise<PlayerInfo | null> {
                     return;
                 }
 
-                const resp = await fetch("/api/auth/login", {
+                const resp = await apiFetch("/api/auth/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password }),  // ⬅️ même payload que login.ts
@@ -559,7 +560,7 @@ export function matchAlert(mode: "sync" | "guest"): Promise<PlayerInfo | null> {
                 return;
             }
 
-            const verifyResp = await fetch("/api/auth/verify-2fa", {
+            const verifyResp = await apiFetch("/api/auth/verify-2fa", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: currentUserId, code }),   // ⬅️ userId, pas login
