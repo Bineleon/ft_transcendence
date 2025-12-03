@@ -322,6 +322,30 @@ export class UserService {
     };
   }
 
+
+async updateUsername(userId: string, newUsername: string) {
+  if (newUsername.length < 3 || newUsername.length > 20) {
+    throw new ValidationError('Username must be between 3 and 20 characters');
+  }
+
+  // Vérifier que l’username n’est pas déjà pris
+  const exists = await this.prisma.user.findFirst({
+    where: { username: newUsername, id: { not: userId } },
+    select: { id: true }
+  });
+
+  if (exists) {
+    throw new ConflictError('Username already in use');
+  }
+
+  const updated = await this.prisma.user.update({
+    where: { id: userId },
+    data: { username: newUsername }
+  });
+
+  return formatUser(updated);
+}
+
   // Récupère les infos étendues pour le profil
   async getFullProfile(userId: string) {
     try {

@@ -12,7 +12,8 @@ import { setupErrorHandler } from './shared/middleware/index.js';
 import { getPrismaClient } from './shared/database/prisma.js';
 import { setupTournamentModule } from './modules/tournaments/index.js';
 import { setupMatchModule } from './modules/matches/index.js';
-
+import { userController } from './modules/users/users.controller.js';
+import { UserService } from './modules/users/users.service.js';
 
 // Configuration
 import { env } from './shared/config/environment.js';
@@ -38,7 +39,6 @@ export function createApp() {
 
   app.register(helmet, { contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false });
 
-
   // 🔐 Rate limiting global (sans DB, stockage en mémoire)
   app.register(rateLimit, {
     max: 100,              // 100 requêtes...
@@ -58,6 +58,10 @@ export function createApp() {
   setupTournamentModule(app);
   setupMatchModule(app);
 
+  // --- Users module ---
+  const userService = new UserService(prisma);
+  userController(app, userService);
+
   // --- Health check ---
   app.get('/health', async () => ({
     status: 'ok',
@@ -66,7 +70,6 @@ export function createApp() {
     uptime: process.uptime()
   }));
 
-  
   // --- Multipart ---
   app.register(multipart, {
     limits: { fileSize: 2 * 1024 * 1024 } // 2 MB

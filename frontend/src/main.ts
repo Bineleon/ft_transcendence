@@ -8,6 +8,7 @@ import { Profile } from "./content/profile";
 import { ChoseTournament } from "./content/tournament/tournament";
 import { classicTournament } from "./content/tournament/classic";
 import { PlaySnake } from "./content/snake/snake";
+import { Settings } from "./content/settings";
 
 // Structure des routes de l'application
 const routes = {
@@ -21,6 +22,7 @@ const routes = {
   // "/tournament/gauntlet": gauntletTournament,
   "/tournament": ChoseTournament,
   "/snake": PlaySnake,
+  "/settings": Settings,
 };
 
 // ✅ Gérer le state de Google OAuth AVANT d'initialiser le router

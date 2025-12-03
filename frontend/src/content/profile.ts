@@ -133,6 +133,13 @@ export function Profile(): HTMLElement {
     infoBox.append(stats);
 
     if (isSelf) {
+
+            // ---- EDIT PROFILE ----
+        const settingsBtn = el("a", "big-link cursor-pointer") as HTMLAnchorElement;
+        settingsBtn.href = "#/settings";
+        settingsBtn.append(text("Edit Profile"));
+        infoBox.append(settingsBtn);
+
         // --- Logout ---
         const logoutBtn = el("button", "big-link");
         logoutBtn.append(text("Logout"));
