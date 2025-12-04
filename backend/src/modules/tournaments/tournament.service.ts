@@ -385,6 +385,142 @@ export class TournamentService {
     return (await this.findByCode(code)) as TournamentResponse;
   }
 
+    // ==========================================
+  // LEAVE alias (P2 sans compte)
+  // ==========================================
+  async leaveWithAlias(code: string, alias: string): Promise<TournamentResponse> {
+    const tournament = await prisma.tournament.findUnique({
+      where: { code },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!tournament) {
+      throw new Error('Tournament not found');
+    }
+
+    if (tournament.status !== 'OPEN') {
+      throw new Error('Cannot leave a tournament that is not OPEN');
+    }
+
+    const trimmedAlias = alias.trim();
+    if (!trimmedAlias) {
+      throw new Error('Alias cannot be empty');
+    }
+
+    // Vérifier qu'il est bien présent
+    const exists = await prisma.match.findFirst({
+      where: {
+        tournamentId: tournament.id,
+        OR: [
+          { p1Ref: trimmedAlias },
+          { p2Ref: trimmedAlias },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!exists) {
+      throw new Error('Alias is not registered in this tournament');
+    }
+
+    // Supprimer l'alias des slots où il apparaît
+    await prisma.match.updateMany({
+      where: {
+        tournamentId: tournament.id,
+        p1Ref: trimmedAlias,
+      },
+      data: {
+        p1Ref: null,
+      },
+    });
+
+    await prisma.match.updateMany({
+      where: {
+        tournamentId: tournament.id,
+        p2Ref: trimmedAlias,
+      },
+      data: {
+        p2Ref: null,
+      },
+    });
+
+    return (await this.findByCode(code)) as TournamentResponse;
+  }
+
+  // ==========================================
+  // LEAVE user (P2 avec compte existant)
+  // ==========================================
+  async leaveWithUser(code: string, username: string): Promise<TournamentResponse> {
+    const tournament = await prisma.tournament.findUnique({
+      where: { code },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!tournament) {
+      throw new Error('Tournament not found');
+    }
+
+    if (tournament.status !== 'OPEN') {
+      throw new Error('Cannot leave a tournament that is not OPEN');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Vérifier qu'il est bien inscrit
+    const exists = await prisma.match.findFirst({
+      where: {
+        tournamentId: tournament.id,
+        OR: [
+          { p1UserId: user.id },
+          { p2UserId: user.id },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!exists) {
+      throw new Error('User is not registered in this tournament');
+    }
+
+    // On libère les slots P1 / P2 pour ce user
+    await prisma.match.updateMany({
+      where: {
+        tournamentId: tournament.id,
+        p1UserId: user.id,
+      },
+      data: {
+        p1UserId: null,
+        p1Ref: null, // on nettoie aussi la ref texte si tu l'utilises
+      },
+    });
+
+    await prisma.match.updateMany({
+      where: {
+        tournamentId: tournament.id,
+        p2UserId: user.id,
+      },
+      data: {
+        p2UserId: null,
+        p2Ref: null,
+      },
+    });
+
+    return (await this.findByCode(code)) as TournamentResponse;
+  }
+
   // ==========================================
   // START / CLOSE / DELETE / UTILS / STATS
   // ==========================================
