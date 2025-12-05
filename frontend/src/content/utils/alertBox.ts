@@ -323,6 +323,8 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
         dom.inputLogin.value = "";
         dom.inputPassword.value = "";
         dom.input2FA.value = "";
+
+        console.log("handleSubmitBehavior initial:", handleSubmitBehavior);
         
     // --- Cas particulier JOIN : si user déjà loggué, bouton direct --- //
         if (mode === "JOIN" && tCode) {
@@ -444,7 +446,6 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
                     const username = dom.inputLogin.value.trim();
                     const password = dom.inputPassword.value;
 
-                    console.log("LOGIN PHASE 1:", username, password);
                     if (!username || !password) {
                         pongAlert("Please fill in all fields.", "error");
                         dom.submitBtn.disabled = false;
@@ -527,7 +528,6 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
                             avatarUrl,
                         });
                     }
-                    window.location.reload();
                     return;
                 }
 

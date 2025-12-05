@@ -22,15 +22,14 @@ export class TournamentService {
     }
 
     let createdByValue: string | undefined;
-    if (data.creatorID) {
+    if (data.creatorName) {
       const user = await prisma.user.findUnique({
-        where: { id: data.creatorID },
-        select: { id: true }
+        where: { username: data.creatorName }
       });
       if (!user) {
         throw new Error('Creator not found');
       }
-      createdByValue = data.creatorID;
+      createdByValue = user.id;
     }
 
     return await prisma.$transaction(async (tx) => {
@@ -172,7 +171,220 @@ export class TournamentService {
   // ==========================================
   // JOIN WITH USERNAME + PASSWORD (P2 compte existant)
   // ==========================================
-  async joinWithCredentials(code: string, username: string, password: string): Promise<TournamentResponse> {
+  // async joinWithCredentials(code: string, username: string, password: string): Promise<TournamentResponse> {
+  //   const tournament = await prisma.tournament.findUnique({
+  //     where: { code },
+  //     include: {
+  //       matches: {
+  //         where: { round: 1 },
+  //         orderBy: { gameIndex: 'asc' }
+  //       }
+  //     }
+  //   });
+
+  //   if (!tournament) {
+  //     throw new Error('Tournament not found');
+  //   }
+
+  //   if (tournament.status !== 'OPEN') {
+  //     throw new Error('Tournament is not open for registration');
+  //   }
+
+  //   const user = await prisma.user.findUnique({
+  //     where: { username },
+  //     select: {
+  //       id: true,
+  //       username: true,
+  //       passwordHash: true
+  //     }
+  //   });
+
+  //   if (!user || !user.passwordHash) {
+  //     throw new Error('Invalid username or password');
+  //   }
+
+  //   const ok = await comparePassword(password, user.passwordHash);
+  //   if (!ok) {
+  //     throw new Error('Invalid username or password');
+  //   }
+
+  //   // Vérifier si déjà inscrit (par id ou par ref texte)
+  //   const alreadyJoined = tournament.matches.some(
+  //     (match) =>
+  //       match.p1UserId === user.id ||
+  //       match.p2UserId === user.id ||
+  //       match.p1Ref === user.username ||
+  //       match.p2Ref === user.username
+  //   );
+
+  //   if (alreadyJoined) {
+  //     throw new Error('User already joined this tournament');
+  //   }
+
+  //   // Calculer le nombre de slots déjà occupés (userId OU alias)
+  //   const usedSlots = tournament.matches.reduce((acc, m) => {
+  //     if (m.p1UserId || m.p1Ref) acc++;
+  //     if (m.p2UserId || m.p2Ref) acc++;
+  //     return acc;
+  //   }, 0);
+
+  //   if (usedSlots >= tournament.maxParticipants) {
+  //     throw new Error('Tournament is full');
+  //   }
+
+  //   let assigned = false;
+
+  //   for (const match of tournament.matches) {
+  //     // slot P1 libre ?
+  //     if (!match.p1UserId && !match.p1Ref) {
+  //       await prisma.match.update({
+  //         where: { id: match.id },
+  //         data: { p1UserId: user.id, p1Ref: user.username }
+  //       });
+  //       assigned = true;
+  //       break;
+  //     }
+  //     // slot P2 libre ?
+  //     if (!match.p2UserId && !match.p2Ref) {
+  //       await prisma.match.update({
+  //         where: { id: match.id },
+  //         data: { p2UserId: user.id, p2Ref: user.username }
+  //       });
+  //       assigned = true;
+  //       break;
+  //     }
+  //   }
+
+  //   if (!assigned) {
+  //     throw new Error('Could not assign player to a match');
+  //   }
+
+  //   const updatedTournament = await prisma.tournament.findUnique({
+  //     where: { code },
+  //     include: {
+  //       matches: {
+  //         where: { round: 1 }
+  //       }
+  //     }
+  //   });
+
+  //   if (updatedTournament) {
+  //     const allSlotsFilled = updatedTournament.matches.every(
+  //       (match) =>
+  //         (match.p1UserId || match.p1Ref) &&
+  //         (match.p2UserId || match.p2Ref)
+  //     );
+
+  //     if (allSlotsFilled) {
+  //       await prisma.tournament.update({
+  //         where: { code },
+  //         data: { status: 'RUNNING' }
+  //       });
+  //     }
+  //   }
+
+  //   return (await this.findByCode(code)) as TournamentResponse;
+  // }
+
+  // // ==========================================
+  // // JOIN WITH ALIAS (P2 sans compte)
+  // // ==========================================
+  // async joinWithAlias(code: string, alias: string): Promise<TournamentResponse> {
+  //   const tournament = await prisma.tournament.findUnique({
+  //     where: { code },
+  //     include: {
+  //       matches: {
+  //         where: { round: 1 },
+  //         orderBy: { gameIndex: 'asc' }
+  //       }
+  //     }
+  //   });
+
+  //   if (!tournament) {
+  //     throw new Error('Tournament not found');
+  //   }
+
+  //   if (tournament.status !== 'OPEN') {
+  //     throw new Error('Tournament is not open for registration');
+  //   }
+
+  //   const trimmedAlias = alias.trim();
+  //   if (!trimmedAlias) {
+  //     throw new Error('Alias cannot be empty');
+  //   }
+
+  //   // Vérifier si un alias identique est déjà utilisé (optionnel)
+  //   const alreadyAlias = tournament.matches.some(
+  //     (m) => m.p1Ref === trimmedAlias || m.p2Ref === trimmedAlias
+  //   );
+  //   if (alreadyAlias) {
+  //     throw new Error('This alias is already used in this tournament');
+  //   }
+
+  //   // Slots utilisés (userId ou alias)
+  //   const usedSlots = tournament.matches.reduce((acc, m) => {
+  //     if (m.p1UserId || m.p1Ref) acc++;
+  //     if (m.p2UserId || m.p2Ref) acc++;
+  //     return acc;
+  //   }, 0);
+
+  //   if (usedSlots >= tournament.maxParticipants) {
+  //     throw new Error('Tournament is full');
+  //   }
+
+  //   let assigned = false;
+
+  //   for (const match of tournament.matches) {
+  //     if (!match.p1UserId && !match.p1Ref) {
+  //       await prisma.match.update({
+  //         where: { id: match.id },
+  //         data: { p1Ref: trimmedAlias }
+  //       });
+  //       assigned = true;
+  //       break;
+  //     }
+  //     if (!match.p2UserId && !match.p2Ref) {
+  //       await prisma.match.update({
+  //         where: { id: match.id },
+  //         data: { p2Ref: trimmedAlias }
+  //       });
+  //       assigned = true;
+  //       break;
+  //     }
+  //   }
+
+  //   if (!assigned) {
+  //     throw new Error('Could not assign alias to a match');
+  //   }
+
+  //   const updatedTournament = await prisma.tournament.findUnique({
+  //     where: { code },
+  //     include: {
+  //       matches: {
+  //         where: { round: 1 }
+  //       }
+  //     }
+  //   });
+
+  //   if (updatedTournament) {
+  //     const allSlotsFilled = updatedTournament.matches.every(
+  //       (match) =>
+  //         (match.p1UserId || match.p1Ref) &&
+  //         (match.p2UserId || match.p2Ref)
+  //     );
+
+  //     if (allSlotsFilled) {
+  //       await prisma.tournament.update({
+  //         where: { code },
+  //         data: { status: 'RUNNING' }
+  //       });
+  //     }
+  //   }
+
+  //   return (await this.findByCode(code)) as TournamentResponse;
+  // }
+
+     async join(code: string, userName: string): Promise<TournamentResponse> {
     const tournament = await prisma.tournament.findUnique({
       where: { code },
       include: {
@@ -192,64 +404,45 @@ export class TournamentService {
     }
 
     const user = await prisma.user.findUnique({
-      where: { username },
-      select: {
-        id: true,
-        username: true,
-        passwordHash: true
-      }
+      where: { username: userName }  
     });
 
-    if (!user || !user.passwordHash) {
-      throw new Error('Invalid username or password');
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    const ok = await comparePassword(password, user.passwordHash);
-    if (!ok) {
-      throw new Error('Invalid username or password');
-    }
-
-    // Vérifier si déjà inscrit (par id ou par ref texte)
     const alreadyJoined = tournament.matches.some(
-      (match) =>
-        match.p1UserId === user.id ||
-        match.p2UserId === user.id ||
-        match.p1Ref === user.username ||
-        match.p2Ref === user.username
+      match => match.p1UserId === user.id || match.p2UserId === user.id
     );
 
     if (alreadyJoined) {
       throw new Error('User already joined this tournament');
     }
 
-    // Calculer le nombre de slots déjà occupés (userId OU alias)
-    const usedSlots = tournament.matches.reduce((acc, m) => {
-      if (m.p1UserId || m.p1Ref) acc++;
-      if (m.p2UserId || m.p2Ref) acc++;
-      return acc;
-    }, 0);
+    const participants = new Set<string>();
+    tournament.matches.forEach(match => {
+      if (match.p1UserId) participants.add(match.p1UserId);
+      if (match.p2UserId) participants.add(match.p2UserId);
+    });
 
-    if (usedSlots >= tournament.maxParticipants) {
+    if (participants.size >= tournament.maxParticipants) {
       throw new Error('Tournament is full');
     }
 
     let assigned = false;
-
+    
     for (const match of tournament.matches) {
-      // slot P1 libre ?
-      if (!match.p1UserId && !match.p1Ref) {
+      if (!match.p1UserId) {
         await prisma.match.update({
           where: { id: match.id },
-          data: { p1UserId: user.id, p1Ref: user.username }
+          data: { p1UserId: user.id }
         });
         assigned = true;
         break;
-      }
-      // slot P2 libre ?
-      if (!match.p2UserId && !match.p2Ref) {
+      } else if (!match.p2UserId) {
         await prisma.match.update({
           where: { id: match.id },
-          data: { p2UserId: user.id, p2Ref: user.username }
+          data: { p2UserId: user.id }
         });
         assigned = true;
         break;
@@ -269,121 +462,21 @@ export class TournamentService {
       }
     });
 
-    if (updatedTournament) {
-      const allSlotsFilled = updatedTournament.matches.every(
-        (match) =>
-          (match.p1UserId || match.p1Ref) &&
-          (match.p2UserId || match.p2Ref)
-      );
-
-      if (allSlotsFilled) {
-        await prisma.tournament.update({
-          where: { code },
-          data: { status: 'RUNNING' }
-        });
-      }
-    }
-
-    return (await this.findByCode(code)) as TournamentResponse;
-  }
-
-  // ==========================================
-  // JOIN WITH ALIAS (P2 sans compte)
-  // ==========================================
-  async joinWithAlias(code: string, alias: string): Promise<TournamentResponse> {
-    const tournament = await prisma.tournament.findUnique({
-      where: { code },
-      include: {
-        matches: {
-          where: { round: 1 },
-          orderBy: { gameIndex: 'asc' }
-        }
-      }
-    });
-
-    if (!tournament) {
-      throw new Error('Tournament not found');
-    }
-
-    if (tournament.status !== 'OPEN') {
-      throw new Error('Tournament is not open for registration');
-    }
-
-    const trimmedAlias = alias.trim();
-    if (!trimmedAlias) {
-      throw new Error('Alias cannot be empty');
-    }
-
-    // Vérifier si un alias identique est déjà utilisé (optionnel)
-    const alreadyAlias = tournament.matches.some(
-      (m) => m.p1Ref === trimmedAlias || m.p2Ref === trimmedAlias
+    const allSlotsFilled = updatedTournament!.matches.every(
+      match => match.p1UserId && match.p2UserId
     );
-    if (alreadyAlias) {
-      throw new Error('This alias is already used in this tournament');
+
+    if (allSlotsFilled) {
+      await prisma.tournament.update({
+        where: { code },
+        data: { status: 'RUNNING' }
+      });
     }
 
-    // Slots utilisés (userId ou alias)
-    const usedSlots = tournament.matches.reduce((acc, m) => {
-      if (m.p1UserId || m.p1Ref) acc++;
-      if (m.p2UserId || m.p2Ref) acc++;
-      return acc;
-    }, 0);
-
-    if (usedSlots >= tournament.maxParticipants) {
-      throw new Error('Tournament is full');
-    }
-
-    let assigned = false;
-
-    for (const match of tournament.matches) {
-      if (!match.p1UserId && !match.p1Ref) {
-        await prisma.match.update({
-          where: { id: match.id },
-          data: { p1Ref: trimmedAlias }
-        });
-        assigned = true;
-        break;
-      }
-      if (!match.p2UserId && !match.p2Ref) {
-        await prisma.match.update({
-          where: { id: match.id },
-          data: { p2Ref: trimmedAlias }
-        });
-        assigned = true;
-        break;
-      }
-    }
-
-    if (!assigned) {
-      throw new Error('Could not assign alias to a match');
-    }
-
-    const updatedTournament = await prisma.tournament.findUnique({
-      where: { code },
-      include: {
-        matches: {
-          where: { round: 1 }
-        }
-      }
-    });
-
-    if (updatedTournament) {
-      const allSlotsFilled = updatedTournament.matches.every(
-        (match) =>
-          (match.p1UserId || match.p1Ref) &&
-          (match.p2UserId || match.p2Ref)
-      );
-
-      if (allSlotsFilled) {
-        await prisma.tournament.update({
-          where: { code },
-          data: { status: 'RUNNING' }
-        });
-      }
-    }
-
-    return (await this.findByCode(code)) as TournamentResponse;
+    return await this.findByCode(code) as TournamentResponse;
   }
+
+
 
     // ==========================================
   // LEAVE alias (P2 sans compte)

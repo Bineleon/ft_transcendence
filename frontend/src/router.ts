@@ -14,7 +14,6 @@ function getPathFromHash(routes: Routes): string {
   if (routes[path]) return path;
 
   for (const base of Object.keys(routes)) {
-    console.log("Checking base route:", base, "against path:", path);
     if (path === base) return base;
     if (path.startsWith(base + "/")) return base;
   }
@@ -24,23 +23,24 @@ function getPathFromHash(routes: Routes): string {
 
 /* Initialise le routeur */
 export function createRouter(rootId: string, routes: Routes) {
- const root = document.getElementById(rootId);
-   if (!root) {
+  const root = document.getElementById(rootId);
+    if (!root) {
     throw new Error(`#${rootId} not found.`);
-}
+  }
 
-// root est forcément non null ici
-async function render() {
+  // root est forcément non null ici
+  async function render() {
   const path = getPathFromHash(routes);
   const node = routes[path]();
   root!.replaceChildren(node);
 
   // Met à jour le statut utilisateur à chaque rendu de route
-  try { logUI();
-  } catch (error) {
-    console.error("Error updating user status:", error);
+  try {
+    logUI();
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
   }
-}
 
 
   /* Fonction pour naviguer programmatique */

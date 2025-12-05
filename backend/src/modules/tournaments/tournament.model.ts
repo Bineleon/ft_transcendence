@@ -4,7 +4,7 @@ import type { MatchResponse } from "../matches/match.model.js";
 export interface CreateTournamentDTO {
   code: string;
   name: string;
-  creatorID: string;
+  creatorName: string;
   mode: TournamentMode | string;
   maxParticipants: number;
   kingMaxTime: number | null;
@@ -22,7 +22,7 @@ export interface TournamentResponse {
   kingMaxRounds: number | null;
   createdBy: string | null;
   createdAt: Date;
-  creator?: {
+  creator: {
     id: string;
     username: string;
     avatarUrl: string | null;

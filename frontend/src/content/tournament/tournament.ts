@@ -1,7 +1,7 @@
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
 import { pongAlert, runAuthBox } from "../utils/alertBox.ts";
-import { createDBTournament, getLoggedID, notLoggedIn, getTournamentDatas, getUserDatas, addUserAsPlayerToTournament } from "../utils/todb.ts";
+import { createDBTournament, getLoggedID, notLoggedIn, getTournamentDatas, getUserDatas, addUserAsPlayerToTournament, getLoggedName } from "../utils/todb.ts";
 import type { Tournament } from "./uiTypes.ts";
 
 
@@ -27,7 +27,7 @@ const KING_TIME_CHOICES = [
 // Envoyer a la Back
 export interface TournamentFormDatas {
     tName: string;
-    creatorID: string;
+    creatorName: string;
     tMode: tournamentMode;
     maxParticipants: number;
     kingMaxTime?: number;
@@ -54,7 +54,7 @@ interface TournamentSettings {
 let formEls: TournamentSettings | null = null;
 let formDatas: TournamentFormDatas | null = null;
 let TMode: tournamentMode | null = null;
-export let tCode: string | null = null;
+let tCode: string | null = null;
 
 export function TournamentFormUI(subscriptionSection: HTMLElement): void {
     TournamentForm(subscriptionSection);
@@ -97,17 +97,21 @@ async function handleGenerateTournament(): Promise<void> {
         pongAlert("Please select King of the Hill settings.");
         return;
     }
-
-    const creatorId = await getLoggedID();
-    tCode = generateTournamentCode();
-    formDatas = {
-        tName: formEls.nameInput.value.trim(),
-        creatorID: creatorId, // À remplacer par l'ID réel de l'utilisateur connecté
-        tMode: "CLASSIC",
-        maxParticipants: parseInt(formEls.participantsButton.value, 10),
-    };
-    createDBTournament(tCode, formDatas);
-    // assignPlayersToTournament(tCode, creatorId);
+    getLoggedName().then(async (name) => {
+        if (!name) {
+            pongAlert("You must be logged in to create a tournament.", "error");
+            return;
+        }
+        if (formEls) {
+            formDatas = {
+                tName: formEls.nameInput.value.trim(),
+                creatorName: name, // À remplacer par l'ID réel de l'utilisateur connecté
+                tMode: "CLASSIC",
+                maxParticipants: parseInt(formEls.participantsButton.value, 10),
+            };
+            createDBTournament(generateTournamentCode(), formDatas);
+        }
+    });
 }
 
 function setupKingRoundsSelector(): void {

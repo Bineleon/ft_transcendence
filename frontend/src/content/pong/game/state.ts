@@ -1,3 +1,5 @@
+import type { Tournament } from "../../tournament/uiTypes";
+import { getTournamentDatas } from "../../utils/todb";
 import type { GameState } from "./types";
 import type { CardinalDirection } from "./update";
 
@@ -12,7 +14,7 @@ export function launchBall(state: GameState, dir: CardinalDirection, speed: numb
     state.ball.vel = { x: -diag, y: -diag };
   } else if (dir === "SE") {
     state.ball.vel = { x:  diag, y:  diag };
-  } else { // "SO"
+  } else {        // "SO"
     state.ball.vel = { x: -diag, y:  diag };
   }
 }
@@ -20,7 +22,7 @@ export function launchBall(state: GameState, dir: CardinalDirection, speed: numb
 export function initBoard(state: GameState) {
     state.ball.pos = { x: 750, y: 450 };
     state.ball.vel = { x: 0, y: 0 };
-    state.ball.r = 40;
+    state.ball.r = 15;
 
     state.paddle1 = {
         pos: { x: 5, y: 325 },
@@ -40,14 +42,24 @@ export function initPlayersInfo(state: GameState) {
     state.p2 = { userName: "P2", avatarUrl: "" };
 }
 
-export function initState(): GameState {
+export function initState(tCode?: string): GameState {
+  let t: Tournament | undefined = undefined;
+  if (tCode) {
+    getTournamentDatas(tCode).then(tournament => {
+      t = tournament;
+    }).catch(() => {
+      t = undefined;
+    });
+  }
+  
+
   return {
-    world: { w: 1500, h: 900 }, // logique, pas pixels
+    world: { w: 1500, h: 900 },   // logique, pas pixels
     ball: {
         pos: { x: 750, y: 450 },  // position initiale de la balle
-        vel: { x: 0, y: 0 },// "pixels" par seconde
+        vel: { x: 0, y: 0 },      // "pixels" par seconde
         velIncrement: { x: 20, y: 20 },
-        r: 15                   // rayon de la balle en "pixels" world
+        r: 15                     // rayon de la balle en "pixels" world
     },
     paddle1: {
         pos: { x: 5, y: 325 },
@@ -64,5 +76,7 @@ export function initState(): GameState {
     ready: { p1: false, p2: false },
     stats: { p1Score: 0, p2Score: 0, lastScorer: undefined, bounces: 0, p1Effects: 0, p2Effects: 0, p1MaxBounces: 0, p2MaxBounces: 0 },
     p1: { userName: "P1", avatarUrl: "" }, p2: { userName: "P2", avatarUrl: "" }
+    , tournamentCode: tCode,
+    tournament: t
   } as GameState;
 }

@@ -1,5 +1,7 @@
 // Un peu comme des structures en C
 
+import type { Tournament } from "../../tournament/uiTypes";
+
 export interface GameViewHooks {
     onPlayerChange?: (id: PlayerId, info: PlayerInfo | null) => void;
 }
@@ -7,6 +9,7 @@ export interface GameViewHooks {
 export interface PlayerInfo {
     userName: string;
     avatarUrl: string;
+    stats: PlayerStats;
 }
 
 export interface KeyFlag { code: string; down: boolean; }
@@ -22,15 +25,21 @@ export interface Controls {
     escape: KeyFlag;
 }
 
-export interface PlayersStats {
-    p1Score: number;
-    p2Score: number;
+export interface MatchStats {
+    p1Stats: PlayerStats;
+    p2Stats: PlayerStats;
+    
     lastScorer?: PlayerId;
     bounces: number;
-    p1Effects: number;
-    p2Effects: number;
-    p1MaxBounces: number;
-    p2MaxBounces: number;
+}
+
+export interface PlayerStats {
+    name: string;
+    isGuest: boolean;
+    score: number;
+    effects: number;   /// Pas besoin la db
+    maxEffects: number;
+    maxBounces: number;
 }
 
 export type  GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART" | "SCORED";
@@ -59,8 +68,10 @@ export interface GameState {
     phase: GamePhase;
     PrevPhase?: GamePhase;
     ready: { p1: boolean; p2: boolean };
-    stats: PlayersStats;
+    stats: MatchStats;
     p1: PlayerInfo; 
-    p2: PlayerInfo;  
+    p2: PlayerInfo;
+    tournamentCode?: string;
+    tournament?: Tournament;
 }
 

@@ -59,7 +59,7 @@ export function Home(): HTMLElement {
     // avec une dernière colonne plus fine pour la “sidebar”
     const grid = el(
         "section",
-        `grid grid-cols-1 gap-6
+        `grid grid-cols-1
         lg:[grid-template-columns:20%_40%_20%_13%] lg:gap-7
         xl:[grid-template-columns:20%_40%_20%_13%] xl:gap-8
         xxl:[grid-template-columns:20%_40%_20%_13%] xxl:gap-10`
@@ -320,6 +320,7 @@ export function Home(): HTMLElement {
         kickerText: string,
         bodyText: string
     ): HTMLAnchorElement {
+
         const link = el(
             "a",
             "block no-underline group cursor-pointer"
@@ -354,6 +355,8 @@ export function Home(): HTMLElement {
         return link as HTMLAnchorElement;
     }
 
+    const linksLabel = el("h1", "text-[100px] font-roman-new text-center -m-6", text(`Links`));
+
     const navPlay = makeSidebarItem(
         "#/game",
         "BREAKING GAME · PLAY PONG",
@@ -382,7 +385,7 @@ export function Home(): HTMLElement {
         "Win rate, unexpected defeats, and that one unbelievable comeback: everything is neatly archived, as if you were important."
     );
 
-    sidebar.append(navPlay, navLogin, navCredits, navProfile);
+    sidebar.append(linksLabel, navPlay, navLogin, navCredits, navProfile);
 
     /************************************************************
      * ASSEMBLAGE

@@ -88,31 +88,38 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
 
     PBox.append(syncProfileBtn, guestBtn);
 
-    const existing = getPlayerInfo(player);
-    if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
+    if (state.tournament) {
+        const info: PlayerInfo = { userName: player === "p1" ? state.p1.userName : state.p2.userName,
+                                   avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
+        setPlayerInfo(player, info);
+    } else {
+
+        const existing = getPlayerInfo(player);
+        if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
 
 
-    if (player === "p1" && arePlayersRegistered(state).p1 === false) {
-        getLoggedName().then((name) => {
-            if (!name) return; // personne log → on garde les boutons
-            
-            getUserDatas(name).then((user) => {
-                if (!user) return;
-                // Robustly handle either: User OR { data: { user: User } }
-                const resolvedUser: any = (user as any)?.data?.user ?? user;
-                const username = resolvedUser?.username ?? resolvedUser?.userName ?? name;
-                const avatar   = resolvedUser?.avatarUrl ?? resolvedUser?.avatar ?? "";
+        if (player === "p1" && arePlayersRegistered(state).p1 === false) {
+            getLoggedName().then((name) => {
+                if (!name) return; // personne log → on garde les boutons
+                
+                getUserDatas(name).then((user) => {
+                    if (!user) return;
+                    // Robustly handle either: User OR { data: { user: User } }
+                    const resolvedUser: any = (user as any)?.data?.user ?? user;
+                    const username = resolvedUser?.username ?? resolvedUser?.userName ?? name;
+                    const avatar   = resolvedUser?.avatarUrl ?? resolvedUser?.avatar ?? "";
 
-                state.p1.userName = username;
-                state.p1.avatarUrl = avatar || "";
-                applyPlayerInfoToBox(PBox, state.p1, player, state);
-                document.dispatchEvent(new CustomEvent("playersUpdated", { detail: { state } }));
-             }).catch((err) => {
-                 console.error("getUserDatas error:", err);
-             });
-        }).catch((err) => {
-            console.error("getLoggedName error:", err);
-        });
+                    state.p1.userName = username;
+                    state.p1.avatarUrl = avatar || "";
+                    applyPlayerInfoToBox(PBox, state.p1, player, state);
+                    document.dispatchEvent(new CustomEvent("playersUpdated", { detail: { state } }));
+                }).catch((err) => {
+                    console.error("getUserDatas error:", err);
+                });
+            }).catch((err) => {
+                console.error("getLoggedName error:", err);
+            });
+        }
     }
 
     if (player === "p1") {

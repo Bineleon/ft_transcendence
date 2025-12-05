@@ -31,10 +31,9 @@ export async function notLoggedIn(): Promise<boolean> {
 
 /// ------        ADD ADD ADD        ------ //
 export async function addUserAsPlayerToTournament(tCode: string, userName: string, t: Tournament): Promise<void> {
-
+    console.log("Adding user to tournament:", tCode, userName);
     const payload = {
-        tCode: tCode,
-        userId: userName,
+        userName: userName,
     };    try {
         const resp = await apiFetch(`/api/tournaments/${tCode}/join`, {
             method: "POST",
@@ -116,7 +115,7 @@ export async function createDBTournament(code: string, datas: TournamentFormData
     const payload = {
         code: code,
         name: datas.tName,
-        creatorID: datas.creatorID,
+        creatorName: datas.creatorName,
         mode: datas.tMode,
         maxParticipants: datas.maxParticipants,
     };
@@ -128,8 +127,6 @@ export async function createDBTournament(code: string, datas: TournamentFormData
             credentials: "include"
         });
         const data = await resp.json();
-        console.log("Code created:", code);
-        console.log("tMode:", datas.tMode.toLocaleLowerCase());
         if (resp.ok) {
             window.location.hash = `#/tournament/${datas.tMode.toLowerCase()}/${code}`;
         } else {
@@ -235,12 +232,14 @@ export async function getTournamentDatas(code: string): Promise<Tournament> {
         const apiT: ApiTournament = raw.data ?? raw;
         const data: Tournament = tournamentFromApi(apiT);
 
-        console.log("Fetched tournament data:", data);
-        console.log("API tournament data:", apiT);
         return data;
     } catch (error) {
         console.error("Tournament fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
+        if (window.location.hash === "#/playpong") {
+            window.location.hash = "#/playpong";
+        } else {
+            pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
+        }
         throw error;
     }
 }

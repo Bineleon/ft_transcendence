@@ -29,10 +29,8 @@ export function createSnakeCanvas(): HTMLCanvasElement {
 
 export function resizeSnake(canvas: HTMLCanvasElement, container: HTMLElement, state: SnakeState): void {
         const rect = container.getBoundingClientRect();
-        console.log("Container rect:", rect);
 
         const viewport = Math.min(rect.width, rect.height);
-        console.log("Viewport size:", viewport);
         const tile = pickTileSize(viewport);
 
         TILE = tile;

@@ -43,11 +43,11 @@ function matchFromApi(apiM: ApiMatch): Match {
     p1User: matchhUserFromApi(
         apiM.p1 ?? null, 
         apiM.p1Score ?? null, 
-        apiM.winnerUserId === apiM.p1UserId),
+        apiM.winnerUserName === apiM.p1UserName),
     p2User: matchhUserFromApi(
         apiM.p2 ?? null, 
         apiM.p2Score ?? null, 
-        apiM.winnerUserId === apiM.p2UserId),
+        apiM.winnerUserName === apiM.p2UserName),
     status: apiM.status,
   };
 }

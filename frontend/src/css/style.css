@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/****** IM Fell Small Caps ******/
+/**************** FONTS ****************/
 @font-face {
   font-family: "IM_Double_SmallCaps"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -105,7 +105,6 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 }
 
-/* for /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/merchande_print_serif/MerchandePrintSerif-PERSONALUSEONLY.ttf */
 @font-face {
   font-family: "MerchandePrintSerif"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -116,7 +115,6 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 }
 
-/* pour /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/oldprint_2/Oldprint Extravagant.ttf */
 @font-face {
   font-family: "Oldprint_Extravagant"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -127,7 +125,6 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 } 
 
-/* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf */
 @font-face {
   font-family: "Screenprint-Regular"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -138,7 +135,6 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 }
 
-/*/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/hello_gorgeous_print/HelloGorgeous-Print.ttf */
 @font-face {
   font-family: "HelloGorgeous-Print"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -159,7 +155,6 @@
   font-display: swap;
 }
 
-/* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/houston_sport/Houston Sport Free.ttf */
 @font-face {
   font-family: "Houston_Sport"; /* Le nom que TU utiliseras dans tes styles */
   src:
@@ -223,8 +218,7 @@
   font-style: normal;
   font-display: swap;
 }
- /* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Origin Athletic TTF.ttf
-/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf */
+
 @font-face {
   font-family: "Origin Athletic";
   src: url("/fonts/Origin Athletic TTF.ttf") format("truetype");
@@ -233,36 +227,373 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "F25Blackletter";
+  src: url("/fonts/F25Blackletter_Type.woff2") format("woff2"),
+       url("/fonts/F25Blackletter_Type.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "HandPrintingPressMeshed";
+  src: url("/fonts/hand_printing_press_meshed/HandPrintingPress_Meshed_demo.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "HandPrintingPressStencil";
+  src: url("/fonts/hand_printing_press_stencil/HandPrintingPress_Stencil_demo.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "HelloGorgeousPrint";
+  src: url("/fonts/hello_gorgeous_print.woff2") format("woff2"),
+       url("/fonts/hello_gorgeous_print.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "HoustonSport";
+  src: url("/fonts/houston_sport.woff2") format("woff2"),
+       url("/fonts/houston_sport.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* IM Fell family (several variants) */
+@font-face {
+  font-family: "IMFellDoublePica";
+  src: url("/fonts/IM Fell Double Pica.woff2") format("woff2"),
+       url("/fonts/IM Fell Double Pica.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IMFellDWPica";
+  src: url("/fonts/IM Fell DW Pica.woff2") format("woff2"),
+       url("/fonts/IM Fell DW Pica.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IMFellEnglish";
+  src: url("/fonts/IM Fell English.woff2") format("woff2"),
+       url("/fonts/IM Fell English.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IMFellFrenchCanon";
+  src: url("/fonts/IM Fell French Canon.woff2") format("woff2"),
+       url("/fonts/IM Fell French Canon.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IMFellGreatPrimer";
+  src: url("/fonts/IM Fell Great Primer.woff2") format("woff2"),
+       url("/fonts/IM Fell Great Primer.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IMFellThreeLinePica";
+  src: url("/fonts/IM Fell Three Line Pica.woff2") format("woff2"),
+       url("/fonts/IM Fell Three Line Pica.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* JMH, Modern, RoyalVogue, etc. */
+@font-face {
+  font-family: "JMHTypeSans";
+  src: url("/fonts/JMH_Type_Sans.woff2") format("woff2"),
+       url("/fonts/JMH_Type_Sans.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MerchandePrintSerif";
+  src: url("/fonts/merchande_print_serif.woff2") format("woff2"),
+       url("/fonts/merchande_print_serif.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ModernType";
+  src: url("/fonts/Modern_Type.woff2") format("woff2"),
+       url("/fonts/Modern_Type.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NexaRustSlab";
+  src: url("/fonts/nexa_rust_slab.woff2") format("woff2"),
+       url("/fonts/nexa_rust_slab.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OceanType";
+  src: url("/fonts/Ocean_Type.woff2") format("woff2"),
+       url("/fonts/Ocean_Type.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OldPrint";
+  src: url("/fonts/oldprint_2.woff2") format("woff2"),
+       url("/fonts/oldprint_2.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "RoyalVogue";
+  src: url("/fonts/RoyalVogue_Type.woff2") format("woff2"),
+       url("/fonts/RoyalVogue_Type.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "VintageRough";
+  src: url("/fonts/Vintage Rough - Preview.woff2") format("woff2"),
+       url("/fonts/Vintage Rough - Preview.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* existing single-file fonts (keep these too) */
+@font-face {
+  font-family: "Abduction2002";
+  src: url("/fonts/abduction2002.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ArcadeRegular";
+  src: url("/fonts/ARCADE_R.TTF") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "ArcadeItalic";
+  src: url("/fonts/ARCADE_I.TTF") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "ArcadeNarrow";
+  src: url("/fonts/ARCADE_N.TTF") format("truetype");
+  font-weight: 400;
+  font-stretch: condensed;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Barcade family (many variants) — declare a family and map weights/styles as needed */
+@font-face {
+  font-family: "Barcade";
+  src: url("/fonts/barcade.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Barcade";
+  src: url("/fonts/barcadbold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Barcade";
+  src: url("/fonts/barcadeital.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+/* add other barcade variants as needed (3d, condensed, left, out, etc.) using the same family name */
+
+/* Hacked CRT, ka1, LaPresse, Minecraft Evenings, Origin Athletic, Screenprint, Super Retro, Vintage */
+@font-face {
+  font-family: "HackedCRT";
+  src: url("/fonts/Hacked CRT.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ka1";
+  src: url("/fonts/ka1.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "LaPresse";
+  src: url("/fonts/LaPresse.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MinecraftEvenings";
+  src: url("/fonts/Minecraft Evenings.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "OriginAthletic";
+  src: url("/fonts/Origin Athletic TTF.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Screenprint";
+  src: url("/fonts/Screenprint-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SuperRetro";
+  src: url("/fonts/Super Retro M54.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "VintageWarehouse";
+  src: url("/fonts/Vintage Warehouse.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vintage";
+  src: url("/fonts/Vintage.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 @theme {
-/**************** FONTS ****************/
-  /* IM Fell (style journal, serif) */
-  --font-im-double: "IM_Double_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-im-great:  "IM_Great_Primer_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  /* Blackletter (ancien journal, gothique → serif fallback) */
-  --font-f25-blackletter: "F25Blackletter", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  /* JMH Typewriter Sans (sans-serif) */
-  --font-jmh: "JMH_Type_Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-  /* Typewriter “machine à écrire” (souvent monospaces) */
-  --font-modern-type: "Modern_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-ocean-type:  "OceanSide_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-royalvogue:  "RoyalVogue_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-mono:  Menlo, Consolas, "Courier New", monospace;
+  /* IM Fell */
+  --font-im-double: "IM_Double_SmallCaps", ui-serif, Georgia, serif;
+  --font-im-great: "IM_Great_Primer_SmallCaps", ui-serif, Georgia, serif;
+  --font-im-dw-pica: "IMFellDWPica", ui-serif, Georgia, serif;
+  --font-im-double-pica: "IMFellDoublePica", ui-serif, Georgia, serif;
+  --font-im-english: "IMFellEnglish", ui-serif, Georgia, serif;
+  --font-im-french-canon: "IMFellFrenchCanon", ui-serif, Georgia, serif;
+  --font-im-three-line: "IMFellThreeLinePica", ui-serif, Georgia, serif;
 
-  --font-merchande-serif: "MerchandePrintSerif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-oldprint-extravagant: "Oldprint_Extravagant", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-screenprint: "Screenprint-Regular", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  /* Blackletter / decorative */
+  --font-f25-blackletter: "F25Blackletter", ui-serif, Georgia, serif;
 
-  --font-hello-gorgeous-print: "HelloGorgeous-Print", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-hello-gorgeous-script: "HelloGorgeous-Script", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  /* HelloGorgeous */
+  --font-hello-print: "HelloGorgeous-Print", ui-serif, Georgia, serif;
+  --font-hello-script: "HelloGorgeous-Script", ui-serif, Georgia, serif;
 
-  --font-houston-sport: "Houston_Sport", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  /* JMH / Sans & modern */
+  --font-jmh: "JMH_Type_Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-modern-type: "Modern_Type", ui-monospace, Menlo, Monaco, "Courier New", monospace;
+  --font-ocean-type: "OceanSide_Type", ui-monospace, Menlo, Monaco, monospace;
 
-  --font-nexa-rust-sans: "NexaRust Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-  --font-nexa-rust-slab: "NexaRust Slab", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-nexa-rust-script: "NexaRust Script", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  /* Royal / Merchande / Old print */
+  --font-royalvogue: "RoyalVogue_Type", ui-serif, Georgia, serif;
+  --font-merchande: "MerchandePrintSerif", ui-serif, Georgia, serif;
+  --font-oldprint: "Oldprint_Extravagant", ui-serif, Georgia, serif;
 
-  --font-origin-athletic: "Origin Athletic", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  /* NexaRust families */
+  --font-nexa-rust-sans: "NexaRust Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-nexa-rust-slab: "NexaRust Slab", ui-serif, Georgia, serif;
+  --font-nexa-rust-script: "NexaRust Script", ui-serif, Georgia, serif;
+
+  /* Houston / display */
+  --font-houston-sport: "Houston_Sport", ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* Arcade / retro / barcade */
+  --font-arcade: "ArcadeRegular", ui-sans-serif, system-ui, sans-serif;
+  --font-arcade-italic: "ArcadeItalic", var(--font-arcade), ui-sans-serif, system-ui, sans-serif;
+  --font-arcade-narrow: "ArcadeNarrow", ui-sans-serif, system-ui, sans-serif;
+  --font-barcade: "Barcade", ui-sans-serif, system-ui, sans-serif;
+
+  /* Pixel / gaming */
+  --font-minecraft: "MinecraftEvenings", ui-sans-serif, system-ui, sans-serif;
+  --font-abduction: "Abduction2002", ui-sans-serif, system-ui, sans-serif;
+
+  /* Origin / screenprint / la presse */
+  --font-origin-athletic: "OriginAthletic", ui-sans-serif, system-ui, sans-serif;
+  --font-screenprint-regular: "Screenprint-Regular", ui-serif, Georgia, serif;
+  --font-screenprint: "Screenprint", ui-serif, Georgia, serif;
+  --font-lapresse: "LaPresse", ui-serif, Georgia, serif;
+
+  /* Hacked CRT / Ka1 / SuperRetro / Vintage */
+  --font-hacked-crt: "HackedCRT", ui-monospace, Menlo, Monaco, monospace;
+  --font-ka1: "Ka1", ui-sans-serif, system-ui, sans-serif;
+  --font-superretro: "SuperRetro", ui-sans-serif, system-ui, sans-serif;
+  --font-vintage-warehouse: "VintageWarehouse", ui-serif, Georgia, serif;
+  --font-vintage: "Vintage", ui-serif, Georgia, serif;
+
+  /* Hand printing press */
+  --font-hand-press-meshed: "HandPrintingPressMeshed", ui-serif, Georgia, serif;
+  --font-hand-press-stencil: "HandPrintingPressStencil", ui-serif, Georgia, serif;
+
+  /* Others / fallbacks */
+  --font-origin: var(--font-origin-athletic);
+  --font-serif-base: ui-serif, Georgia, "Times New Roman", Times, serif;
+  --font-sans-base: ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono-base: ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace;
+
 
   /**************** BREAKPOINTS ****************/
   /* Remets les valeurs qui te conviennent (en rem = tri fiable) */
@@ -671,6 +1002,19 @@
     border: 100px solid transparent;
     border-image: url("/imgs/borders/b-film2.svg") 400 round stretch;
     pointer-events: none;     /* Permet de cliquer à travers la bordure */
+    z-index: 0;
+  }
+
+  .border-tournament {
+    content: "";
+    position: relative;
+    inset: 0;
+    border: 70px solid transparent;
+    border-image: url("/imgs/design/box2.png");
+    border-image-slice: 80%;
+    border-image-repeat: round stretch;
+    border-image-width: 50%;
+    border-image-outset: 0;
     z-index: 0;
   }
 

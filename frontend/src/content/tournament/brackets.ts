@@ -37,7 +37,6 @@ export function renderBracket(t: Tournament): HTMLElement {
     for (let nbPlayers = t.maxParticipants / 2; nbPlayers >= 1; nbPlayers /= 2) {
         // tu peux garder ton ID basé sur le nombre de joueurs restants si tu veux
         const roundID = `round-${nbPlayers}`;
-        console.log(`Rendering round: ${roundID} with ${nbPlayers} slots`);
 
         const roundColumn = renderNextRoundsColumns(
             roundID,
@@ -70,7 +69,6 @@ function renderFirstRoundColumn(t: Tournament, roundId: string, playersCount: nu
 
     // 1. On ne prend que les matchs du round 1 (ou le round que tu veux)
     const firstRoundMatches = t.matches.filter((m) => m.round === 1);
-    console.log("First round matches:", firstRoundMatches);
 
     // 2. On prépare une liste "flat" de slots (un slot = un joueur potentiel)
     const slots: string[] = [];
@@ -107,8 +105,6 @@ function renderFirstRoundColumn(t: Tournament, roundId: string, playersCount: nu
 export function renderTournamentBrackets(tClassicDatas: Tournament): HTMLElement {
     // Implémentation du rendu des brackets du tournoi
     const brackets = el("div", "brackets");
-
-    console.log("Rendering tournament brackets for:", tClassicDatas);
 
     brackets.append(renderBracket(tClassicDatas));
 

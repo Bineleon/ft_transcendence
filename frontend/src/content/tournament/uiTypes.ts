@@ -53,7 +53,7 @@ export interface Tournament {
     name: string;
     tMode: tournamentMode;
     status: tStatus;
-    creatorId: string | null;
+    creatorName: string | null;
     maxParticipants: number;
     kingMaxTime?: number;
     kingMaxRounds?: number;

@@ -13,7 +13,6 @@ export interface ApiMatchUser {
   id: string;
   username: string;
   avatarUrl: string | null;
-  playerRef: string | null;
 }
 
 export interface ApiMatch {
@@ -23,15 +22,15 @@ export interface ApiMatch {
   round: number | null;
   gameIndex: number | null;
 
-  p1UserId: string | null;
+  p1UserName: string | null;
   p1Ref: string | null;
   p1Score: number | null;
 
-  p2UserId: string | null;
+  p2UserName: string | null;
   p2Ref: string | null;
   p2Score: number | null;
 
-  winnerUserId: string | null;
+  winnerUserName: string | null;
   winnerRef: string | null;
 
   status: MatchStatus;

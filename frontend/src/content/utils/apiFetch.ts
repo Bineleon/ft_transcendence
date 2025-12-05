@@ -26,8 +26,10 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
     return res;
   }
 
-  if (window.location.href = "/#/playpong")
-    return;
+  // si sur la page de jeu ou de tournoi → on ne fait rien
+  if (window.location.hash.startsWith("#/playpong/") || window.location.hash.startsWith("#/tournament/")) {
+    return res;
+  }
 
   // Tentative de refresh
   try {

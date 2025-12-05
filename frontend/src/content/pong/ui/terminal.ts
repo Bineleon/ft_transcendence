@@ -128,8 +128,6 @@ export function createPongStatsPanel(state: GameState): HTMLElement {
   vs.textContent = "VS";
   playersBox.append(vs);
   const p2Title = el("div", "font-bold text-right terminal-title");
-  console.log(state);
-  console.log("Players info :", state.p1, state.p2);
   p2Title.textContent = state.p2.userName || "P2";
   PlayerHeader.append(p1Title, vs, p2Title);
 
