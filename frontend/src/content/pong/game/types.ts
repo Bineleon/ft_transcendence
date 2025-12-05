@@ -9,7 +9,6 @@ export interface GameViewHooks {
 export interface PlayerInfo {
     userName: string;
     avatarUrl: string;
-    stats: PlayerStats;
 }
 
 export interface KeyFlag { code: string; down: boolean; }
@@ -26,20 +25,57 @@ export interface Controls {
 }
 
 export interface MatchStats {
-    p1Stats: PlayerStats;
-    p2Stats: PlayerStats;
+    totalPoints: number;        // 3 | 4 | 5
+    winnerName: string;
+    loserName: string;
+
+    totalRallies: number;       // Nombre total d'echanges sur le match entier
+    maxBounces: number;         // Nombre max d'echanges en une partie      
+    avgRallyBounces: number;    // Moyenne des echanges de tout les matchs par partie
+
+    startedAt: string;     // ISO
+    finishedAt: string;    // ISO
+    durationMs: number;         // Temps total du match
     
-    lastScorer?: PlayerId;
-    bounces: number;
+    p1: PlayerMatchStats;
+    p2: PlayerMatchStats;
 }
 
-export interface PlayerStats {
+export interface PlayerMatchStats {
+    userName: string;
+
+    score: number;                  // 0 | 1 | 2 | 3
+    maxWins: number;                // max points consécutifs
+    totalBallSpins: number;         // Nombre total d'effets de balle sur le match
+    maxBouncesInWonRally: number;   // Nombre max d'echanges en une partie
+    maxEffectsInWonRally: number;   // Nombre max d'effets en une partie
+
+    ralliesWon: number;
+    ralliesLost: number;
+}
+
+
+export interface LiveMatchStats {
+    p1Stats: LivePlayerStats;
+    p2Stats: LivePlayerStats;
+    lastScorer?: PlayerId;
+    
+    currentBounces: number;
+    totalBounces: number;
+    totalRallies: number;   // un rally = un echange, tant qu'il n'y a pas de points
+}
+
+export interface LivePlayerStats {
     name: string;
     isGuest: boolean;
     score: number;
+
     effects: number;   /// Pas besoin la db
     maxEffects: number;
     maxBounces: number;
+
+    paddleHits: number;
+    currentWins: number;        // serie de rally gagnes
 }
 
 export type  GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART" | "SCORED";
@@ -68,9 +104,11 @@ export interface GameState {
     phase: GamePhase;
     PrevPhase?: GamePhase;
     ready: { p1: boolean; p2: boolean };
-    stats: MatchStats;
+
+    stats: LiveMatchStats;
     p1: PlayerInfo; 
     p2: PlayerInfo;
+
     tournamentCode?: string;
     tournament?: Tournament;
 }
