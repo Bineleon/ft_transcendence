@@ -5,7 +5,7 @@
 import type { User } from '@prisma/client';
 
 // ============================================
-// 1. TYPES DE REQUÊTE (ce que le client envoie)
+//  TYPES DE REQUÊTE (ce que le client envoie)
 // ============================================
 
 /**
@@ -34,7 +34,7 @@ export interface SearchUsersQuery {
 }
 
 // ============================================
-// 2. TYPES DE RÉPONSE (ce que le serveur renvoie)
+//  TYPES DE RÉPONSE (ce que le serveur renvoie)
 // ============================================
 
 /**
@@ -72,7 +72,7 @@ export interface UserListItem {
 }
 
 // ============================================
-// 3. TYPES UTILITAIRES (usage interne)
+//  TYPES UTILITAIRES (usage interne)
 // ============================================
 
 /**

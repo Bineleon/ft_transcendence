@@ -41,7 +41,7 @@ export class TournamentService {
     
     // TRANSACTION : Créer tournoi + matchs ensemble
     return await prisma.$transaction(async (tx) => {
-      // 1. Créer le tournoi
+      // Créer le tournoi
       const tournament = await tx.tournament.create({
         data: {
           code: data.code,
@@ -55,13 +55,13 @@ export class TournamentService {
         }
       });
 
-      // 2. Générer tous les matchs vides
+      // Générer tous les matchs vides
       const matches = this.generateEmptyMatches(
         tournament.id,
         data.maxParticipants
       );
 
-      // 3. Créer tous les matchs
+      // Créer tous les matchs
       if (matches.length > 0) {
         await tx.match.createMany({ data: matches });
       }
@@ -378,7 +378,7 @@ export class TournamentService {
       throw new Error('User not found');
     }
 
-    // 3) Vérifier si déjà inscrit (en tant que p1 ou p2 dans un match du tournoi)
+    // Vérifier si déjà inscrit (en tant que p1 ou p2 dans un match du tournoi)
     const already = await prisma.match.findFirst({
       where: {
         tournamentId: tournament.id,
@@ -394,13 +394,13 @@ export class TournamentService {
       throw new Error('User already registered to this tournament');
     }
 
-    // 4) Vérifier si le tournoi est plein
+    // Vérifier si le tournoi est plein
     const isFull = await this.isFull(code);
     if (isFull) {
       throw new Error('Tournament is full');
     }
 
-    // 5) Créer une "inscription" sous forme de match spécial DB_ONLY
+    // Créer une "inscription" sous forme de match spécial DB_ONLY
     //    - pas de round / gameIndex / scores
     //    - juste un lien tournamentId + p1UserId
     const registrationMatch = await prisma.match.create({

@@ -18,7 +18,7 @@ export interface UpdateMatchDTO {
   txHash?: string | null;
 }
 
-// ⬇️ Utiliser le type Prisma + les relations
+// Utiliser le type Prisma + les relations
 export type MatchResponse = Match & {
   p1?: Pick<User, 'id' | 'username' | 'avatarUrl' | 'playerRef'> | null;
   p2?: Pick<User, 'id' | 'username' | 'avatarUrl' | 'playerRef'> | null;

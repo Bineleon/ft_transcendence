@@ -16,19 +16,19 @@ export function setupErrorHandler(app: FastifyInstance): void {
       route: `${request.method} ${request.url}`
     });
 
-    // 🔵 Erreur custom (ValidationError, AuthError, etc.)
+    // Erreur custom (ValidationError, AuthError, etc.)
     if (error instanceof AppError) {
       const formatted = formatAppError(error);
       return reply.status(error.statusCode).send(formatted);
     }
 
-    // 🔵 Erreur Prisma (base de données)
+    // Erreur Prisma (base de données)
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       const formatted = formatPrismaError(error);
       return reply.status(formatted.error.statusCode).send(formatted);
     }
 
-    // 🔵 Erreur JWT
+    // Erreur JWT
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return reply.status(401).send({
         error: {
@@ -39,12 +39,12 @@ export function setupErrorHandler(app: FastifyInstance): void {
       });
     }
 
-    // 🔵 Erreur générique (fallback)
+    // Erreur générique (fallback)
     const formatted = formatGenericError(error);
     return reply.status(500).send(formatted);
   });
 
-  // 🔵 Route 404 (Not Found)
+  // Route 404 (Not Found)
   app.setNotFoundHandler((request, reply) => {
     reply.status(404).send({
       error: {

@@ -363,7 +363,7 @@ export class MatchService {
 
     // Utiliser une transaction pour garantir l'atomicité
     return await prisma.$transaction(async (tx) => {
-      // 1. Mettre à jour le match
+      // Mettre à jour le match
       const updatedMatch = await tx.match.update({
         where: { id },
         data: {
@@ -399,7 +399,7 @@ export class MatchService {
         }
       });
 
-      // 2. Si c'est un match de tournoi, avancer le gagnant
+      // Si c'est un match de tournoi, avancer le gagnant
       if (match.tournamentId && match.round !== null && match.gameIndex !== null) {
         await this.advanceWinner(
           tx, 

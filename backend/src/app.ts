@@ -39,7 +39,7 @@ export function createApp() {
 
   app.register(helmet, { contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false });
 
-  // 🔐 Rate limiting global (sans DB, stockage en mémoire)
+  // Rate limiting global (sans DB, stockage en mémoire)
   app.register(rateLimit, {
     max: 100,              // 100 requêtes...
     timeWindow: '1 minute' // ...par minute / IP

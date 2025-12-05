@@ -5,7 +5,7 @@ import type { FriendsService } from './friends.service.js';
 
 export function friendsController(app: FastifyInstance, friendsService: FriendsService) {
   // ---------------------------------------------
-  // 1️⃣ Envoyer une demande d'ami
+  //  Envoyer une demande d'ami
   // ---------------------------------------------
   app.post<{ Body: { username: string } }>(
     '/api/friends/request',
@@ -19,7 +19,7 @@ export function friendsController(app: FastifyInstance, friendsService: FriendsS
   );
 
   // ---------------------------------------------
-  // 2️⃣ Accepter ou refuser une demande
+  // Accepter ou refuser une demande
   // ---------------------------------------------
   app.patch<{ Params: { friendId: string }; Body: { action: 'accept' | 'reject' } }>(
     '/api/friends/:friendId',
@@ -35,7 +35,7 @@ export function friendsController(app: FastifyInstance, friendsService: FriendsS
   );
 
   // ---------------------------------------------
-  // 3️⃣ Liste d'amis
+  //  Liste d'amis
   // ---------------------------------------------
   app.get(
     '/api/friends',
@@ -48,7 +48,7 @@ export function friendsController(app: FastifyInstance, friendsService: FriendsS
   );
 
   // ---------------------------------------------
-  // 4️⃣ Supprimer un ami
+  //  Supprimer un ami
   // ---------------------------------------------
   app.delete<{ Params: { friendId: string } }>(
     '/api/friends/:friendId',
@@ -63,7 +63,7 @@ export function friendsController(app: FastifyInstance, friendsService: FriendsS
   );
 
   // ---------------------------------------------
-  // 5️⃣ Récupérer les demandes reçues
+  //  Récupérer les demandes reçues
   // ---------------------------------------------
   app.get(
     '/api/friends/requests',

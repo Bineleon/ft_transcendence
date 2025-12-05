@@ -36,7 +36,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     // typé grâce à fastify.d.ts
     request.user = decoded;
 
-    // 🔥 Mise à jour lastSeen en "fire and forget"
+    // Mise à jour lastSeen en "fire and forget"
     if (decoded.userId) {
       userService.updateLastSeen(decoded.userId).catch((err) => {
         request.log?.error({ err }, 'Failed to update lastSeen');
