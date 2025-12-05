@@ -1,26 +1,20 @@
-import { createGameViewWindow }     from "./ui/pongview";
+import { createGameViewWindow }     from "./ui/view";
 import { setupCanvas }              from "./core/canvas";
 import { GameController }           from "./controller";
+import type { Tournament }               from "../tournament/uiTypes";
 
-
-
-export function PlayPong(): HTMLElement {
+export function PlayPong(t?: Tournament): HTMLElement {
     // Création de la fenêtre de jeu
     const view = createGameViewWindow();
-
     // Configuration du canvas Pong
     const context = setupCanvas(view.canvas);
 
     // Configuration de l'overlay
-    const controller = new GameController({ 
-        root: view.main,
-        context: context,
-        overlay: view.overlay,
-    });
+    const controller = new GameController({ context, view, t});
 
     controller.boot();
 
-    return view.main;
+    return view.root;
 }
 
 /*** MEMO **

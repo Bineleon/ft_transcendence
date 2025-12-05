@@ -105,30 +105,728 @@
   font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
 }
 
+/* for /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/merchande_print_serif/MerchandePrintSerif-PERSONALUSEONLY.ttf */
+@font-face {
+  font-family: "MerchandePrintSerif"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/merchande_print_serif/MerchandePrintSerif-PERSONALUSEONLY.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+/* pour /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/oldprint_2/Oldprint Extravagant.ttf */
+@font-face {
+  font-family: "Oldprint_Extravagant"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/oldprint_2/Oldprint.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+} 
+
+/* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf */
+@font-face {
+  font-family: "Screenprint-Regular"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/Screenprint-Regular.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+/*/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/hello_gorgeous_print/HelloGorgeous-Print.ttf */
+@font-face {
+  font-family: "HelloGorgeous-Print"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/hello_gorgeous_print/HelloGorgeous-Print.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+@font-face {
+  font-family: "HelloGorgeous-Script";
+  src:
+    url("/fonts/hello_gorgeous_script/HelloGorgeous-Script.ttf")
+    format("truetype"); 
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/houston_sport/Houston Sport Free.ttf */
+@font-face {
+  font-family: "Houston_Sport"; /* Le nom que TU utiliseras dans tes styles */
+  src:
+    url("/fonts/houston_sport/Houston Sport Free.ttf")
+    format("truetype");
+  font-weight: 400;        /* poids concerné (normal). Fais un autre bloc pour 700 si besoin */
+  font-style: normal;      /* normal/italic. Variable font : voir plus bas */
+  font-display: swap;      /* évite les flashs de texte invisible : montre la fallback, puis remplace par ta fonte */
+}
+
+/* NexaRust — exemples de déclarations pour différentes variantes */
+@font-face {
+  font-family: "NexaRust Sans";
+  src: url("/fonts/nexa_rust_slab/NexaRustSans-Trial-Black2.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NexaRust Sans";
+  src: url("/fonts/nexa_rust_slab/NexaRustSans-Trial-Shadow.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  /* shadow versions are visually different — tu peux choisir de leur donner une famille propre si tu veux */
+}
+
+/* Slab (weight Black, etc.) */
+@font-face {
+  font-family: "NexaRust Slab";
+  src: url("/fonts/nexa_rust_slab/NexaRustSlab-Trial-Black3.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Condensed / Extended — utilise font-stretch */
+@font-face {
+  font-family: "NexaRust Slab";
+  src: url("/fonts/nexa_rust_slab/NexaRustHandmade-Trial-Condensed.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-stretch: condensed; /* ou percentage ex: 80% */
+  font-display: swap;
+}
+@font-face {
+  font-family: "NexaRust Slab";
+  src: url("/fonts/nexa_rust_slab/NexaRustHandmade-Trial-Extended.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-stretch: expanded;
+  font-display: swap;
+}
+
+/* Script / Decorative : famille séparée souvent plus claire */
+@font-face {
+  font-family: "NexaRust Script";
+  src: url("/fonts/nexa_rust_slab/NexaRustScriptR-Trial-4.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+ /* /home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Origin Athletic TTF.ttf
+/home/chatou/Documents/42/ft_transcendence/frontend/public/fonts/Screenprint-Regular.ttf */
+@font-face {
+  font-family: "Origin Athletic";
+  src: url("/fonts/Origin Athletic TTF.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 @theme {
+/**************** FONTS ****************/
   /* IM Fell (style journal, serif) */
   --font-im-double: "IM_Double_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-im-great:  "IM_Great_Primer_SmallCaps", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-
   /* Blackletter (ancien journal, gothique → serif fallback) */
   --font-f25-blackletter: "F25Blackletter", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-
   /* JMH Typewriter Sans (sans-serif) */
   --font-jmh: "JMH_Type_Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-
   /* Typewriter “machine à écrire” (souvent monospaces) */
   --font-modern-type: "Modern_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-ocean-type:  "OceanSide_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-royalvogue:  "RoyalVogue_Type", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
+  --font-mono:  Menlo, Consolas, "Courier New", monospace;
 
-@theme {
+  --font-merchande-serif: "MerchandePrintSerif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-oldprint-extravagant: "Oldprint_Extravagant", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-screenprint: "Screenprint-Regular", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --font-hello-gorgeous-print: "HelloGorgeous-Print", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-hello-gorgeous-script: "HelloGorgeous-Script", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --font-houston-sport: "Houston_Sport", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+
+  --font-nexa-rust-sans: "NexaRust Sans", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  --font-nexa-rust-slab: "NexaRust Slab", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-nexa-rust-script: "NexaRust Script", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --font-origin-athletic: "Origin Athletic", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+
+  /**************** BREAKPOINTS ****************/
   /* Remets les valeurs qui te conviennent (en rem = tri fiable) */
   --breakpoint-xs: 30rem;   /* 480px */
   --breakpoint-sm: 36rem;   /* 576px */
   --breakpoint-md: 48rem;   /* 768px */
   --breakpoint-lg: 64rem;   /* 1024px */
   --breakpoint-xl: 100rem;   /* 1280px */
-  --breakpoint-xxl: 140rem; /* 1760px */
+  --breakpoint-xxl: 140rem;  /* 1920px */
+
+/**************** TEXT SIZES ****************/
+  /* Tailles de texte personnalisées */
+  --text-hed-md: 2.488rem;   /* ~39.8px */
+  --text-hed-lg: 2.074rem;   /* ~33.2px */
+  --text-hed-xl: 1.728rem;   /* ~27.6px */
+  --text-hed-xxl: 2.6rem;    /* ~23.0px */
+
+  /* === articles === */
+  --text-article-xs: clamp(0.6rem, 1vw + 0.4rem, 0.7rem);
+  --text-article-sm: clamp(0.7rem, 1vw + 0.5rem, 0.8rem);
+  --text-article-md: clamp(0.8rem, 1vw + 0.6rem, 0.9rem);
+  --text-article-lg: clamp(0.9rem, 1vw + 0.7rem, 1rem);
+  --text-article-xl: clamp(1rem, 1.2vw + 0.7rem, 1.15rem);
+  --text-article-xxl: clamp(1.15rem, 1.5vw + 0.8rem, 1.3rem);
+  --text-article-3xl: clamp(1.3rem, 1.8vw + 0.9rem, 1.5rem);
+  --text-article-4xl: clamp(1.5rem, 2.2vw + 1rem, 1.8rem);
+
+  --text-article-xs--line-height: 1.1;
+  --text-article-sm--line-height: 1.2;
+  --text-article-md--line-height: 1.3;
+  --text-article-lg--line-height: 1.4;
+  --text-article-xl--line-height: 1.5;
+  --text-article-xxl--line-height: 1.6;
+  --text-article-3xl--line-height: 1.8;
+  --text-article-4xl--line-height: 2;
+
+  /* === terminal === */
+  --text-terminal-s1: clamp(0.2rem, 1vw + 0.3rem, 0.3rem);
+  --text-terminal-s2: clamp(0.4rem, 1vw + 0.5rem, 0.5rem);
+  --text-terminal-s3: clamp(0.7rem, 1vw + 0.5rem, 0.7rem);
+  --text-terminal-s4: clamp(0.8rem, 1vw + 0.6rem, 0.8rem);
+  --text-terminal-s5: clamp(0.9rem, 1vw + 0.7rem, 1rem);
+  --text-terminal-s6: clamp(1rem, 1.2vw + 0.7rem, 1.15rem);
+  --text-terminal-s7: clamp(1.15rem, 1.5vw + 0.8rem, 1.3rem);
+  --text-terminal-s8: clamp(1.3rem, 1.8vw + 0.9rem, 1.5rem);
 }
+
+@layer base {
+  input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: black !important;
+  }
+}
+
+@layer utilities {
+  .no-scroll { overflow: hidden;}     /* Empêche le scroll de la page */
+  .hide-cursor { cursor: none; }        /* Cache le curseur */
+}
+
+@layer components {
+/**************** TEXT STYLES ****************/
+  .article-base {
+    @apply font-modern-type text-justify leading-relaxed
+           text-article-md text-article-md--line-height
+           lg:text-article-lg lg:text-article-lg--line-height
+           xl:text-article-xl xl:text-article-xl--line-height
+           xxl:text-article-xxl xxl:text-article-xxl--line-height;
+  }
+  .article-sm {
+    @apply font-modern-type text-justify leading-relaxed
+           text-article-sm text-article-sm--line-height
+           lg:text-article-md lg:text-article-md--line-height
+           xl:text-article-lg xl:text-article-lg--line-height
+           xxl:text-article-xl xxl:text-article-xl--line-height;
+  }
+  .article-xs {
+    @apply font-modern-type text-justify leading-relaxed
+           text-article-xs text-article-xs--line-height 
+           lg:text-article-sm lg:text-article-sm--line-height
+           xl:text-article-md xl:text-article-md--line-height
+           xxl:text-article-lg xxl:text-article-lg--line-height;
+  }
+  .article2-base {
+    @apply font-ocean-type text-justify leading-relaxed
+           text-article-md text-article-md--line-height
+           lg:text-article-lg lg:text-article-lg--line-height
+           xl:text-article-xl xl:text-article-xl--line-height
+           xxl:text-article-xxl xxl:text-article-xxl--line-height;
+  }
+  .article-hed {
+    @apply font-nexa-rust-slab uppercase text-left
+           text-hed-md 
+           lg:text-hed-lg 
+           xl:text-hed-xl 
+           xxl:text-hed-xxl 
+           mb-4 tracking-widest
+           flex justify-start
+           font-bold whitespace-pre-line;
+           text-align: justify;
+           text-align-last: justify;
+           hyphens: auto;
+  }
+  .title-hed {
+    @apply font-im-great uppercase text-center 
+           text-hed-md 
+           lg:text-hed-lg 
+           xl:text-hed-xl 
+           xxl:text-hed-xxl 
+           mb-1 tracking-widest
+           flex justify-center;
+  }
+  .title-profile {
+    @apply px-4 pt-4 font-jmh w-full text-5xl tracking-widest;
+  }
+  .subtitle-hed {
+    @apply font-im-great text-center 
+           text-xl
+           lg:text-lg
+           xl:text-xl
+           xxl:text-2xl 
+           mb-8;
+  }
+  .subtitle-cat {
+    @apply font-origin-athletic text-center leading-relaxed tracking-widest
+           text-sm
+           lg:text-sm
+           xl:text-sm
+           xxl:text-2xl 
+           mb-2;
+  }
+  .form-title {
+    @apply font-im-great text-xl uppercase my-2;
+  }
+  .terminal-text {
+    @apply font-mono leading-relaxed
+          text-terminal-s6
+          lg:text-terminal-s3
+          xl:text-terminal-s4
+          xxl:text-terminal-s6
+          text-white;
+    text-align: justify;
+  }
+  .terminal-text-score {
+    @apply font-mono
+          text-[60px] -mt-4
+          lg:text-[18px] -mt-6
+          xl:text-[40px]
+          xxl:text-[60px]
+          text-white;
+    text-align: justify;
+  }
+  .terminal-title {
+    @apply font-mono text-white 
+          text-terminal-s8
+          lg:text-terminal-s5
+          xl:text-terminal-s6
+          xxl:text-terminal-s8
+          mb-4;
+    text-align: center;
+  }
+
+  .stat-line {
+    @apply flex justify-between text-white font-mono leading-[1.25];
+  }
+  .stat-label {
+    @apply opacity-80; /* optionnel */
+  }
+  .stat-value {
+    @apply font-bold text-right;
+  }
+
+  .terminal-header {
+    @apply font-mono text-white leading-[1]
+          text-terminal-s3
+          lg:text-terminal-s1
+          xl:text-terminal-s2
+          xxl:text-terminal-s4;
+    text-align: center;
+  }
+
+
+/* --- Special text styles --- */
+  .funfact {
+    @apply italic text-center 
+           bg-stone-100 
+           my-6 mx-8 p-4 rounded-lg
+           mix-blend-multiply;
+  }
+  .dropcap {
+    @apply first-line:tracking-widest 
+           first-letter:text-5xl first-letter:font-bold 
+           first-letter:text-stone-900 
+           first-letter:me-2 first-letter:float-left
+           first-letter:translate-y-[5px];
+  }
+  .article-link {
+    @apply text-black underline decoration-4 hover:bg-black hover:text-white;
+  }
+
+  .big-link {
+    @apply text-xl underline decoration-4 hover:text-red-800
+    font-modern-type cursor-pointer text-right mr-4 mb-2;
+  }
+
+  .in-dark-box {
+    @apply  text-white text-4xl 
+           font-im-double uppercase text-center;
+  }
+
+  .big-arrow {
+    @apply absolute bottom-1 left-1/2 -translate-x-1/2 
+           text-white font-mono
+           mb-4
+           text-[58px] sm:text-[72px] md:text-[90px]
+           leading-none select-none;
+  }
+
+/**************** WRAPPER STYLES ****************/
+  /* wrap basique */
+  .wrap-right { @apply float-right ml-4 mb-2; }
+  .wrap-left  { @apply float-left m-4 mb-2; }
+  .wrap-clear { @apply clear-both p-4; }
+
+  /* wrap “magazine” (forme + halo) */
+  .wrap-circle { @apply mr-8 [shape-outside:circle(50%)] [clip-path:circle(50%)] [shape-margin:10px]; }
+  .wrap-tight  { @apply [shape-outside:inset(0)] [shape-margin:8px]; }
+
+/**************** IMG STYLES ****************/
+  .img-newspaper {
+    @apply mix-blend-multiply mx-auto grayscale contrast-200 hover:contrast-170
+           transition-all duration-300 ease-in-out
+           [mask-image:url('/imgs/trames/trame5.png')] [mask-repeat:no-repeat]
+           [mask-size:100%_100%] [mask-position:center] [mask-origin:content-box]
+           [-webkit-mask-image:url('/imgs/trames/trame5.png')] [-webkit-mask-size:100%_100%]
+           [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center];
+  }
+
+/**************** BUTTON STYLES ****************/
+  .btn-input {
+    @apply border-t-1 border-l-1 border-r-2 border-b-2
+           font-modern-type border-black p-2 
+           focus:border-r-4 focus:border-b-4 focus:border-t-0 focus:border-l-0
+           focus:outline-none focus:border-stone-700
+           transition-all
+           text-base lg:text-lg xl:text-xl xxl:text-2xl;
+  }
+  .btn-click {
+    @apply bg-black text-white p-2 font-modern-type
+           hover:bg-stone-700 cursor-pointer
+           transition-all duration-300 ease-in-out;
+  }
+  .btn-click-dark {
+    @apply bg-white text-black p-2 font-modern-type
+           hover:bg-stone-300 cursor-pointer
+           transition-all duration-300 ease-in-out;
+  }
+  .btn-tournament {
+    @apply text-stone-800 font-jmh text-5xl uppercase
+           cursor-pointer
+           transition-all duration-300 ease-in-out
+           px-8 py-2
+           mix-blend-multiply;
+    position: relative;
+    z-index: 1;
+  }
+  .btn-tournament::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    z-index: -1;
+    transition: 
+      border-width 150ms ease-in-out,
+      opacity 150ms ease-in-out;
+    opacity: 0;
+  }
+  .btn-tournament:hover::before {
+    opacity: 1;
+    border-image: url("/imgs/borders/circle.svg");
+    border-image-slice: 50%;
+    border-image-repeat: stretch;
+    border-image-width: 100%;
+    border-image-outset: 0;
+  }
+  .btn-participants {
+    @apply font-jmh text-3xl
+           m-1 px-6 py-1
+           cursor-pointer
+           mix-blend-multiply;
+    position: relative;
+    border: 6px solid transparent; /* base neutre */
+  }
+
+  /* Cercle uniquement au survol */
+  .btn-participants:hover {
+    border-image: url("/imgs/borders/circle.svg");
+    border-image-slice: 50%;
+    border-image-repeat: stretch;
+    border-image-width: 100%;
+    border-image-outset: 0;
+  }
+  .input-tournament {
+    @apply border-t-0 border-l-0 border-r-0 border-b-2
+           font-jmh border-black p-2 
+           focus:border-r-0 focus:border-b-4 focus:border-t-0 focus:border-l-0
+           focus:outline-none focus:border-stone-700
+           transition-all
+           text-base lg:text-lg xl:text-xl xxl:text-2xl;
+  }
+
+
+/**************** BOX STYLES ****************/
+  .box-dark {
+    @apply mix-blend-multiply
+           bg-[url('/imgs/trame2.png')] bg-center bg-cover
+           p-7;
+  }
+  .box-subscription {
+    @apply mix-blend-multiply relative
+           bg-gradient-to-b from-white to-stone-200 bg-center bg-cover 
+           items-center text-center
+           p-6;
+  }
+/*---                   ---*/
+  .box-selected {
+    position: relative;
+    z-index: 1;
+  }
+  .box-selected::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border-image: url("/imgs/borders/circle.svg");
+    border-image-slice: 50%;
+    border-image-repeat: stretch;
+    border-image-width: 100%;
+    border-image-outset: 0;
+    pointer-events: none;     /* Permet de cliquer à travers la bordure */
+    z-index: 0;
+    opacity: 1;
+  }
+  .box-unselected {
+    position: relative;
+    z-index: 1;
+  }
+  .box-unselected::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    border-image: url("/imgs/borders/cross2.svg");
+    border-image-slice: 50%;
+    border-image-repeat: stretch;
+    border-image-width: 100%;
+    border-image-outset: 0;
+    pointer-events: none;     /* Permet de cliquer à travers la bordure */
+    z-index: -1;
+    opacity: 1;
+  }
+
+  /* bg-[url('/imgs/trame2.png')] bg-cover bg-center text-white font-im-double uppercase text-center text-4xl */
+
+/****************** BORDER STYLES ******************/
+  .border-subscription {
+    position: relative;
+    z-index: 0; 
+  }
+  .border-subscription::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    border: 150px solid transparent;
+    border-image: url("/imgs/borders/b-scissors.svg") ;
+    border-image-slice: 200;
+    border-image-repeat: round;
+    pointer-events: none;     /* Permet de cliquer à travers la bordure */
+    z-index: 0;
+  }
+
+  .border-subscription-btn {
+    position: relative;
+    isolation: isolate;
+    z-index: 0;
+  }
+  .border-subscription-btn:hover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: scale(1.1);
+    border-image: url("/imgs/borders/circle.svg");
+    border-image-slice: 50%;
+    border-image-repeat: stretch;
+    border-image-width: 100%;
+    border-image-outset: 0;
+    pointer-events: none;     /* Permet de cliquer à travers la bordure */
+    z-index: 0;
+  }
+
+  .border-movie {
+    position: relative;
+    z-index: 0; 
+  }
+  .border-movie::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border: 100px solid transparent;
+    border-image: url("/imgs/borders/b-film2.svg") 400 round stretch;
+    pointer-events: none;     /* Permet de cliquer à travers la bordure */
+    z-index: 0;
+  }
+
+  .frame-photo {
+    @apply relative inline-block overflow-hidden;  
+  }
+  .frame-photo::before {
+    content: "";
+    @apply absolute inset-0 pointer-events-none;
+    background-image: url('/imgs/borders/frame.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    mix-blend-mode: normal;
+    z-index: 10;
+  }
+  .frame-photo-img {
+    @apply w-full h-full;
+  }
+
+  /**************** KING — CLOCK STYLES ****************/
+
+  /* Style de base d'une horloge */
+  .king-clock {
+    @apply cursor-pointer p-1
+           transition-all duration-200 ease-in-out
+           mix-blend-multiply;
+    position: relative;
+  }
+
+  /* Horloge sélectionnée */
+  .king-clock-selected {
+    @apply opacity-100 grayscale-0;
+  }
+  .king-clock-caption {
+    @apply mt-1 text-lg font-jmh tracking-wide opacity-0 
+          transition-opacity duration-150 ease-in-out;
+  }
+
+  .king-clock:hover .king-clock-caption {
+    @apply opacity-100;
+  }
+
+  .king-clock-selected .king-clock-caption {
+    @apply opacity-100;
+  }
+
+  /* Horloges non-sélectionnées */
+  .king-clock-unselected {
+    @apply opacity-40;
+  }
+  .king-clock-unselected:hover {
+    @apply opacity-60;
+  }
+
+/*************************************************
+                ALERT STYLES
+**************************************************/
+  .alert-overlay {
+    position: fixed !important;
+    inset: 0!important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    z-index: 999999 !important;
+
+    background: rgba(0,0,0,0.6) !important;
+
+    pointer-events: all !important;
+  }
+
+  .alert-box {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+
+    @apply bg-white
+          p-6 rounded-xl shadow-2xl
+          flex flex-col gap-3 items-stretch;
+    max-width: 420px;
+    width: 90%;
+  }
+  .alert-title {
+    @apply font-im-great text-2xl mb-4;
+  }
+  .alert-message {
+    @apply font-modern-type text-base mb-6;
+  }
+  .alert-button {
+    @apply bg-black text-white px-4 py-2 rounded
+           hover:bg-stone-700 
+           transition-all duration-300 ease-in-out
+           font-modern-type cursor-pointer;
+  }
+
+/*---------------------------------------------------------
+              TOURNAMENT BRACKETS STYLES
+----------------------------------------------------------*/
+  .brackets {
+    @apply items-center;
+    display: flex;
+    justify-content: space-evenly;
+    margin-bottom: 100px;
+    overflow: visible;
+    width: 100%;
+  }
+
+  .sectionFor8 {
+    width: 25%;
+  }
+
+  .round-1-For8 {
+    grid-row: span 4;
+  }
+}
+
+/*---------------------------------------------------------
+ 🧠 MÉMO — FONCTION CSS clamp()
+
+ clamp(MIN, PREF, MAX)
+
+ 👉 Sert à créer une valeur *fluide* entre un minimum et un maximum.
+    Très pratique pour rendre les tailles de texte, marges ou espacements
+    réactifs sans breakpoints.
+
+ ▸ MIN  → la plus petite valeur possible (quand l’écran est étroit)
+ ▸ PREF → la valeur "idéale", souvent dépendante du viewport (ex: 1vw + 0.6rem)
+ ▸ MAX  → la plus grande valeur possible (quand l’écran est large)
+
+ ⚙️  Exemple concret :
+      clamp(0.8rem, 1vw + 0.6rem, 0.9rem);
+
+    • 0.8rem = plancher : le texte ne descend jamais en dessous.
+    • 1vw + 0.6rem = formule fluide :
+        - 1vw = 1% de la largeur de la fenêtre
+        - donc la taille augmente légèrement avec la largeur du viewport
+        - le "+ 0.6rem" garde une base lisible sur mobile
+    • 0.9rem = plafond : au-delà, la taille reste fixe.
+
+ 📈  Résultat :
+    - le texte grandit doucement entre 0.8rem et 0.9rem,
+      sans saut ni breakpoint.
+    - très utile pour une mise en page plus organique et lisible.
+
+ 🧩  Bon usage :
+    - Utiliser clamp() pour les tailles de texte, marges, paddings…
+    - Garder les breakpoints (`sm:`, `md:`...) pour les changements
+      structurels (grilles, colonnes, affichage conditionnel, etc.)
+
+ 💬  Astuce :
+    clamp() fonctionne parfaitement avec tes breakpoints personnalisés :
+    entre deux paliers, la valeur reste fluide !
+----------------------------------------------------------*/

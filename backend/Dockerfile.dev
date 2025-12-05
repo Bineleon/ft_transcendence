@@ -6,11 +6,11 @@ WORKDIR /app
 
 COPY . .
 
-RUN mkdir -p database && chown -R node:node database
-
+RUN mkdir -p database && chown -R node:node /app/database
+RUN mkdir -p /app/avatars && chown node:node /app/avatars
 
 # Deps pour node-gyp + SQLite (musl)
-RUN apk add --no-cache python3 make g++ pkgconfig sqlite sqlite-dev
+RUN apk add --no-cache python3 py3-pip make g++ pkgconfig sqlite sqlite-dev
 
 # Étape 4 : installer les dépendances
 RUN npm ci
@@ -24,4 +24,4 @@ EXPOSE 3000
 
 # Étape 7 : commande par défaut pour lancer ton serveur
 # CMD ["npm", "run", "dev"]
-CMD ["sh", "-c", "npx prisma db push && npm run dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]

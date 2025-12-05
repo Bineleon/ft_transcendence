@@ -1,200 +1,318 @@
-import type { GameViewWindow}       from "./ui/pongview";
-import { gameLoop }                 from "./core/loop";
-import { createState }              from "./game/state";
-import { update }                   from "./game/update";
-import { render }                   from "./game/render";
-import { attachGameInputs }         from "./game/input";
-import type { GameState, GamePhase } from "./game/types";
+import type { GameViewWindow}           from "./ui/view";
+import { GameLoop }                     from "./core/loop";
+import { initState, initBoard, launchBall, initPlayersInfo }         from "./game/state";
+import { update, type CardinalDirection }                       from "./game/update";
+import { render }                       from "./game/render";
+import type { GamePhase, GameState, Controls, PlayerInfo, PlayerId }    from "./game/types";
+import { domOverlayManager }            from "./ui/overlay";
+import { createGameGuards }             from "./ui/guards";
+import { setupCanvas }                  from "./core/canvas";
+import type { GameGuards }              from "./ui/guards";
+import { createPongStatsPanel }         from "./ui/terminal";
+import { createPlayersBox, resetPlayersCache }             from "./ui/players";
+import type { Tournament }               from "../tournament/uiTypes";
 
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
 export class GameController {
-    private root: HTMLElement;
-    private context: CanvasRenderingContext2D;
-    private overlay: GameViewWindow["overlay"];
-    private state: GameState;
-    private loopCtrl: { stop: () => void } | null = null;
-    private detachInputs: (() => void) | null = null;
-    private countdownTimer: number | null = null;
+///////// ATTRIBUTS /////////
+    public view: GameViewWindow;
+    public context: CanvasRenderingContext2D;
+    public state: GameState;
+    public domOverlay: domOverlayManager;
+    private loopCtrl: ReturnType<typeof GameLoop> | null = null;
+    private gameGuards: GameGuards;
+    public terminal: HTMLElement;
+    public pongControls: Controls = {
+        p1Up:   { code: "KeyW",         down: false },
+        p1Down: { code: "KeyS",         down: false },
+        p2Up:   { code: "ArrowUp",      down: false },
+        p2Down: { code: "ArrowDown",    down: false },
+        pause:  { code: "Space",        down: false },
+        escape: { code: "Escape",       down: false }
+    };
+    private tournament: Tournament | undefined;
 
-    constructor(opts: { context: CanvasRenderingContext2D; overlay: GameViewWindow["overlay"]; root: HTMLElement }) {
+///////// CONSTRUCTEUR /////////
+    constructor(opts: { context: CanvasRenderingContext2D; view: GameViewWindow, t?: Tournament }) {
         this.context = opts.context;
-        this.overlay = opts.overlay;
-        this.root = opts.root;
-        this.state = createState();
+        this.view = opts.view;
+        this.terminal = this.view.terminal;
+        this.state = initState();
+        this.domOverlay = new domOverlayManager(this);
+        this.gameGuards = createGameGuards(this.view.canvas);
+        this.tournament = opts.t || undefined;
+
+        document.addEventListener("playersUpdated", this.onPlayersUpdated);
     }
 
-    private setPhase(phase: GamePhase) {
-        // Timer Reset si on quitte le COUNTDOWN
-        if (phase !== "COUNTDOWN" && this.countdownTimer !== null) {
-            window.clearTimeout(this.countdownTimer);
-            this.countdownTimer = null;
+///////// METHODES /////////
+// -----  Gestion du Clavier  ----- //
+    private onKeyDown = (e: KeyboardEvent) => {
+        // if (e.repeat) return;
+        const { code } = e;
+        const c = this.pongControls;
+
+        if (code === c.p1Up.code)   c.p1Up.down = true;
+        if (code === c.p1Down.code) c.p1Down.down = true;
+        if (code === c.p2Up.code)   c.p2Up.down = true;
+        if (code === c.p2Down.code) c.p2Down.down = true;
+        if (code === c.pause.code)  c.pause.down = true;
+        if (code === c.escape.code) c.escape.down = true;
+
+        // --- Logiques simples ---
+        switch (this.state.phase) {
+        case "WAITING":
+            if (code === c.p1Up.code) {
+                this.state.ready.p1 = true;
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("WAITING", this.state));
+            }
+            if (code === c.p2Up.code) {
+                this.state.ready.p2 = true;
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("WAITING", this.state));
+            }
+            if (this.state.ready.p1 && this.state.ready.p2) this.setPhase("COUNTDOWN");
+            break;
+
+        case "PLAYING":
+            if (code === c.pause.code) this.setPhase("PAUSED");
+            break;
+
+        case "COUNTDOWN":
+            if (code === c.pause.code) this.setPhase("PAUSED");
+            break;
+
+        case "SCORED":
+            if (code === c.pause.code) this.setPhase("PAUSED");
+            break;
+
+        case "PAUSED":
+            if (code === c.pause.code) this.setPhase("COUNTDOWN");
+            break;
         }
-        
+    };
+
+    private onKeyUp = (e: KeyboardEvent) => {
+        const { code } = e;
+        const c = this.pongControls;
+        if (code === c.p1Up.code)   c.p1Up.down = false;
+        if (code === c.p1Down.code) c.p1Down.down = false;
+        if (code === c.p2Up.code)   c.p2Up.down = false;
+        if (code === c.p2Down.code) c.p2Down.down = false;
+        if (code === c.pause.code)  c.pause.down = false;
+        if (code === c.escape.code) c.escape.down = false;
+    };
+
+    private clearKeys() {
+        for (const k in this.pongControls) (this.pongControls as any)[k].down = false;
+    }
+
+    private wireControls() {
+        window.addEventListener("keydown", this.onKeyDown);
+        window.addEventListener("keyup", this.onKeyUp);
+        window.addEventListener("blur", () => this.clearKeys());
+    }
+
+    private unwireControls() {
+        window.removeEventListener("keydown", this.onKeyDown);
+        window.removeEventListener("keyup", this.onKeyUp);
+        this.clearKeys();
+    }
+
+    private refreshTerminal() {
+        this.view.terminal.replaceChildren(createPongStatsPanel(this.state));
+    }
+
+    private onPlayersUpdated = (_e: Event) => {
+        this.refreshTerminal();
+    };
+
+// -----  Gestion des Phases de Jeu  ----- //
+    public setPhase(phase: GamePhase) {
+        if (this.state.phase !== "COUNTDOWN") this.state.PrevPhase = this.state.phase;
         this.state.phase = phase;
 
+        this.terminal.replaceChildren(createPongStatsPanel(this.state));
+        this.view.playersBox.replaceChildren(createPlayersBox(this.state));
+
+        if (phase === "PLAYING" || phase === "COUNTDOWN" || phase === "SCORED") {
+            this.gameGuards.enable();
+        } else {
+            this.gameGuards.disable();
+        }        
+
+        this.domOverlay.gamingOverlayMode(this.view.canvas, phase);
+
+        if (phase === "PAUSED") {
+            if (this.domOverlay.countdownTimerId !== null) {
+                clearInterval(this.domOverlay.countdownTimerId);
+                this.domOverlay.countdownTimerId = null;
+            }
+            (document.activeElement as HTMLElement)?.blur();
+        }
+        
         switch (phase) {
             case "START":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: false,
-                    showStart: true,
-                    showPause: false,
-                });
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
+                this.unwireControls();
+
+                resetPlayersCache();
+                initBoard(this.state);
+                initPlayersInfo(this.state);
+
+                this.view.playersBox.replaceChildren(createPlayersBox(this.state));
+                launchBall(this.state, this.getNextServer(this.state), 500);
+                break;
+
+            case "RESTART":
+                initBoard(this.state);
+                this.setPhase("WAITING");
                 break;
                 
             case "WAITING":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: true,
-                    showStart: false,
-                    showPause: false,
-                    p1Ready: this.state.ready.p1,
-                    p2Ready: this.state.ready.p2,
-                });
-                this.attachInputs();
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
+                this.wireControls();
                 break;
-                
+
             case "COUNTDOWN":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: true,
-                    showStart: false,
-                    showPause: false,
-                    countdown: { secondsLeft: 3 },
-                });
-                this.attachInputs();
+                this.startCountdown();
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
+                if (this.state.PrevPhase === "PAUSED") break;
                 break;
-                
+
             case "PLAYING":
-                this.startLoop();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: true,
-                    showStart: false,
-                    showPause: true,
-                });
+                this.wireControls();
+                this.startPlaying();
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
-                
+
             case "PAUSED":
-                this.stopLoopOnly();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: false,
-                    showStart: false,
-                    showPause: true,
-                });
+                this.pausePlaying();
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
-                
+
             case "GAMEOVER":
-                this.stopLoopInputs();
-                this.overlay.applyOverlay({
-                    phase,
-                    cursorHidden: false,
-                    showStart: false,
-                    showPause: false,
-                });
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
+                this.unwireControls();
+                this.resetGame();
+                break;
+
+            case "SCORED":
+                this.pausePlaying();
+                this.scoredCountdown();
+                initBoard(this.state);
+                launchBall(this.state, this.getNextServer(this.state), 500);
+                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
                 break;
         }
-
     }
 
-    boot()        {
-        this.setPhase("START");
-        this.wireView();
+    private getNextServer(state: GameState): CardinalDirection {
+        const last = state.stats.lastScorer;
+        if (last === "p1") return "SE";
+        if (last === "p2") return "SO";
+        // pas encore de point -> serveur random
+        const r = Math.random();
+        if (r < 0.5) return "SE";
+        return "SO";
     }
 
-    private wireView() {
-        this.overlay.onPlay(() => {
-            if (this.state.phase === "PAUSED") {
-                this.resume();
-            } else {
-                this.start();
-            }
-        });
-        this.overlay.onPause(() => {
-            if (this.state.phase === "PLAYING") this.pause();
-            else if (this.state.phase === "PAUSED") this.resume();
-        });
+    public setPlayer(id: PlayerId, info: PlayerInfo | null): void {
+        if (id === "p1") {
+            this.state.p1 = info ? info : { userName: "P1", avatarUrl: "" };
+        } else {
+            this.state.p2 = info ? info : { userName: "P2", avatarUrl: "" };
+        }
+    };
+
+    public clearPlayers(): void {
+        this.state.p1 = { userName: "P1", avatarUrl: "" };
+        this.state.p2 = { userName: "P2", avatarUrl: "" };
+    }
+    
+// ----  Actions sur le Jeu  ----- //
+    private startPlaying() {
+        if (!this.loopCtrl) {
+            this.loopCtrl = GameLoop(
+                (delta) => update(this, delta),
+                (acc) => render(this.context, this.state, acc),
+                60,
+                true
+            );
+        }
+        if (!this.loopCtrl.running) {
+            this.loopCtrl.start();
+        }
     }
 
-    start()       { this.setPhase("WAITING"); }
+    private pausePlaying() {
+        if (this.loopCtrl && this.loopCtrl.running) {
+            this.loopCtrl.stop();
+        }
+    }
 
-    countdown()   {
-        const total = 3;
-        let remaining = total;
-        this.setPhase("COUNTDOWN");
-        // met à jour immédiatement l'affichage (setPhase a déjà mis 3)
-        // démarre interval
-        if (this.countdownTimer !== null) window.clearInterval(this.countdownTimer);
-        this.countdownTimer = window.setInterval(() => {
-            remaining -= 1;
-            if (remaining >= 0) {
-                this.overlay.applyOverlay({
-                    phase: "COUNTDOWN",
-                    countdown: { secondsLeft: remaining }
-                });
-            }
-            if (remaining <= 0) {
-                // clear et lancer le jeu
-                if (this.countdownTimer !== null) {
-                    window.clearInterval(this.countdownTimer);
-                    this.countdownTimer = null;
+    private scoredCountdown() {
+        let secsLeft = 2;
+
+        if (this.domOverlay.countdownTimerId !== null) {
+            window.clearInterval(this.domOverlay.countdownTimerId);
+        }
+
+        this.domOverlay.countdownLeft = secsLeft;
+        this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("SCORED", this.state));
+
+        this.domOverlay.countdownTimerId = window.setInterval(() => {
+            secsLeft -= 1;
+            if (secsLeft <= 0) {
+                if (this.domOverlay.countdownTimerId !== null) {
+                    window.clearInterval(this.domOverlay.countdownTimerId);
+                    this.domOverlay.countdownTimerId = null;
                 }
-                this.play();
+                this.setPhase("COUNTDOWN");
+                return;
             }
         }, 1000);
     }
 
-
-    play()        { this.setPhase("PLAYING"); }
-    pause()       { this.setPhase("PAUSED"); }
-    resume()      { this.countdown(); } // ou direct PLAYING si tu veux instantané
-    gameOver()    { this.setPhase("GAMEOVER"); }
+    private startCountdown() {
+        let secsLeft = 3;
 
 
-    private attachInputs() {
-    this.detachInputs = attachGameInputs(this.state, {
-        root: this.root,
-        onBothReady: () => this.countdown(),
-        onPause: () => this.pause(),
-        onResume: () => this.resume(),
-        onReadyChange: () => {
-            // redraw waiting overlay with current ready flags
-            if (this.state.phase === "WAITING") {
-                this.overlay.applyOverlay({
-                    phase: "WAITING",
-                    p1Ready: this.state.ready.p1,
-                    p2Ready: this.state.ready.p2,
-                });
-            }
+        if (this.domOverlay.countdownTimerId !== null) {
+            window.clearInterval(this.domOverlay.countdownTimerId);
         }
-    });
+
+        this.domOverlay.countdownLeft = secsLeft;
+        this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("COUNTDOWN", this.state));
+
+        this.domOverlay.countdownTimerId = window.setInterval(() => {
+            secsLeft -= 1;
+            if (secsLeft <= 0) {
+                if (this.domOverlay.countdownTimerId !== null) {
+                    window.clearInterval(this.domOverlay.countdownTimerId);
+                    this.domOverlay.countdownTimerId = null;
+                }
+                this.setPhase("PLAYING");
+                return;
+            }
+
+            this.domOverlay.countdownLeft = secsLeft;
+            this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("COUNTDOWN", this.state));
+        }, 1000);
     }
 
-    private startLoop() {
-    if (this.loopCtrl) return;
-    this.loopCtrl = gameLoop(
-        (dt)   => update(this.state, dt),
-        (acc)  => render(this.context, this.state, acc),
-        60
-    );
+    private resetGame() {
+        if (this.loopCtrl) {
+            this.loopCtrl.stop();
+            this.loopCtrl = null;
+        }
+        this.state = initState();
+        this.context = setupCanvas(this.view.canvas);
     }
 
-    private stopLoopOnly() {
-    if (this.loopCtrl) { this.loopCtrl.stop(); this.loopCtrl = null; }
-    }
-
-    private stopLoopInputs() {
-    this.stopLoopOnly();
-    if (this.detachInputs) { this.detachInputs(); this.detachInputs = null; }
-    }
-
-    getState() {
-        return this.state;
+    public boot() {
+        this.setPhase("START");
     }
 }
+
