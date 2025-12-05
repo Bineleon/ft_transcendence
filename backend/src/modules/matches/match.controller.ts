@@ -4,6 +4,7 @@ import type { CreateMatchDTO, UpdateMatchDTO } from './match.model.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { formatSuccess } from '../../shared/utils/formatters.js';
 import { formatGenericError } from '../../shared/errors/formatters.js';
+import { PlayersStats } from '../../types/game.js';
 
 export function matchController(
   app: FastifyInstance,
@@ -206,18 +207,18 @@ export function matchController(
   // ==========================================
   // GET /api/matches/:id/stats - Stats d'un match
   // ==========================================
-  app.get<{ Params: { id: string } }>(
-    '/api/matches/:id/stats',
-    async (request, reply) => {
-      try {
-        const stats = await matchService.getStats(request.params.id);
-        return formatSuccess(stats, 'Match stats retrieved successfully');
-      } catch (error) {
-        const errorResponse = formatGenericError(
-          error instanceof Error ? error : new Error('Failed to retrieve match stats')
-        );
-        return reply.status(errorResponse.error.statusCode).send(errorResponse);
-      }
-    }
-  );
+app.post<{
+  Body: PlayersStats;
+}>("/api/matches/stats", {
+  preHandler: [authenticate], // ou pas, comme tu veux
+}, async (request, reply) => {
+  const stats = request.body;
+  const match = await matchService.recordPlayersStats(stats);
+
+  return reply.send({
+    success: true,
+    data: match,
+  });
+});
+
 }
