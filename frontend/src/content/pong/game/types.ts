@@ -23,14 +23,19 @@ export interface Controls {
 }
 
 export interface PlayersStats {
-    p1Score: number;
-    p2Score: number;
+    p1Stats: PStats;
+    p2Stats: PStats;
     lastScorer?: PlayerId;
     bounces: number;
-    p1Effects: number;
-    p2Effects: number;
-    p1MaxBounces: number;
-    p2MaxBounces: number;
+}
+
+export interface PStats {
+    name: string;
+    isGuest: boolean;
+    score: number;
+    effects: number;
+    maxEffects: number;
+    maxBounces: number;
 }
 
 export type  GamePhase = "START" | "WAITING" | "PLAYING" | "COUNTDOWN" | "GAMEOVER" | "PAUSED" | "RESTART" | "SCORED";

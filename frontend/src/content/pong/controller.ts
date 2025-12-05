@@ -1,22 +1,28 @@
-import type { GameViewWindow}           from "./ui/view";
-import { GameLoop }                     from "./core/loop";
-import { initState, initBoard, launchBall, initPlayersInfo }         from "./game/state";
-import { update, type CardinalDirection }                       from "./game/update";
-import { render }                       from "./game/render";
-import type { GamePhase, GameState, Controls, PlayerInfo, PlayerId }    from "./game/types";
-import { domOverlayManager }            from "./ui/overlay";
-import { createGameGuards }             from "./ui/guards";
-import { setupCanvas }                  from "./core/canvas";
-import type { GameGuards }              from "./ui/guards";
-import { createPongStatsPanel }         from "./ui/terminal";
-import { createPlayersBox, resetPlayersCache }             from "./ui/players";
+import type { GameViewWindow }           from "./ui/view";
+import { GameLoop }                      from "./core/loop";
+import { initState, initBoard, launchBall, initPlayersInfo } from "./game/state";
+import { update, type CardinalDirection }                    from "./game/update";
+import { render }                        from "./game/render";
+import type {
+    GamePhase,
+    GameState,
+    Controls,
+    PlayerInfo,
+    PlayerId,
+    PlayersStats, // 👈 ajouté
+} from "./game/types";
+import { domOverlayManager }             from "./ui/overlay";
+import { createGameGuards }              from "./ui/guards";
+import { setupCanvas }                   from "./core/canvas";
+import type { GameGuards }               from "./ui/guards";
+import { createPongStatsPanel }          from "./ui/terminal";
+import { createPlayersBox, resetPlayersCache } from "./ui/players";
 import type { Tournament }               from "../tournament/uiTypes";
-
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
 export class GameController {
-///////// ATTRIBUTS /////////
+    ///////// ATTRIBUTS /////////
     public view: GameViewWindow;
     public context: CanvasRenderingContext2D;
     public state: GameState;
@@ -34,8 +40,8 @@ export class GameController {
     };
     private tournament: Tournament | undefined;
 
-///////// CONSTRUCTEUR /////////
-    constructor(opts: { context: CanvasRenderingContext2D; view: GameViewWindow, t?: Tournament }) {
+    ///////// CONSTRUCTEUR /////////
+    constructor(opts: { context: CanvasRenderingContext2D; view: GameViewWindow; t?: Tournament }) {
         this.context = opts.context;
         this.view = opts.view;
         this.terminal = this.view.terminal;
@@ -47,8 +53,8 @@ export class GameController {
         document.addEventListener("playersUpdated", this.onPlayersUpdated);
     }
 
-///////// METHODES /////////
-// -----  Gestion du Clavier  ----- //
+    ///////// METHODES /////////
+    // -----  Gestion du Clavier  ----- //
     private onKeyDown = (e: KeyboardEvent) => {
         // if (e.repeat) return;
         const { code } = e;
@@ -66,11 +72,15 @@ export class GameController {
         case "WAITING":
             if (code === c.p1Up.code) {
                 this.state.ready.p1 = true;
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("WAITING", this.state));
+                this.view.overlay.replaceChildren(
+                    this.domOverlay.bindHTMLElement("WAITING", this.state)
+                );
             }
             if (code === c.p2Up.code) {
                 this.state.ready.p2 = true;
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("WAITING", this.state));
+                this.view.overlay.replaceChildren(
+                    this.domOverlay.bindHTMLElement("WAITING", this.state)
+                );
             }
             if (this.state.ready.p1 && this.state.ready.p2) this.setPhase("COUNTDOWN");
             break;
@@ -105,7 +115,9 @@ export class GameController {
     };
 
     private clearKeys() {
-        for (const k in this.pongControls) (this.pongControls as any)[k].down = false;
+        for (const k in this.pongControls) {
+            (this.pongControls as any)[k].down = false;
+        }
     }
 
     private wireControls() {
@@ -128,7 +140,7 @@ export class GameController {
         this.refreshTerminal();
     };
 
-// -----  Gestion des Phases de Jeu  ----- //
+    // -----  Gestion des Phases de Jeu  ----- //
     public setPhase(phase: GamePhase) {
         if (this.state.phase !== "COUNTDOWN") this.state.PrevPhase = this.state.phase;
         this.state.phase = phase;
@@ -140,7 +152,7 @@ export class GameController {
             this.gameGuards.enable();
         } else {
             this.gameGuards.disable();
-        }        
+        }
 
         this.domOverlay.gamingOverlayMode(this.view.canvas, phase);
 
@@ -151,60 +163,78 @@ export class GameController {
             }
             (document.activeElement as HTMLElement)?.blur();
         }
-        
+
         switch (phase) {
-            case "START":
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
-                this.unwireControls();
+        case "START":
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement(phase, this.state)
+            );
+            this.unwireControls();
 
-                resetPlayersCache();
-                initBoard(this.state);
-                initPlayersInfo(this.state);
+            resetPlayersCache();
+            initBoard(this.state);
+            initPlayersInfo(this.state);
 
-                this.view.playersBox.replaceChildren(createPlayersBox(this.state));
-                launchBall(this.state, this.getNextServer(this.state), 500);
-                break;
+            this.view.playersBox.replaceChildren(createPlayersBox(this.state));
+            launchBall(this.state, this.getNextServer(this.state), 500);
+            break;
 
-            case "RESTART":
-                initBoard(this.state);
-                this.setPhase("WAITING");
-                break;
-                
-            case "WAITING":
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
-                this.wireControls();
-                break;
+        case "RESTART":
+            initBoard(this.state);
+            this.setPhase("WAITING");
+            break;
 
-            case "COUNTDOWN":
-                this.startCountdown();
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
-                if (this.state.PrevPhase === "PAUSED") break;
-                break;
+        case "WAITING":
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement(phase, this.state)
+            );
+            this.wireControls();
+            break;
 
-            case "PLAYING":
-                this.wireControls();
-                this.startPlaying();
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
-                break;
+        case "COUNTDOWN":
+            this.startCountdown();
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement(phase, this.state)
+            );
+            if (this.state.PrevPhase === "PAUSED") break;
+            break;
 
-            case "PAUSED":
-                this.pausePlaying();
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
-                break;
+        case "PLAYING":
+            this.wireControls();
+            this.startPlaying();
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement(phase, this.state)
+            );
+            break;
 
-            case "GAMEOVER":
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
-                this.unwireControls();
-                this.resetGame();
-                break;
+        case "PAUSED":
+            this.pausePlaying();
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement(phase, this.state)
+            );
+            break;
 
-            case "SCORED":
-                this.pausePlaying();
-                this.scoredCountdown();
-                initBoard(this.state);
-                launchBall(this.state, this.getNextServer(this.state), 500);
-                this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement(phase, this.state));
-                break;
+        case "GAMEOVER":
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement(phase, this.state)
+            );
+            this.unwireControls();
+
+            // 👇 Envoi des stats au backend (PlayersStats seulement)
+            void this.sendMatchStats();
+
+            this.resetGame();
+            break;
+
+        case "SCORED":
+            this.pausePlaying();
+            this.scoredCountdown();
+            initBoard(this.state);
+            launchBall(this.state, this.getNextServer(this.state), 500);
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement(phase, this.state)
+            );
+            break;
         }
     }
 
@@ -224,14 +254,14 @@ export class GameController {
         } else {
             this.state.p2 = info ? info : { userName: "P2", avatarUrl: "" };
         }
-    };
+    }
 
     public clearPlayers(): void {
         this.state.p1 = { userName: "P1", avatarUrl: "" };
         this.state.p2 = { userName: "P2", avatarUrl: "" };
     }
-    
-// ----  Actions sur le Jeu  ----- //
+
+    // ----  Actions sur le Jeu  ----- //
     private startPlaying() {
         if (!this.loopCtrl) {
             this.loopCtrl = GameLoop(
@@ -260,7 +290,9 @@ export class GameController {
         }
 
         this.domOverlay.countdownLeft = secsLeft;
-        this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("SCORED", this.state));
+        this.view.overlay.replaceChildren(
+            this.domOverlay.bindHTMLElement("SCORED", this.state)
+        );
 
         this.domOverlay.countdownTimerId = window.setInterval(() => {
             secsLeft -= 1;
@@ -278,13 +310,14 @@ export class GameController {
     private startCountdown() {
         let secsLeft = 3;
 
-
         if (this.domOverlay.countdownTimerId !== null) {
             window.clearInterval(this.domOverlay.countdownTimerId);
         }
 
         this.domOverlay.countdownLeft = secsLeft;
-        this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("COUNTDOWN", this.state));
+        this.view.overlay.replaceChildren(
+            this.domOverlay.bindHTMLElement("COUNTDOWN", this.state)
+        );
 
         this.domOverlay.countdownTimerId = window.setInterval(() => {
             secsLeft -= 1;
@@ -298,7 +331,9 @@ export class GameController {
             }
 
             this.domOverlay.countdownLeft = secsLeft;
-            this.view.overlay.replaceChildren(this.domOverlay.bindHTMLElement("COUNTDOWN", this.state));
+            this.view.overlay.replaceChildren(
+                this.domOverlay.bindHTMLElement("COUNTDOWN", this.state)
+            );
         }, 1000);
     }
 
@@ -311,8 +346,35 @@ export class GameController {
         this.context = setupCanvas(this.view.canvas);
     }
 
+    // ----- Envoi des stats au backend ----- //
+    private async sendMatchStats() {
+        // On suppose que this.state.stats correspond à PlayersStats
+        const stats = this.state.stats as PlayersStats;
+
+        try {
+            const res = await fetch("/api/matches/stats", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include", // pour envoyer les cookies JWT
+                body: JSON.stringify(stats), // 👉 uniquement PlayersStats
+            });
+
+            if (!res.ok) {
+                const text = await res.text().catch(() => "");
+                console.error(
+                    "[GameController] Failed to send match stats",
+                    res.status,
+                    text
+                );
+            }
+        } catch (err) {
+            console.error("[GameController] Error while sending match stats", err);
+        }
+    }
+
     public boot() {
         this.setPhase("START");
     }
 }
-
