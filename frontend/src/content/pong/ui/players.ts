@@ -145,6 +145,13 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     return PBox;
 }
 
+function handleTournamentPlayerInfo(box: HTMLDivElement, player: PlayerId, state: GameState): HTMLDivElement {
+    const info: PlayerInfo = { userName: player === "p1" ? state.p1.userName : state.p2.userName,
+                               avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
+    applyPlayerInfoToBox(box, info, player, state);
+    return box;
+}
+
 export function createPlayersBox(state: GameState): HTMLDivElement {
     const playersBox = el("div", `w-full 
         grid grid-cols-2 
@@ -153,11 +160,23 @@ export function createPlayersBox(state: GameState): HTMLDivElement {
         xl:w-[1404px]
         xxl:w-[1950px]`) as HTMLDivElement;
 
-    const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
-    P1Box.classList.add("justify-self-start");
-    const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
-    P2Box.classList.add("justify-self-end");
-    playersBox.append(P1Box, P2Box);
+    if (state.tournament) {
+        const p1Info: PlayerInfo = { userName: state.p1.userName, avatarUrl: state.p1.avatarUrl };
+        const p2Info: PlayerInfo = { userName: state.p2.userName, avatarUrl: state.p2.avatarUrl };
+        const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
+        applyPlayerInfoToBox(P1Box, p1Info, "p1", state);
+        P1Box.classList.add("justify-self-start");
+        const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
+        applyPlayerInfoToBox(P2Box, p2Info, "p2", state);
+        P2Box.classList.add("justify-self-end");
+        playersBox.append(P1Box, P2Box);
+    } else {
+        const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
+        P1Box.classList.add("justify-self-start");
+        const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
+        P2Box.classList.add("justify-self-end");
+        playersBox.append(P1Box, P2Box);
+    }
         
     return playersBox;
 }

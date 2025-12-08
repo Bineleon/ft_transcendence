@@ -504,7 +504,7 @@ export class MatchService {
       const p1 = await prisma.user.findUnique({ where: { username: data.p1UserName } });
       if (p1) {
         // createData.p1 = p1 as User;         /// Je ne sais pas si c'est comme ca qu'on fait le lien d'une table a une autre 
-        // updatePlayerStats(data.p1 as PlayedMatchUserResponse, p1);
+        updatePlayerStats(data.p1 as PlayedMatchUserResponse, p1);
       }                                     /// Pareil pour la founction au dessus, je sais pas comment on peut mettre a jour
     }                                       /// les stats du player, je me dis que ca peut passer par ici.
     createData.p1UserName = data.p1UserName;
@@ -518,8 +518,9 @@ export class MatchService {
         // updatePlayerStats(data.p2 as PlayedMatchUserResponse, p2);
       }
     }
-    createData.p2UserName = data.p2UserName;
+    createData.p2UserName = data.p2UserName;                          /// Changer userId en userName
     createData.p2Score = data.p2Score;
+    
 
     createData.totalPoints = data.totalPoints;
     if (data.winnerName) createData.winnerName = data.winnerName;     /// Changer winnerUserId ->  winnerName

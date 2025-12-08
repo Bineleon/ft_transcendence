@@ -137,7 +137,6 @@ export function tournamentController(
     Body: { userName: string };
   }>(
     '/api/tournaments/:code/join',
-    // { preHandler: authenticate },
     async (request, reply) => {
       try {
         const { code } = request.params;

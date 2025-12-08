@@ -40,14 +40,14 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
 
     if (!refreshRes.ok) {
       // Refresh impossible → on considère la session expirée
-      pongAlert("Session expirée. Merci de vous reconnecter.");
+      pongAlert("Merci de vous reconnecter.");
       window.location.href = "/#/login";
       return res;
     }
 
     const refreshData = await refreshRes.json();
     if (!refreshData.success) {
-      pongAlert("Session expirée. Merci de vous reconnecter.");
+      pongAlert("Merci de vous reconnecter.");
       window.location.href = "/#/login";
       return res;
     }
