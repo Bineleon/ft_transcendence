@@ -1,6 +1,6 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
 import type { MatchStatus, TournamentStatus } from '@prisma/client';
-import type { CreateMatchDTO, UpdateMatchDTO, MatchResponse, PlayedMatchUserResponse, PlayedMatchResponse } from './match.model.js';
+import type { CreateMatchDTO, UpdateMatchDTO, MatchResponse, PlayedMatchResponse, PlayerIdResponse  } from './match.model.js';
 
 const prisma = getPrismaClient();
 
@@ -480,13 +480,12 @@ export class MatchService {
   // HELPERS – Winner à partir des scores PlayersStats
   // ==========================================
 
-  private determineWinner(stats: PlayersStats): PlayerId | null {
-    const { p1Stats, p2Stats } = stats;
+  private determineWinner(stats: PlayedMatchResponse): PlayerIdResponse | null {
+    const { p1, p2 } = stats;
 
-    if (p1Stats.score === p2Stats.score) {
-      return null; // match nul → pas de vainqueur
-    }
-    return p1Stats.score > p2Stats.score ? 'p1' : 'p2';
+	if (!p1 || !p2)
+		return null;
+    return p1.score > p2.score ? 'p1' : 'p2';
   }
 
 
@@ -504,8 +503,8 @@ export class MatchService {
     if (!data.p1IsGuest) {
       const p1 = await prisma.user.findUnique({ where: { username: data.p1UserName } });
       if (p1) {
-        createData.p1 = p1 as User;         /// Je ne sais pas si c'est comme ca qu'on fait le lien d'une table a une autre 
-        updatePlayerStats(data.p1 as PlayedMatchUserResponse, p1);
+        // createData.p1 = p1 as User;         /// Je ne sais pas si c'est comme ca qu'on fait le lien d'une table a une autre 
+        // updatePlayerStats(data.p1 as PlayedMatchUserResponse, p1);
       }                                     /// Pareil pour la founction au dessus, je sais pas comment on peut mettre a jour
     }                                       /// les stats du player, je me dis que ca peut passer par ici.
     createData.p1UserName = data.p1UserName;
@@ -515,8 +514,8 @@ export class MatchService {
     if (!data.p2IsGuest) {
       const p2 = await prisma.user.findUnique({ where: { username: data.p2UserName } });
       if (p2) {
-        createData.p2 = p2 as User;
-        updatePlayerStats(data.p2 as PlayedMatchUserResponse, p2);
+        // createData.p2 = p2 as User;
+        // updatePlayerStats(data.p2 as PlayedMatchUserResponse, p2);
       }
     }
     createData.p2UserName = data.p2UserName;
@@ -543,7 +542,7 @@ export class MatchService {
 // ==========================================
 // recordPlayersStats – appliquer tes 4 règles, SANS matchId
 // ==========================================
-async recordPlayersStats(stats: ApiMatch | any): Promise<MatchResponse | null> {
+async recordPlayersStats(stats: PlayedMatchResponse | any): Promise<MatchResponse | null> {
   console.log("[recordPlayersStats] CALLED with:", stats);
 
   if (!stats || typeof stats !== "object") {
@@ -551,16 +550,16 @@ async recordPlayersStats(stats: ApiMatch | any): Promise<MatchResponse | null> {
     return null;
   }
 
-  const { p1Stats, p2Stats } = stats as PlayersStats;
+  const { p1, p2 } = stats as PlayedMatchResponse;
 
-  if (!p1Stats || !p2Stats) {
-    console.warn("[recordPlayersStats] Missing p1Stats or p2Stats", stats);
+  if (!p1 || !p2) {
+    console.warn("[recordPlayersStats] Missing p1 or p2", stats);
     return null;
   }
   // ...
 
 
-  const bothGuests = p1Stats.isGuest && p2Stats.isGuest;
+  const bothGuests = stats.p1IsGuest && stats.p2IsGuest;
   if (bothGuests) {
     // Règle 1 : les deux guest → on ne touche pas à la DB
     console.log("[recordPlayersStats] Both players are guests, nothing persisted.");
@@ -569,8 +568,8 @@ async recordPlayersStats(stats: ApiMatch | any): Promise<MatchResponse | null> {
 
   // Préparer la liste des usernames à chercher (uniquement les non-guests)
   const usernamesToLookup: string[] = [];
-  if (!p1Stats.isGuest) usernamesToLookup.push(p1Stats.name);
-  if (!p2Stats.isGuest) usernamesToLookup.push(p2Stats.name);
+  if (!stats.p1IsGuest) usernamesToLookup.push(stats.p1UserName);
+  if (!stats.p2IsGuest) usernamesToLookup.push(stats.p2UserName);
 
   const users =
     usernamesToLookup.length > 0
@@ -585,16 +584,16 @@ async recordPlayersStats(stats: ApiMatch | any): Promise<MatchResponse | null> {
         })
       : [];
 
-  const p1User = !p1Stats.isGuest
-    ? users.find((u) => u.username === p1Stats.name)
+  const p1User = !stats.p1IsGuest
+    ? users.find((u) => u.username === stats.p1UserName)
     : undefined;
 
-  const p2User = !p2Stats.isGuest
-    ? users.find((u) => u.username === p2Stats.name)
+  const p2User = !stats.p2IsGuest
+    ? users.find((u) => u.username === stats.p2UserName)
     : undefined;
 
   // Déterminer le "winner" à partir des scores
-  const winnerSide = this.determineWinner(stats as PlayersStats);
+  const winnerSide = this.determineWinner(stats as PlayedMatchResponse);
   let winnerUserId: string | null = null;
 
   if (winnerSide === "p1" && p1User) {
@@ -607,8 +606,8 @@ async recordPlayersStats(stats: ApiMatch | any): Promise<MatchResponse | null> {
   const data: any = {
     status: "DB_ONLY" as MatchStatus, // 👈 match isolé pour les stats
     gameCode: "pong",                 // adapte si tu veux
-    p1Score: p1Stats.score,
-    p2Score: p2Stats.score,
+    p1Score: stats.p1Score,
+    p2Score: stats.p2Score,
   };
 
   // Règle 2 & 3 : ne mettre p1UserId / p2UserId que pour les non-guests trouvés

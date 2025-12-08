@@ -103,7 +103,7 @@ export function authController(
         },
       },
     },
-    async (request, reply) => {
+    async (request) => {
       const { userId, code } = request.body as { userId: string; code: string };
       const result = await authService.verify2FA(userId, code);
 

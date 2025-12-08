@@ -1,10 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { MatchService } from './match.service.js';
-import type { CreateMatchDTO, UpdateMatchDTO } from './match.model.js';
+import type { CreateMatchDTO, UpdateMatchDTO, PlayedMatchResponse } from './match.model.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { formatSuccess } from '../../shared/utils/formatters.js';
 import { formatGenericError } from '../../shared/errors/formatters.js';
-import { PlayersStats } from '../../types/game.js';
 
 export function matchController(
   app: FastifyInstance,

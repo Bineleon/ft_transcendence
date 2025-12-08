@@ -6,7 +6,7 @@ import { getPrismaClient } from '../../shared/database/prisma.js';
 const prisma = getPrismaClient();
 
 export async function verify2FA(req: FastifyRequest, rep: FastifyReply) {
-  const { email, codez } = req.body as { email: string; code: string };
+  const { email, code } = req.body as { email: string; code: string };
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return rep.status(404).send({ error: 'User not found' });
 

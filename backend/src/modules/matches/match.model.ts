@@ -9,6 +9,8 @@ export interface CreateMatchDTO {
   txHash?: string;
 }
 
+export type PlayerIdResponse = "p1" | "p2";
+
 export interface UpdateMatchDTO {
   status?: string;
   p1Score?: number | null;
@@ -54,11 +56,11 @@ export interface PlayedMatchResponse {
   round: number | null;
   gameIndex: number | null;
 
-  p1UserName: string | null;
+  p1UserName: string | undefined;
   p1Score: number | null;
   p1IsGuest: boolean | null;
 
-  p2UserName: string | null;
+  p2UserName: string | undefined;
   p2Score: number | null;
   p2IsGuest: boolean | null;
 
@@ -74,6 +76,6 @@ export interface PlayedMatchResponse {
   totalMatchTime: number;         // Temps total du match
   avgRallyTime: number;       // Temps Moyen par partie
 
-  p1?: PlayedMatchUser | null;
-  p2?: PlayedMatchUser | null;
+  p1?: PlayedMatchUserResponse | null;
+  p2?: PlayedMatchUserResponse | null;
 }
