@@ -12,7 +12,7 @@ dev:
 
 # Lancer le projet en mode prod
 # -d : En background pour avoir la main sur le terminal
-prod:
+docker-prod:
 	$(DC) -f docker-compose.prod.yaml up -d --build
 
 
@@ -28,3 +28,11 @@ clean:
 	docker volume rm ft_transcendence_avatars-data || true
 	docker volume rm ft_transcendence_avatars|| true
 	docker system prune -a --volumes
+
+install-backend:
+	cd backend && npm install
+
+install-frontend:
+	cd frontend && npm install
+
+prod: install-backend install-frontend docker-prod

@@ -74,8 +74,15 @@ export function Profile(): HTMLElement {
         bg-white/70 resize-none h-full font-ocean-type text-md
     `
     ) as HTMLTextAreaElement;
-    stats.readOnly = true;
-    infoBox.append(stats);
+
+	stats.readOnly = true;
+
+//  --- Ajout Yoann pour dashboard : canvas pour le graphe ---
+	// const statsChart = el(
+	// 	"canvas",
+	// 	"w-full h-40 m-4 border border-black/30 bg-white/70 rounded"
+	// ) as HTMLCanvasElement;
+    infoBox.append(stats); // Ajouter statsChart
     section.append(picframe, infoBox);
 
 
@@ -101,6 +108,7 @@ export function Profile(): HTMLElement {
         loginLabel,
         emailLabel,
         stats,
+		// statsChart, // Ajout Yoann : DashBoard
         friendsList,
         requestsBox,
         viewedUsername
@@ -370,6 +378,7 @@ async function loadProfileData(
     loginLabel: HTMLElement,
     emailLabel: HTMLElement,
     stats: HTMLTextAreaElement,
+	// statsChart: HTMLCanvasElement,
     friendsList: HTMLElement | null,
     requestsBox: HTMLElement | null,
     viewedUsername: string
@@ -406,6 +415,11 @@ async function loadProfileData(
         Friends Count: ${user.friendsCount ?? 0}
         Matches Won: ${user.matchesWonCount ?? 0}
         `.trim();
+//      --- Ajout Yoann Dashboard ---
+
+		// const friendsCount = user.friendsCount ?? 0;
+		// const winsCount = user.matchesWonCount ?? 0;
+		// drawProfileStatsChart(statsChart, friendsCount, winsCount);
 
         if (!viewedUsername && friendsList && requestsBox) {
             loadFriends(friendsList, requestsBox);
@@ -550,3 +564,76 @@ async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLElement) {
         console.error("Erreur chargement amis :", err);
     }
 }
+
+
+// // --- Ajout Yoann Dashboard ----
+// function drawProfileStatsChart(
+//     canvas: HTMLCanvasElement,
+//     friends: number,
+//     wins: number
+// ) {
+//     const maybeCtx = canvas.getContext("2d");
+
+//     if (!maybeCtx) {
+//         console.warn("Canvas 2D context non disponible.");
+//         return;
+//     }
+
+//     // À partir d’ici, ctx est typé CanvasRenderingContext2D (plus de null)
+//     const ctx: CanvasRenderingContext2D = maybeCtx;
+
+//     // Support retina / HiDPI
+//     const dpr = window.devicePixelRatio || 1;
+//     const cssWidth = canvas.clientWidth || 300;
+//     const cssHeight = canvas.clientHeight || 160;
+//     canvas.width = cssWidth * dpr;
+//     canvas.height = cssHeight * dpr;
+//     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+//     const width = cssWidth;
+//     const height = cssHeight;
+
+//     ctx.clearRect(0, 0, width, height);
+
+//     const padding = 24;
+//     const chartWidth = width - padding * 2;
+//     const chartHeight = height - padding * 2;
+
+//     const maxValue = Math.max(friends, wins, 1);
+
+//     // Axes
+//     ctx.strokeStyle = "#000000";
+//     ctx.lineWidth = 1;
+//     ctx.beginPath();
+//     ctx.moveTo(padding, padding);
+//     ctx.lineTo(padding, padding + chartHeight);
+//     ctx.lineTo(padding + chartWidth, padding + chartHeight);
+//     ctx.stroke();
+
+//     const barWidth = chartWidth / 4;
+
+//     function drawBar(index: number, value: number, label: string) {
+//         const x = padding + barWidth * (index * 1.5 + 0.5);
+//         const barHeight = (value / maxValue) * (chartHeight - 20);
+//         const y = padding + chartHeight - barHeight;
+
+//         // Barre
+//         ctx.fillStyle = "#111827"; // gris sombre neutre
+//         ctx.fillRect(x - barWidth / 2, y, barWidth, barHeight);
+
+//         // Valeur au-dessus
+//         ctx.fillStyle = "#000000";
+//         ctx.font = "12px system-ui, sans-serif";
+//         ctx.textAlign = "center";
+//         ctx.textBaseline = "bottom";
+//         ctx.fillText(String(value), x, y - 4);
+
+//         // Label en dessous
+//         ctx.textBaseline = "top";
+//         ctx.fillText(label, x, padding + chartHeight + 4);
+//     }
+
+//     drawBar(0, friends, "Friends");
+//     drawBar(1, wins, "Wins");
+// }
+
