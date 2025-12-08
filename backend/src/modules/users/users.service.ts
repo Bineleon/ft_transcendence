@@ -1,7 +1,3 @@
-/**
- * Service pour la gestion des utilisateurs
- */
-
 import type { PrismaClient } from '@prisma/client';
 import { getPrismaClient } from '../../shared/database/prisma.js';
 import type {
@@ -9,7 +5,10 @@ import type {
   ChangePasswordRequest,
   UserProfile,
   PublicUserProfile,
-  UpdateUserData
+  UpdateUserData,
+  PlayerStatsResponse,
+  PlayerMatchHistoryResponse,
+  PlayerMatchItem         
 } from './users.model.js';
 import { hashPassword, comparePassword } from '../../shared/utils/password.js';
 import { formatUser } from '../../shared/utils/formatters.js';
@@ -402,7 +401,7 @@ async updateUsername(userId: string, newUsername: string) {
           undefined
         : undefined;
 
-      // ✅ Compter les amis uniques (pour éviter le doublon friend / friendOf)
+      // Compter les amis uniques (pour éviter le doublon friend / friendOf)
       const friendIds = new Set<string>();
 
       for (const f of user.friends ?? []) {
@@ -435,4 +434,269 @@ async updateUsername(userId: string, newUsername: string) {
       throw err;
     }
   }
+  // ==========================================
+  // READ - Récupérer les stats globales d'un joueur
+  // ==========================================
+  async getPlayerStats(userId: string): Promise<PlayerStatsResponse> {
+    // Vérifier que l'utilisateur existe
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true, avatarUrl: true }
+    });
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Récupérer tous les matchs du joueur
+    const matches = await this.prisma.match.findMany({
+      where: {
+        OR: [
+          { p1UserId: userId },
+          { p2UserId: userId }
+        ],
+        status: 'CLOSED'  // Seulement les matchs terminés
+      },
+      include: {
+        tournament: { select: { id: true } },
+        playerStats: {
+          where: { userId },
+          select: {
+            maxBouncesInWonRally: true,
+            maxBallSpeedWon: true,
+            maxBallSpeedLost: true,
+            totalBallSpins: true,
+            fastestWonRally: true
+          }
+        }
+      },
+      orderBy: { closedAt: 'desc' }
+    });
+
+    // Calculer les stats
+    let totalWins = 0;
+    let totalLosses = 0;
+    let tempStreak = 0;
+    let maxStreak = 0;
+    const tournamentsPlayed = new Set<string>();
+    const tournamentsWon = new Set<string>();
+    let maxBounces = 0;
+    let maxSpeed = 0;
+    let totalSpins = 0;
+    let fastestWin = Infinity;
+    let totalDuration = 0;
+    let totalScore = 0;
+    let totalBounces = 0;
+    let totalRallies = 0;
+
+    for (const match of matches) {
+      const isP1 = match.p1UserId === userId;
+      const playerScore = isP1 ? match.p1Score : match.p2Score;
+      const isWinner = match.winnerUserId === userId;
+
+      // Victoires/Défaites
+      if (isWinner) {
+        totalWins++;
+        tempStreak++;
+        if (tempStreak > maxStreak) maxStreak = tempStreak;
+      } else {
+        totalLosses++;
+        tempStreak = 0;
+      }
+
+      // Tournois
+      if (match.tournamentId) {
+        tournamentsPlayed.add(match.tournamentId);
+        
+        // Vérifier si c'était la finale et si le joueur a gagné
+        const isFinal = match.round === 0; // Round 0 = finale
+        if (isFinal && isWinner) {
+          tournamentsWon.add(match.tournamentId);
+        }
+      }
+
+      // Records personnels
+      const playerStats = match.playerStats[0];
+      if (playerStats) {
+        if (playerStats.maxBouncesInWonRally > maxBounces) {
+          maxBounces = playerStats.maxBouncesInWonRally;
+        }
+        
+        const maxSpeedInMatch = Math.max(
+          playerStats.maxBallSpeedWon,
+          playerStats.maxBallSpeedLost
+        );
+        if (maxSpeedInMatch > maxSpeed) {
+          maxSpeed = maxSpeedInMatch;
+        }
+        
+        totalSpins += playerStats.totalBallSpins;
+        
+        if (isWinner && playerStats.fastestWonRally < fastestWin) {
+          fastestWin = playerStats.fastestWonRally;
+        }
+      }
+
+      // Durée et stats moyennes
+      if (match.totalMatchTime) {
+        totalDuration += match.totalMatchTime;
+      }
+      if (playerScore) {
+        totalScore += playerScore;
+      }
+      if (match.avgRallyBounces) {
+        totalBounces += match.avgRallyBounces;
+      }
+      if (match.totalRallies) {
+        totalRallies += match.totalRallies;
+      }
+    }
+
+    // Série actuelle (les matchs sont triés du plus récent au plus ancien)
+    const currentStreak = tempStreak;
+
+    const totalMatches = matches.length;
+    const winRate = totalMatches > 0 ? (totalWins / totalMatches) * 100 : 0;
+    const avgMatchDuration = totalMatches > 0 ? totalDuration / totalMatches : 0;
+    const avgScorePerMatch = totalMatches > 0 ? totalScore / totalMatches : 0;
+    const avgBouncesPerRally = totalRallies > 0 ? totalBounces / totalRallies : 0;
+
+    return {
+      userId: user.id,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      
+      totalMatches,
+      totalWins,
+      totalLosses,
+      winRate: Math.round(winRate * 100) / 100,
+      
+      tournamentsPlayed: tournamentsPlayed.size,
+      tournamentsWon: tournamentsWon.size,
+      
+      longestWinStreak: maxStreak,
+      currentWinStreak: currentStreak,
+      
+      maxBouncesInMatch: maxBounces,
+      maxBallSpeedEver: maxSpeed,
+      totalBallSpins: totalSpins,
+      
+      fastestWinEver: fastestWin === Infinity ? 0 : fastestWin,
+      avgMatchDuration: Math.round(avgMatchDuration * 100) / 100,
+      
+      avgScorePerMatch: Math.round(avgScorePerMatch * 100) / 100,
+      avgBouncesPerRally: Math.round(avgBouncesPerRally * 100) / 100
+    };
+  }
+
+  // ==========================================
+  // READ - Récupérer l'historique de matchs d'un joueur
+  // ==========================================
+  async getPlayerMatchHistory(
+    userId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PlayerMatchHistoryResponse> {
+    // Vérifier que l'utilisateur existe
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true }
+    });
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Récupérer les matchs avec pagination
+    const [matches, totalCount] = await Promise.all([
+      this.prisma.match.findMany({
+        where: {
+          OR: [
+            { p1UserId: userId },
+            { p2UserId: userId }
+          ],
+          status: 'CLOSED'
+        },
+        include: {
+          p1: { select: { id: true, username: true, avatarUrl: true } },
+          p2: { select: { id: true, username: true, avatarUrl: true } },
+          tournament: { select: { id: true, name: true } },
+          playerStats: {
+            where: { userId },
+            select: {
+              maxBouncesInWonRally: true,
+              maxBallSpeedWon: true,
+              maxBallSpeedLost: true,
+              totalBallSpins: true
+            }
+          }
+        },
+        orderBy: { closedAt: 'desc' },
+        take: limit,
+        skip: offset
+      }),
+      
+      this.prisma.match.count({
+        where: {
+          OR: [
+            { p1UserId: userId },
+            { p2UserId: userId }
+          ],
+          status: 'CLOSED'
+        }
+      })
+    ]);
+
+    const matchHistory: PlayerMatchItem[] = matches.map(match => {
+      const wasP1 = match.p1UserId === userId;
+      const playerScore = wasP1 ? match.p1Score : match.p2Score;
+      const isWinner = match.winnerUserId === userId;
+      const playerStats = match.playerStats[0];
+
+      return {
+        id: match.id,
+        createdAt: match.createdAt,
+        closedAt: match.closedAt,
+        
+        // Infos du joueur
+        playerScore: playerScore || 0,
+        isWinner,
+        wasP1,
+        
+        // Infos P1
+        p1UserId: match.p1UserId,
+        p1Username: match.p1?.username || 'Guest',
+        p1AvatarUrl: match.p1?.avatarUrl || null,
+        p1Score: match.p1Score || 0,
+        
+        // Infos P2
+        p2UserId: match.p2UserId,
+        p2Username: match.p2?.username || 'Guest',
+        p2AvatarUrl: match.p2?.avatarUrl || null,
+        p2Score: match.p2Score || 0,
+        
+        // Stats du match
+        duration: match.totalMatchTime || 0,
+        longestRally: playerStats?.maxBouncesInWonRally || 0,
+        maxBallSpeed: Math.max(
+          playerStats?.maxBallSpeedWon || 0,
+          playerStats?.maxBallSpeedLost || 0
+        ),
+        effectsUsed: playerStats?.totalBallSpins || 0,
+        
+        // Tournoi
+        tournamentId: match.tournamentId,
+        tournamentName: match.tournament?.name || null,
+        round: match.round
+      };
+    });
+
+    return {
+      userId: user.id,
+      username: user.username,
+      totalMatches: totalCount,
+      matches: matchHistory
+    };
+  }
+
 }
