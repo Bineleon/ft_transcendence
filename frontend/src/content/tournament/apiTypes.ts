@@ -11,13 +11,16 @@ export type MatchStatus =
 
 export interface ApiMatchUser {
   username: string;
-  avatarUrl: string | null;
 
   score: number;                  // 0 | 1 | 2 | 3
   maxWins: number;                // max points consécutifs
   totalBallSpins: number;         // Nombre total d'effets de balle sur le match
   maxBouncesInWonRally: number;   // Nombre max d'echanges en une partie
   maxEffectsInWonRally: number;   // Nombre max d'effets en une partie
+  maxBallSpeedWon: number;        // Balle la plus rapide gagnee
+  maxBallSpeedLost: number;       // Balle la plus rapide perdue
+  fastestWonRally: number;        // Partie gagnee la plus rapidement
+  fastestLostRally: number;       // Partie perdu le plus rapidement
 
   ralliesWon: number;
   ralliesLost: number;
@@ -31,12 +34,12 @@ export interface ApiMatch {
   gameIndex: number | null;
 
   p1UserName: string | null;
-  p1Ref: string | null;
   p1Score: number | null;
+  p1IsGuest: boolean | null;
 
   p2UserName: string | null;
-  p2Ref: string | null;
   p2Score: number | null;
+  p2IsGuest: boolean | null;
 
 /// Match Stats
   totalPoints: number;        // 3 | 4 | 5
@@ -47,17 +50,8 @@ export interface ApiMatch {
   maxBounces: number;         // Nombre max d'echanges en une partie      
   avgRallyBounces: number;    // Moyenne des echanges de tout les matchs par partie
 
-  startedAt: string;     // ISO
-  finishedAt: string;    // ISO
-  durationMs: number;         // Temps total du match
-
-////
-  status: MatchStatus;
-  txHash: string | null;
-  onchainAt: string | null;
-  closedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+  totalMatchTime: number;     // Temps total du match
+  avgRallyTime: number;       // Temps Moyen par partie
 
   p1?: ApiMatchUser | null;
   p2?: ApiMatchUser | null;

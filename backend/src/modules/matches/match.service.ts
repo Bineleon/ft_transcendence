@@ -1,7 +1,6 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
 import type { MatchStatus, TournamentStatus } from '@prisma/client';
-import type { CreateMatchDTO, UpdateMatchDTO, MatchResponse } from './match.model.js';
-import type { PlayersStats, PlayerId } from '../../types/game.js';
+import type { CreateMatchDTO, UpdateMatchDTO, MatchResponse, PlayedMatchUserResponse, PlayedMatchResponse } from './match.model.js';
 
 const prisma = getPrismaClient();
 
@@ -488,6 +487,56 @@ export class MatchService {
       return null; // match nul → pas de vainqueur
     }
     return p1Stats.score > p2Stats.score ? 'p1' : 'p2';
+  }
+
+
+
+////////////////////////////////////////////////////////////////
+//////////         FELIX              ////////////////////////
+
+///// ----- Creation de match Hors tournois, a la fin d'un Match ----- /////
+/// Je vais afficher les changements du model Prisma en commentaires a cote
+  async createAndRecordStats(data: PlayedMatchResponse): Promise<MatchResponse> {
+
+    const createData: any = { gameCode: "pong", status: 'CLOSED' as MatchStatus, };
+
+    //// Le p1
+    if (!data.p1IsGuest) {
+      const p1 = await prisma.user.findUnique({ where: { username: data.p1UserName } });
+      if (p1) {
+        createData.p1 = p1 as User;         /// Je ne sais pas si c'est comme ca qu'on fait le lien d'une table a une autre 
+        updatePlayerStats(data.p1 as PlayedMatchUserResponse, p1);
+      }                                     /// Pareil pour la founction au dessus, je sais pas comment on peut mettre a jour
+    }                                       /// les stats du player, je me dis que ca peut passer par ici.
+    createData.p1UserName = data.p1UserName;
+    createData.p1Score = data.p1Score;
+
+    //// Le p2
+    if (!data.p2IsGuest) {
+      const p2 = await prisma.user.findUnique({ where: { username: data.p2UserName } });
+      if (p2) {
+        createData.p2 = p2 as User;
+        updatePlayerStats(data.p2 as PlayedMatchUserResponse, p2);
+      }
+    }
+    createData.p2UserName = data.p2UserName;
+    createData.p2Score = data.p2Score;
+
+    createData.totalPoints = data.totalPoints;
+    if (data.winnerName) createData.winnerName = data.winnerName;     /// Changer winnerUserId ->  winnerName
+    if (data.loserName) createData.loserName = data.loserName;        /// Ajouter loserName
+    createData.totalRallies = data.totalRallies;                      /// Ajouter totalRallies
+    createData.maxBounces = data.maxBounces;                          /// Ajouter maxBounces
+    createData.avgRallyBounces = data.avgRallyBounces;                /// Ajouter avgRallyBounces
+    createData.totalMatchTime = data.totalMatchTime;                  /// Ajouter totalMatchTime
+    createData.avgRallyTime = data.avgRallyTime;                      /// Ajouter avgRallyTime
+    
+
+    return await prisma.match.create({
+      data: createData,
+      include: {       /// Ici je ne sais pas trop comment ca fonctionne le retour je laisse comme ca
+      },
+    });
   }
 
 

@@ -72,8 +72,8 @@ export function Home(): HTMLElement {
 
     const col1Kicker = el("p", "subtitle-cat", text(" · Campus · 42 Paris · "));
 
-    const col1Title = el("h2", `article-hed`,
-        text(`4 Students , 1 Last Boss`));
+    const col1Title = el("h2", `article-hed font-lapresse`,
+        text(`4 Students, 1 Last Boss`));
 
     const col1Chapo = el("p", "article-sm italic");
     col1Chapo.append(
@@ -355,7 +355,7 @@ export function Home(): HTMLElement {
         return link as HTMLAnchorElement;
     }
 
-    const linksLabel = el("h1", "text-[100px] font-roman-new text-center -m-6", text(`Links`));
+    const linksLabel = el("h1", "text-[70px] font-lapresse text-center -m-6", text(`Links`));
 
     const navPlay = makeSidebarItem(
         "#/game",

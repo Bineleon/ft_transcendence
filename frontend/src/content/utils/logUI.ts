@@ -47,7 +47,8 @@ export function logUI() {
                     console.error("Logout error:", error);
                 }
                 sessionStorage.clear();
-                window.location.hash = "#/";
+                window.location.reload();
+                // window.location.hash = "#/";
             };
         }
     }).catch((error) => {

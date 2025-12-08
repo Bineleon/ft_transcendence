@@ -205,20 +205,25 @@ export function matchController(
   );
 
   // ==========================================
-  // GET /api/matches/:id/stats - Stats d'un match
+  // GET /api/matches/:id/played - Stats d'un match joué
   // ==========================================
-app.post<{
-  Body: PlayersStats;
-}>("/api/matches/stats", {
-  preHandler: [authenticate], // ou pas, comme tu veux
-}, async (request, reply) => {
-  const stats = request.body;
-  const match = await matchService.recordPlayersStats(stats);
+  app.post<{ Body: PlayedMatchResponse; }>(
+    `/api/matches/played`,
+    async (request, reply) => {
+      if (request.body.p1IsGuest && request.body.p2IsGuest) {
+        return formatSuccess(`2 Guests, no save`);
+      }
 
-  return reply.send({
-    success: true,
-    data: match,
-  });
-});
-
+      try {
+        const match = await matchService.createAndRecordStats(request.body);
+        return formatSuccess(match, `Match created and filled successfully`);
+      } catch (error) {
+        const errorResponse = formatGenericError(
+          error instanceof Error ? error : new Error('Failed to create match')
+        );
+        return reply.status(errorResponse.error.statusCode).send(errorResponse);
+      }
+    }
+  );
 }
+

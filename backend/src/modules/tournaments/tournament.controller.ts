@@ -137,7 +137,7 @@ export function tournamentController(
     Body: { userName: string };
   }>(
     '/api/tournaments/:code/join',
-    { preHandler: authenticate },
+    // { preHandler: authenticate },
     async (request, reply) => {
       try {
         const { code } = request.params;
@@ -166,7 +166,7 @@ export function tournamentController(
   app.delete<{
     Params: { code: string };
     Body: {
-      username?: string;
+      userName?: string;
     };
   }>(
     '/api/tournaments/:code/join',
@@ -174,26 +174,22 @@ export function tournamentController(
     async (request, reply) => {
       try {
         const { code } = request.params;
-        const { username } = request.body;
+        const { userName } = request.body;
 
-        if (
-          !username ||
-          typeof username !== 'string' ||
-          username.trim().length === 0
-        ) {
+        if (!userName || typeof userName !== 'string' || userName.trim().length === 0) {
           const errorResponse = formatGenericError(
-            new Error('Username is required to leave as user')
+            new Error('userName is required to leave as user')
           );
           return reply.status(400).send(errorResponse);
         }
 
         const tournament = await tournamentService.leaveWithUser(
           code,
-          username.trim()
+          userName.trim()
         );
         return formatSuccess(
           tournament,
-          `User "${username.trim()}" left tournament successfully`
+          `User "${userName.trim()}" left tournament successfully`
         );
 
         const errorResponse = formatGenericError(

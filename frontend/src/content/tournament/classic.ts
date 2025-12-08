@@ -3,9 +3,22 @@ import { el, text } from "../home";
 import { pongAlert, runAuthBox} from "../utils/alertBox";
 import { addUserAsPlayerToTournament, getLoggedName, getTournamentDatas } from "../utils/todb";
 import type { Tournament } from "./uiTypes";
+import { tournamentFromApi } from "./mapper";
 import { renderTournamentBrackets } from "./brackets";
 import { apiFetch } from "../utils/apiFetch";
 
+
+
+/// --- HELPER ---- /// 
+function isUserInTournament(t: Tournament, userName: string): boolean {
+    if (!userName) return false;
+
+    return t.matches.some(
+    (m) =>
+      m.p1User?.user.userName === userName ||
+      m.p2User?.user.userName === userName
+    );
+}
 
 /// ---- VIEW RENDERING ---- ///
 function renderRegisterButtons(t: Tournament): HTMLElement {
@@ -15,44 +28,143 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
     const div = el("div", "flex justify-center mb-4 gap-4");
 
     const joinTournamentBtn = el("button", "btn-click flex mb-4");
-    joinTournamentBtn.textContent = "Join Tournament";
-    joinTournamentBtn.addEventListener("click", () => { runAuthBox("JOIN"); });
-
-
+    const joinTournamentAsNewBtn = el("button", "btn-click flex mb-4");
     const unregisterFromTournamentBtn = el("button", "btn-click flex mb-4");
+    const deleteTournamentBtn = el("button", "btn-click flex mb-4");
+
+    joinTournamentBtn.textContent = "Join as Logged";
+    joinTournamentAsNewBtn.textContent = "Join as New";
+    unregisterFromTournamentBtn.textContent = "Unregister";
+    deleteTournamentBtn.textContent = "Delete Tournament";
+    deleteTournamentBtn.classList.add("hidden");
+
+    // Only the creator can see the delete butto
+
     getLoggedName().then((who) => {
         if (!who) {
+            joinTournamentBtn.textContent = "Join";
+            joinTournamentBtn.onclick = () => {
+                runAuthBox("JOIN", { tCode: t.tCode });
+            };
+
+            joinTournamentAsNewBtn.classList.add("hidden");
+
             unregisterFromTournamentBtn.textContent = "Log in to Unregister";
-            unregisterFromTournamentBtn.addEventListener("click", () => {
+            unregisterFromTournamentBtn.onclick = () => {
                 runAuthBox("LOGIN", { tCode: t.tCode });
-            });
-        } else {
-            unregisterFromTournamentBtn.textContent = `Unregister as ${who}`;
-            unregisterFromTournamentBtn.addEventListener("click", async () => {
+            };
+            return;
+        }
+        if (who === t.creatorName) {
+            unregisterFromTournamentBtn.classList.add("hidden");
+            deleteTournamentBtn.classList.remove("hidden");
+            deleteTournamentBtn.textContent = `Delete Tournament as ${who}`;
+            deleteTournamentBtn.onclick = async () => {
+                pongAlert("Deleting tournament", "info", { title: "Delete", onClose: async () => {
+                    try {
+                        const response = await apiFetch(`/api/tournaments/${t.tCode}/join`, {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                        });
+
+                        const data = await response.json().catch(() => null);
+
+                        if (response.ok) {
+                            pongAlert("Tournament deleted.");
+                            window.location.hash = "#/tournaments";
+                        } else {
+                            pongAlert(
+                                `Failed to delete tournament: ${
+                                    data?.error?.message || data?.message || "Unknown error"
+                                }`
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Delete Tournament Btn error:", error);
+                        pongAlert(`An error occurred: ${error instanceof Error ? error.message : "Network error"}`);
+                    }
+                } 
+                });
+            };
+        }
+        
+        const alreadyInTournament = isUserInTournament(t, who);
+
+        if (!alreadyInTournament) {
+            joinTournamentAsNewBtn.classList.remove("hidden");
+            joinTournamentAsNewBtn.onclick = () => {
+                runAuthBox("JOIN", { tCode: t.tCode });
+            };
+
+            joinTournamentBtn.onclick = async () => {
                 try {
-                    const response = await apiFetch(`/api/tournaments/${t.tCode}/join`, {
-                        method: "DELETE",
+                    const resp = await apiFetch(`/api/tournaments/${t.tCode}/join`, {
+                        method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username: who }),
-                        credentials: "include"
+                        body: JSON.stringify({ userName: who }),
+                        credentials: "include",
                     });
-                    const data = await response.json();
-                    if (response.ok) {
-                        pongAlert("You have been unregistered from the tournament.");
-                        window.location.href = `#/tournament`;
+
+                    const data = await resp.json();
+
+                    if (resp.ok) {
+                        document.dispatchEvent(new CustomEvent("tournamentUpdated"));
+                        pongAlert("You joined the tournament!");
                     } else {
-                        pongAlert(`Failed to unregister from tournament: ${data.error?.message || data.message || 'Unknown error'}`);
+                        pongAlert(`Failed to join tournament: 
+                            ${data?.error?.message || data?.message || "Unknown error"}`);
                     }
                 } catch (error) {
-                    console.error("Unregister error:", error);
-                    pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+                    console.error("Join Tournament Btn error:", error);
+                    pongAlert(`An error occurred:
+                        ${error instanceof Error ? error.message : "Network error"}`);
                 }
-            });
+            };
+        } else {
+            joinTournamentBtn.classList.add("hidden");
+            joinTournamentAsNewBtn.classList.remove("hidden");
+            joinTournamentAsNewBtn.onclick = () => {
+                runAuthBox("JOIN", { tCode: t.tCode });
+            };
         }
-    });
-    unregisterFromTournamentBtn.textContent = "Unregister from Tournament";
 
-    div.append(joinTournamentBtn, unregisterFromTournamentBtn);
+
+
+        unregisterFromTournamentBtn.textContent = `Unregister as ${who}`;
+        unregisterFromTournamentBtn.onclick = async () => {
+            try {
+                const response = await apiFetch(`/api/tournaments/${t.tCode}/join`, {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userName: who }),
+                    credentials: "include",
+                });
+
+                const data = await response.json().catch(() => null);
+
+                if (response.ok) {
+                    pongAlert("You have been unregistered from the tournament.");
+                    document.dispatchEvent(new CustomEvent("tournamentUpdated"));
+                } else {
+                    pongAlert(
+                        `Failed to unregister from tournament: ${
+                            data?.error?.message || data?.message || "Unknown error"
+                        }`
+                    );
+                }
+            } catch (error) {
+                console.error("Unregister error:", error);
+                pongAlert(
+                    `An error occurred: ${
+                        error instanceof Error ? error.message : "Network error"
+                    }`
+                );
+            }
+        };
+    });
+
+    div.append(joinTournamentAsNewBtn, joinTournamentBtn, unregisterFromTournamentBtn, deleteTournamentBtn);
     return div;
 }
 
@@ -92,12 +204,33 @@ function renderTournamentState(t: Tournament): HTMLElement {
 
 function renderTournamentView(t: Tournament): HTMLElement {
     const main = el("div", "border-tournament");
-    const tournamentState = renderTournamentState(t) as HTMLElement;
-    const tournamentBrackets = renderTournamentBrackets(t) as HTMLElement;
-    const registerUnregisterDiv = renderRegisterButtons(t) as HTMLElement;
-    
+    let tournamentState = renderTournamentState(t) as HTMLElement;
+    let tournamentBrackets = renderTournamentBrackets(t) as HTMLElement;
+    let registerUnregisterDiv = renderRegisterButtons(t) as HTMLElement;
 
     main.append(tournamentState, tournamentBrackets, registerUnregisterDiv);
+
+    document.addEventListener("tournamentUpdated", async () => {
+        const tCode = getRouteTail("/tournament/classic");
+        try {
+            const updated = await getTournamentDatas(tCode);
+
+            const newState = renderTournamentState(updated) as HTMLElement;
+            tournamentState.replaceWith(newState);
+            tournamentState = newState;
+
+            const newBrackets = renderTournamentBrackets(updated) as HTMLElement;
+            tournamentBrackets.replaceWith(newBrackets);
+            tournamentBrackets = newBrackets;
+
+            const newRegister = renderRegisterButtons(updated) as HTMLElement;
+            registerUnregisterDiv.replaceWith(newRegister);
+            registerUnregisterDiv = newRegister;
+        } catch (err) {
+            console.error("Failed to refresh tournament after update:", err);
+        }
+    });
+
     return main;
 }
 
@@ -132,17 +265,6 @@ export function classicTournament(): HTMLElement {
     const loading = el("p", "article-base text-center", text("Loading tournament..."));
     container.append(loading);
 
-    // Attach listener early so we don't miss events
-    document.addEventListener("tournamentUpdated", async () => {
-        try {
-            const updated = await getTournamentDatas(tCode);
-            container.innerHTML = "";
-            container.append(renderTournamentView(updated));
-        } catch (err) {
-            console.error("Failed to refresh tournament after update:", err);
-        }
-    });
-
     // 2) On lance le fetch en async, mais SANS rendre la fonction async
     getTournamentDatas(tCode).then((tClassicDatas) => {
         container.innerHTML = "";
@@ -153,14 +275,17 @@ export function classicTournament(): HTMLElement {
             container.append(errorDiv);
             return;
         }
-        console.log("creator2:", tClassicDatas);
-        console.log("creator2:", tClassicDatas.creatorId);
+        if (tClassicDatas.creatorId) {
+            const view = renderTournamentView(tClassicDatas);
+            container.append(view);
+            return container;
+        }
 
         // On Add le user loggué en tant que joueur du tournoi
         // rendre la callback async permet d'utiliser await ici sans rendre classicTournament async
         getLoggedName().then(async (name) => {
             if (!name) return;
-            if (tClassicDatas.creatorId) return;
+            if (isUserInTournament(tClassicDatas, tClassicDatas.creatorName)) return;
 
             try {
                 await addUserAsPlayerToTournament(tCode, name, tClassicDatas);

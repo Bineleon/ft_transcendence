@@ -91,6 +91,28 @@ export function authController(
     }
   );
 
+  //////// FELIX /////////////
+  // --- VERIFY 2FA --- NOLOG
+  app.post(
+    '/api/auth/verify-2fa/nolog',
+    {
+      config: {
+        rateLimit: {
+          max: 10,                // 10 essais de code 2FA...
+          timeWindow: '10 minutes', // ...par 10 minutes / IP
+        },
+      },
+    },
+    async (request, reply) => {
+      const { userId, code } = request.body as { userId: string; code: string };
+      const result = await authService.verify2FA(userId, code);
+
+      return formatSuccess(result, '2FA verified. Login successful.');
+    }
+  );
+
+
+
   // --- REFRESH ---
   app.post('/api/auth/refresh', async (request, reply) => {
     const refreshToken = request.cookies.refreshToken;

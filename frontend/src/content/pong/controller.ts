@@ -198,6 +198,7 @@ export class GameController {
             break;
 
         case "PLAYING":
+            this.startRallyTime();
             this.wireControls();
             this.startPlaying();
             this.view.overlay.replaceChildren(
@@ -206,6 +207,7 @@ export class GameController {
             break;
 
         case "PAUSED":
+            this.pauseRallyTime();
             this.pausePlaying();
             this.view.overlay.replaceChildren(
                 this.domOverlay.bindHTMLElement(phase, this.state)
@@ -218,13 +220,13 @@ export class GameController {
             );
             this.unwireControls();
 
-            // 👇 Envoi des stats au backend (PlayersStats seulement)
-            void this.sendMatchStats();
+            void this.handleStats();
 
             this.resetGame();
             break;
 
         case "SCORED":
+            this.stopRallyTime();
             this.pausePlaying();
             this.scoredCountdown();
             initBoard(this.state);
@@ -234,6 +236,49 @@ export class GameController {
             );
             break;
         }
+    }
+
+    private startRallyTime() {
+        this.state.stats.rallyStartAt = performance.now();
+        if (this.state.stats.pauseStartAt !== undefined) this.endPauseRallyTime();
+    }
+
+    private stopRallyTime() {
+        const now = performance.now();
+        const time = now - this.state.stats.rallyStartAt;
+        this.state.stats.rallyDurationsMs.push(time);
+        this.state.stats.rallyStartAt = undefined;
+
+        this.state.stats.totalRallies += 1;
+        if (this.state.stats.lastScorer === "p1") {
+            const p1 = this.state.stats.p1;
+            const p2 = this.state.stats.p2;
+
+            if (p1.fastestWonRally === 0 || time < p1.fastestWonRally) p1.fastestWonRally = time;
+            if (p2.fastestLostRally === 0 || time < p2.fastestLostRally) p2.fastestLostRally = time;
+        }
+
+        if (this.state.stats.lastScorer === "p2") {
+            const p1 = this.state.stats.p1;
+            const p2 = this.state.stats.p2;
+
+            if (p2.fastestWonRally === 0 || time < p2.fastestWonRally) p2.fastestWonRally = time;
+            if (p1.fastestLostRally === 0 || time < p1.fastestLostRally) p1.fastestLostRally = time;
+        } 
+    }
+
+    private pauseRallyTime() {
+        this.state.stats.pauseStartAt = performance.now();
+    }
+
+    private endPauseRallyTime() {
+        if (this.state.stats.pauseStartAt === undefined) return;
+
+        const now = performance.now();
+        const elapsed = now - this.state.stats.pauseStartAt;
+
+        this.state.stats.totalPauseMs += elapsed;
+        this.state.stats.pauseStartAt = undefined;
     }
 
     private getNextServer(state: GameState): CardinalDirection {
@@ -345,18 +390,18 @@ export class GameController {
     }
 
     // ----- Envoi des stats au backend ----- //
-    private async sendMatchStats() {
-        // On suppose que this.state.stats correspond à PlayersStats
-        const stats = this.state.stats as PlayersStats;
+    private async handleStats() {
+        const stats = liveStatsToMatchStats(this.state.stats);
+        const apiMatch = playedMatchStatsToApi(stats);
 
         try {
-            const res = await fetch("/api/matches/stats", {
+            const res = await fetch("/api/matches/played", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 credentials: "include", // pour envoyer les cookies JWT
-                body: JSON.stringify(stats), // 👉 uniquement PlayersStats
+                body: JSON.stringify(apiMatch), // 👉 uniquement PlayersStats
             });
 
             if (!res.ok) {

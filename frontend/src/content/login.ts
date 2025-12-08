@@ -47,10 +47,11 @@ function login(): HTMLElement {
             // --- Phase 2: envoi du code 2FA ---
             if (!input2FA.classList.contains("hidden")) {
                 const code = input2FA.value;
+                const doToken = true;
                 const response = await apiFetch("/api/auth/verify-2fa", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: input2FA.dataset.userId, code }),
+                    body: JSON.stringify({ userId: input2FA.dataset.userId, code, doToken }),
                     credentials: "include",
                 });
                 const data = await response.json();

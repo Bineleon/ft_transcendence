@@ -33,9 +33,8 @@ export interface MatchStats {
     maxBounces: number;         // Nombre max d'echanges en une partie      
     avgRallyBounces: number;    // Moyenne des echanges de tout les matchs par partie
 
-    startedAt: string;     // ISO
-    finishedAt: string;    // ISO
-    durationMs: number;         // Temps total du match
+    totalMatchTime: number;     // Temps total du match
+    avgRallyTime: number;       // Temps Moyen par partie
     
     p1: PlayerMatchStats;
     p2: PlayerMatchStats;
@@ -49,6 +48,10 @@ export interface PlayerMatchStats {
     totalBallSpins: number;         // Nombre total d'effets de balle sur le match
     maxBouncesInWonRally: number;   // Nombre max d'echanges en une partie
     maxEffectsInWonRally: number;   // Nombre max d'effets en une partie
+    maxBallSpeedWon: number;        // Balle la plus rapide gagnee
+    maxBallSpeedLost: number;       // Balle la plus rapide perdue
+    fastestWonRally: number;        // Partie gagnee la plus rapidement
+    fastestLostRally: number;       // Partie perdu le plus rapidement
 
     ralliesWon: number;
     ralliesLost: number;
@@ -56,13 +59,18 @@ export interface PlayerMatchStats {
 
 
 export interface LiveMatchStats {
-    p1Stats: LivePlayerStats;
-    p2Stats: LivePlayerStats;
+    p1: LivePlayerStats;
+    p2: LivePlayerStats;
     lastScorer?: PlayerId;
     
     currentBounces: number;
     totalBounces: number;
     totalRallies: number;   // un rally = un echange, tant qu'il n'y a pas de points
+
+    rallyStartAt?: number;           
+    rallyDurationsMs: number[];   
+    pauseStartAt?: number;  
+    totalPauseMs: number; 
 }
 
 export interface LivePlayerStats {
@@ -73,6 +81,10 @@ export interface LivePlayerStats {
     effects: number;   /// Pas besoin la db
     maxEffects: number;
     maxBounces: number;
+    fastestWonRally: number;        // Partie gagnee la plus rapidement
+    fastestLostRally: number;       // Partie perdu le plus rapidement
+    maxBallSpeedWon: number;        // Balle la plus rapide gagnee
+    maxBallSpeedLost: number;       // Balle la plus rapide perdue
 
     paddleHits: number;
     currentWins: number;        // serie de rally gagnes
