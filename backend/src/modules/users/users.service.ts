@@ -434,9 +434,11 @@ async updateUsername(userId: string, newUsername: string) {
       throw err;
     }
   }
+
   // ==========================================
   // READ - Récupérer les stats globales d'un joueur
   // ==========================================
+  
   async getPlayerStats(userId: string): Promise<PlayerStatsResponse> {
     // Vérifier que l'utilisateur existe
     const user = await this.prisma.user.findUnique({
