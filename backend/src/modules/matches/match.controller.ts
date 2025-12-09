@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { MatchService } from './match.service.js';
-import type { CreateMatchDTO, UpdateMatchDTO, PlayedMatchResponse } from './match.model.js';
+import type { CreateMatchDTO, UpdateMatchDTO, FinishMatchDTO, PlayedMatchDTO  } from './match.model.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { formatSuccess } from '../../shared/utils/formatters.js';
 import { formatGenericError } from '../../shared/errors/formatters.js';
@@ -151,29 +151,27 @@ export function matchController(
   );
 
   // ==========================================
-  // POST /api/matches/:id/finish - Terminer un match
+  // POST /api/matches/:id/finish - Terminer un match de tournoi
   // ==========================================
-  app.post<{ 
-    Params: { id: string }
-    Body: { 
-      winnerId: string
-      p1Score?: number
-      p2Score?: number
-    }
+  app.post<{
+    Params: { id: string };
+    Body: FinishMatchDTO;
   }>(
     '/api/matches/:id/finish',
     { preHandler: authenticate },
     async (request, reply) => {
       try {
-        const { winnerId, p1Score, p2Score } = request.body;
-        
-        if (!winnerId) {
-          const errorResponse = formatGenericError(new Error('winnerId is required'));
-          return reply.status(400).send(errorResponse);
-        }
+        const { id } = request.params;
+        const { winnerUserId, matchStats, p1Stats, p2Stats } = request.body;
 
-        const match = await matchService.finish(request.params.id, winnerId, p1Score, p2Score);
-        
+        const match = await matchService.finishMatchWithStats(
+          id,
+          winnerUserId,
+          matchStats,
+          p1Stats,
+          p2Stats
+        );
+
         return formatSuccess(match, 'Match finished successfully');
       } catch (error) {
         const errorResponse = formatGenericError(
@@ -204,25 +202,63 @@ export function matchController(
   );
 
   // ==========================================
-  // GET /api/matches/:id/played - Stats d'un match joué
+  // POST /api/matches/played - Créer un match hors tournoi avec stats
   // ==========================================
-  app.post<{ Body: PlayedMatchResponse; }>(
-    `/api/matches/played`,
+  app.post<{
+    Body: PlayedMatchDTO;
+  }>(
+    '/api/matches/played',
     async (request, reply) => {
-      if (request.body.p1IsGuest && request.body.p2IsGuest) {
-        return formatSuccess(`2 Guests, no save`);
-      }
-
       try {
-        const match = await matchService.createAndRecordStats(request.body);
-        return formatSuccess(match, `Match created and filled successfully`);
+        const data = request.body;
+
+        // Validation basique
+        if (!data.p1Username || !data.p2Username) {
+          return reply.code(400).send({
+            error: {
+              message: 'p1Username and p2Username are required',
+              statusCode: 400
+            }
+          });
+        }
+
+        // Si les deux sont guests, ne rien enregistrer
+        if (data.p1IsGuest && data.p2IsGuest) {
+          console.log('[POST /api/matches/played] Both players are guests, skipping DB record');
+          return formatSuccess(null, 'Match not recorded (both players are guests)');
+        }
+
+        const match = await matchService.createMatchWithStats(data);
+        return formatSuccess(match, 'Match recorded successfully');
+        
       } catch (error) {
         const errorResponse = formatGenericError(
-          error instanceof Error ? error : new Error('Failed to create match')
+          error instanceof Error ? error : new Error('Failed to record match')
+        );
+        return reply.status(errorResponse.error.statusCode).send(errorResponse);
+      }
+    }
+  );
+
+  // ==========================================
+  // GET /api/matches/:id/details - Détails complets d'un match terminé
+  // ==========================================
+  app.get<{ Params: { id: string } }>(
+    '/api/matches/:id/details',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
+        
+        const details = await matchService.getPlayedMatchDetails(id);
+        return formatSuccess(details, 'Match details retrieved successfully');
+        
+      } catch (error) {
+        const errorResponse = formatGenericError(
+          error instanceof Error ? error : new Error('Failed to get match details')
         );
         return reply.status(errorResponse.error.statusCode).send(errorResponse);
       }
     }
   );
 }
-

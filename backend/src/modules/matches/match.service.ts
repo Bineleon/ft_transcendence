@@ -1,14 +1,21 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
 import type { MatchStatus, TournamentStatus } from '@prisma/client';
-import type { CreateMatchDTO, UpdateMatchDTO, MatchResponse, PlayedMatchResponse, PlayerIdResponse  } from './match.model.js';
+import type { 
+  CreateMatchDTO, 
+  UpdateMatchDTO, 
+  MatchResponse, 
+  PlayedMatchResponse,
+  PlayedMatchDTO,
+  MatchStatsDTO,
+  PlayerStatsDTO
+} from './match.model.js';
 
 const prisma = getPrismaClient();
 
 export class MatchService {
   // ==========================================
-  // CREATE - Créer un nouveau match
+  // CREATE - Créer un nouveau match (tournoi)
   // ==========================================
-
   async create(data: CreateMatchDTO): Promise<MatchResponse> {
     // Validation : vérifier que les joueurs existent
     if (data.p1UserId) {
@@ -71,9 +78,402 @@ export class MatchService {
   }
 
   // ==========================================
+  // CREATE - Créer un match hors tournoi avec stats complètes
+  // ==========================================
+  async createMatchWithStats(data: PlayedMatchDTO): Promise<MatchResponse> {
+    
+    // Récupérer les utilisateurs (seulement les non-guests)
+    const usernamesToLookup: string[] = [];
+    if (!data.p1IsGuest) usernamesToLookup.push(data.p1Username);
+    if (!data.p2IsGuest) usernamesToLookup.push(data.p2Username);
+
+    const users = usernamesToLookup.length > 0
+      ? await prisma.user.findMany({
+          where: { username: { in: usernamesToLookup } },
+          select: { id: true, username: true }
+        })
+      : [];
+
+    const p1User = !data.p1IsGuest 
+      ? users.find(u => u.username === data.p1Username)
+      : undefined;
+
+    const p2User = !data.p2IsGuest 
+      ? users.find(u => u.username === data.p2Username)
+      : undefined;
+
+    // Validation
+    if (!data.p1IsGuest && !p1User) {
+      throw new Error(`Player 1 '${data.p1Username}' not found`);
+    }
+    if (!data.p2IsGuest && !p2User) {
+      throw new Error(`Player 2 '${data.p2Username}' not found`);
+    }
+
+    // Déterminer le gagnant
+    const p1Score = data.matchStats.p1Score;
+    const p2Score = data.matchStats.p2Score;
+    let winnerUserId: string | null = null;
+
+    if (p1Score > p2Score && p1User) {
+      winnerUserId = p1User.id;
+    } else if (p2Score > p1Score && p2User) {
+      winnerUserId = p2User.id;
+    }
+
+    // Transaction : créer le match + stats
+    return await prisma.$transaction(async (tx) => {
+      
+      // Créer le match avec stats globales
+      const createdMatch = await tx.match.create({
+        data: {
+          gameCode: 'pong',
+          status: 'CLOSED' as MatchStatus,
+          
+          // Joueurs (null si guest)
+          p1UserId: p1User?.id || null,
+          p2UserId: p2User?.id || null,
+          winnerUserId,
+          
+          // Scores
+          p1Score: data.matchStats.p1Score,
+          p2Score: data.matchStats.p2Score,
+          
+          // Stats globales
+          totalPoints: data.matchStats.totalPoints,
+          totalRallies: data.matchStats.totalRallies,
+          maxBounces: data.matchStats.maxBounces,
+          avgRallyBounces: data.matchStats.avgRallyBounces,
+          totalMatchTime: data.matchStats.totalMatchTime,
+          avgRallyTime: data.matchStats.avgRallyTime,
+          
+          closedAt: new Date()
+        },
+        include: {
+          p1: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              playerRef: true
+            }
+          },
+          p2: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              playerRef: true
+            }
+          },
+          winner: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true
+            }
+          }
+        }
+      });
+
+      // Créer les stats individuelles (seulement pour les non-guests)
+      const playerStatsData = [];
+
+      if (p1User) {
+        playerStatsData.push({
+          matchId: createdMatch.id,
+          userId: p1User.id,
+          score: data.p1Stats.score,
+          maxWins: data.p1Stats.maxWins,
+          totalBallSpins: data.p1Stats.totalBallSpins,
+          maxBouncesInWonRally: data.p1Stats.maxBouncesInWonRally,
+          maxEffectsInWonRally: data.p1Stats.maxEffectsInWonRally,
+          maxBallSpeedWon: data.p1Stats.maxBallSpeedWon,
+          maxBallSpeedLost: data.p1Stats.maxBallSpeedLost,
+          fastestWonRally: data.p1Stats.fastestWonRally,
+          fastestLostRally: data.p1Stats.fastestLostRally
+        });
+      }
+
+      if (p2User) {
+        playerStatsData.push({
+          matchId: createdMatch.id,
+          userId: p2User.id,
+          score: data.p2Stats.score,
+          maxWins: data.p2Stats.maxWins,
+          totalBallSpins: data.p2Stats.totalBallSpins,
+          maxBouncesInWonRally: data.p2Stats.maxBouncesInWonRally,
+          maxEffectsInWonRally: data.p2Stats.maxEffectsInWonRally,
+          maxBallSpeedWon: data.p2Stats.maxBallSpeedWon,
+          maxBallSpeedLost: data.p2Stats.maxBallSpeedLost,
+          fastestWonRally: data.p2Stats.fastestWonRally,
+          fastestLostRally: data.p2Stats.fastestLostRally
+        });
+      }
+
+      if (playerStatsData.length > 0) {
+        await tx.playerMatchStats.createMany({
+          data: playerStatsData
+        });
+      }
+
+      console.log(`[createMatchWithStats] Match ${createdMatch.id} created with stats`);
+      console.log(`  P1: ${data.p1Username} (${data.p1IsGuest ? 'Guest' : 'User'})`);
+      console.log(`  P2: ${data.p2Username} (${data.p2IsGuest ? 'Guest' : 'User'})`);
+      console.log(`  Score: ${data.matchStats.p1Score} - ${data.matchStats.p2Score}`);
+      console.log(`  Winner: ${winnerUserId || 'None'}`);
+
+      return createdMatch;
+    });
+  }
+
+  // ==========================================
+  // UPDATE - Terminer un match de tournoi avec stats
+  // ==========================================
+  async finishMatchWithStats(
+    matchId: string,
+    winnerUserId: string,
+    matchStats: MatchStatsDTO,
+    p1Stats: PlayerStatsDTO & { userId: string },
+    p2Stats: PlayerStatsDTO & { userId: string }
+  ): Promise<MatchResponse> {
+    
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: {
+        status: true,
+        p1UserId: true,
+        p2UserId: true,
+        tournamentId: true,
+        round: true,
+        gameIndex: true,
+      },
+    });
+
+    if (!match) {
+      throw new Error('Match not found');
+    }
+
+    if (match.status !== 'IN_PROGRESS') {
+      throw new Error(`Cannot finish match with status ${match.status}`);
+    }
+
+    // Vérifier que le gagnant est un participant
+    if (winnerUserId !== match.p1UserId && winnerUserId !== match.p2UserId) {
+      throw new Error('Winner must be one of the match participants');
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      
+      //  Mettre à jour le match avec stats globales
+      const updatedMatch = await tx.match.update({
+        where: { id: matchId },
+        data: {
+          status: 'CLOSED' as MatchStatus,
+          winnerUserId,
+          p1Score: matchStats.p1Score,
+          p2Score: matchStats.p2Score,
+          closedAt: new Date(),
+          
+          // Stats globales
+          totalPoints: matchStats.totalPoints,
+          totalRallies: matchStats.totalRallies,
+          maxBounces: matchStats.maxBounces,
+          avgRallyBounces: matchStats.avgRallyBounces,
+          totalMatchTime: matchStats.totalMatchTime,
+          avgRallyTime: matchStats.avgRallyTime
+        },
+        include: {
+          p1: { 
+            select: { 
+              id: true, 
+              username: true, 
+              avatarUrl: true, 
+              playerRef: true 
+            } 
+          },
+          p2: { 
+            select: { 
+              id: true, 
+              username: true, 
+              avatarUrl: true, 
+              playerRef: true 
+            } 
+          },
+          winner: { 
+            select: { 
+              id: true, 
+              username: true, 
+              avatarUrl: true 
+            } 
+          }
+        }
+      });
+
+      // Créer les stats individuelles
+      await tx.playerMatchStats.createMany({
+        data: [
+          {
+            matchId,
+            userId: p1Stats.userId,
+            score: p1Stats.score,
+            maxWins: p1Stats.maxWins,
+            totalBallSpins: p1Stats.totalBallSpins,
+            maxBouncesInWonRally: p1Stats.maxBouncesInWonRally,
+            maxEffectsInWonRally: p1Stats.maxEffectsInWonRally,
+            maxBallSpeedWon: p1Stats.maxBallSpeedWon,
+            maxBallSpeedLost: p1Stats.maxBallSpeedLost,
+            fastestWonRally: p1Stats.fastestWonRally,
+            fastestLostRally: p1Stats.fastestLostRally
+          },
+          {
+            matchId,
+            userId: p2Stats.userId,
+            score: p2Stats.score,
+            maxWins: p2Stats.maxWins,
+            totalBallSpins: p2Stats.totalBallSpins,
+            maxBouncesInWonRally: p2Stats.maxBouncesInWonRally,
+            maxEffectsInWonRally: p2Stats.maxEffectsInWonRally,
+            maxBallSpeedWon: p2Stats.maxBallSpeedWon,
+            maxBallSpeedLost: p2Stats.maxBallSpeedLost,
+            fastestWonRally: p2Stats.fastestWonRally,
+            fastestLostRally: p2Stats.fastestLostRally
+          }
+        ]
+      });
+
+      //  Si tournoi, avancer le gagnant
+      if (match.tournamentId && match.round !== null && match.gameIndex !== null) {
+        await this.advanceWinner(
+          tx, 
+          match.tournamentId, 
+          winnerUserId, 
+          match.round, 
+          match.gameIndex
+        );
+      }
+
+      console.log(`[finishMatchWithStats] Match ${matchId} finished`);
+      console.log(`  Winner: ${winnerUserId}`);
+      console.log(`  Score: ${matchStats.p1Score} - ${matchStats.p2Score}`);
+
+      return updatedMatch;
+    });
+  }
+
+  // ==========================================
+  // READ - Récupérer les détails complets d'un match terminé
+  // ==========================================
+  async getPlayedMatchDetails(matchId: string): Promise<PlayedMatchResponse> {
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        p1: { select: { id: true, username: true, avatarUrl: true } },
+        p2: { select: { id: true, username: true, avatarUrl: true } },
+        winner: { select: { id: true } },
+        playerStats: {
+          include: {
+            user: { select: { id: true, username: true, avatarUrl: true } }
+          }
+        }
+      }
+    });
+
+    if (!match) {
+      throw new Error('Match not found');
+    }
+
+    // Vérifier que le match est terminé
+    if (match.status !== 'CLOSED') {
+      throw new Error('Match is not finished yet');
+    }
+
+    // Vérifier que toutes les données obligatoires sont présentes
+    if (!match.winnerUserId || !match.totalPoints || !match.totalRallies) {
+      throw new Error('Match is missing required stats');
+    }
+
+    const p1Stats = match.playerStats.find(s => s.userId === match.p1UserId);
+    const p2Stats = match.playerStats.find(s => s.userId === match.p2UserId);
+
+    if (!p1Stats || !p2Stats) {
+      throw new Error('Player stats not found');
+    }
+
+    // Déterminer le perdant
+    const loserId = match.winnerUserId === match.p1UserId ? match.p2UserId! : match.p1UserId!;
+
+    return {
+      // Infos de base
+      id: match.id,
+      tournamentId: match.tournamentId,
+      gameCode: match.gameCode,
+      round: match.round,
+      gameIndex: match.gameIndex,
+      status: match.status,
+      createdAt: match.createdAt,
+      closedAt: match.closedAt,
+
+      // Joueurs
+      p1UserId: match.p1UserId,
+      p1Score: match.p1Score,
+      p1IsGuest: !match.p1UserId,
+
+      p2UserId: match.p2UserId,
+      p2Score: match.p2Score,
+      p2IsGuest: !match.p2UserId,
+
+      // Stats globales (toutes NON NULL car match CLOSED)
+      totalPoints: match.totalPoints,
+      winnerId: match.winnerUserId,
+      loserId: loserId,
+      totalRallies: match.totalRallies,
+      maxBounces: match.maxBounces!,
+      avgRallyBounces: match.avgRallyBounces!,
+      totalMatchTime: match.totalMatchTime!,
+      avgRallyTime: match.avgRallyTime!,
+
+      // Stats individuelles P1
+      p1: {
+        userId: p1Stats.userId,
+        username: p1Stats.user.username,
+        avatarUrl: p1Stats.user.avatarUrl,
+        score: p1Stats.score,
+        maxWins: p1Stats.maxWins,
+        totalBallSpins: p1Stats.totalBallSpins,
+        maxBouncesInWonRally: p1Stats.maxBouncesInWonRally,
+        maxEffectsInWonRally: p1Stats.maxEffectsInWonRally,
+        maxBallSpeedWon: p1Stats.maxBallSpeedWon,
+        maxBallSpeedLost: p1Stats.maxBallSpeedLost,
+        fastestWonRally: p1Stats.fastestWonRally,
+        fastestLostRally: p1Stats.fastestLostRally,
+        ralliesWon: match.p1Score!,
+        ralliesLost: match.p2Score!
+      },
+
+      // Stats individuelles P2
+      p2: {
+        userId: p2Stats.userId,
+        username: p2Stats.user.username,
+        avatarUrl: p2Stats.user.avatarUrl,
+        score: p2Stats.score,
+        maxWins: p2Stats.maxWins,
+        totalBallSpins: p2Stats.totalBallSpins,
+        maxBouncesInWonRally: p2Stats.maxBouncesInWonRally,
+        maxEffectsInWonRally: p2Stats.maxEffectsInWonRally,
+        maxBallSpeedWon: p2Stats.maxBallSpeedWon,
+        maxBallSpeedLost: p2Stats.maxBallSpeedLost,
+        fastestWonRally: p2Stats.fastestWonRally,
+        fastestLostRally: p2Stats.fastestLostRally,
+        ralliesWon: match.p2Score!,
+        ralliesLost: match.p1Score!
+      }
+    };
+  }
+
+  // ==========================================
   // READ - Récupérer un match par ID
   // ==========================================
-
   async findById(id: string): Promise<MatchResponse | null> {
     return await prisma.match.findUnique({
       where: { id },
@@ -114,140 +514,26 @@ export class MatchService {
   }
 
   // ==========================================
-  // READ - Récupérer tous les matchs d'un tournoi
+  // UPDATE - Démarrer un match
   // ==========================================
+  async start(id: string): Promise<MatchResponse> {
+    const match = await prisma.match.findUnique({ where: { id } });
 
-  async findByTournament(tournamentId: string): Promise<MatchResponse[]> {
-    return await prisma.match.findMany({
-      where: { tournamentId },
-      include: {
-        p1: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            playerRef: true,
-          },
-        },
-        p2: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            playerRef: true,
-          },
-        },
-        winner: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-          },
-        },
-      },
-      orderBy: [
-        { round: 'asc' },
-        { gameIndex: 'asc' },
-      ],
-    });
-  }
+    if (!match) {
+      throw new Error('Match not found');
+    }
 
-  // ==========================================
-  // READ - Récupérer les matchs d'un joueur
-  // ==========================================
+    if (match.status !== 'SCHEDULED') {
+      throw new Error(`Cannot start match with status ${match.status}`);
+    }
 
-  async findByPlayer(userId: string): Promise<MatchResponse[]> {
-    return await prisma.match.findMany({
-      where: {
-        OR: [{ p1UserId: userId }, { p2UserId: userId }],
-      },
-      include: {
-        p1: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            playerRef: true,
-          },
-        },
-        p2: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            playerRef: true,
-          },
-        },
-        winner: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-          },
-        },
-        tournament: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            mode: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  // ==========================================
-  // READ - Récupérer tous les matchs (avec filtres)
-  // ==========================================
-
-  async findAll(status?: MatchStatus): Promise<MatchResponse[]> {
-    return await prisma.match.findMany({
-      where: status ? { status } : undefined,
-      include: {
-        p1: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            playerRef: true,
-          },
-        },
-        p2: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            playerRef: true,
-          },
-        },
-        winner: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-          },
-        },
-        tournament: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            mode: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    return await this.update(id, { status: 'IN_PROGRESS' });
   }
 
   // ==========================================
   // UPDATE - Mettre à jour un match
   // ==========================================
-
   async update(id: string, data: UpdateMatchDTO): Promise<MatchResponse> {
-    // Validation : si on déclare un gagnant, vérifier qu'il participe au match
     if (data.winnerUserId) {
       const match = await prisma.match.findUnique({
         where: { id },
@@ -272,6 +558,12 @@ export class MatchService {
         winnerUserId: data.winnerUserId,
         onchainAt: data.onchainAt,
         txHash: data.txHash,
+        totalPoints: data.totalPoints,
+        totalRallies: data.totalRallies,
+        maxBounces: data.maxBounces,
+        avgRallyBounces: data.avgRallyBounces,
+        totalMatchTime: data.totalMatchTime,
+        avgRallyTime: data.avgRallyTime,
       },
       include: {
         p1: {
@@ -310,109 +602,17 @@ export class MatchService {
   }
 
   // ==========================================
-  // UPDATE - Démarrer un match
+  // DELETE - Supprimer un match
   // ==========================================
-
-  async start(id: string): Promise<MatchResponse> {
-    const match = await prisma.match.findUnique({ where: { id } });
-
-    if (!match) {
-      throw new Error('Match not found');
-    }
-
-    if (match.status !== 'SCHEDULED') {
-      throw new Error(`Cannot start match with status ${match.status}`);
-    }
-
-    return await this.update(id, { status: 'IN_PROGRESS' });
-  }
-
-  // ==========================================
-  // UPDATE - Terminer un match (déclarer un gagnant)
-  // ==========================================
-
-  async finish(
-    id: string,
-    winnerUserId: string,
-    p1Score?: number,
-    p2Score?: number,
-  ): Promise<MatchResponse> {
-    const match = await prisma.match.findUnique({
+  async delete(id: string): Promise<void> {
+    await prisma.match.delete({
       where: { id },
-      select: {
-        status: true,
-        p1UserId: true,
-        p2UserId: true,
-        tournamentId: true,
-        round: true,
-        gameIndex: true,
-      },
-    });
-
-    if (!match) {
-      throw new Error('Match not found');
-    }
-
-    if (match.status !== 'IN_PROGRESS') {
-      throw new Error(`Cannot finish match with status ${match.status}`);
-    }
-
-    // Vérifier que le gagnant est un participant
-    if (winnerUserId !== match.p1UserId && winnerUserId !== match.p2UserId) {
-      throw new Error('Winner must be one of the match participants');
-    }
-
-    // Utiliser une transaction pour garantir l'atomicité
-    return await prisma.$transaction(async (tx) => {
-      // 1. Mettre à jour le match
-      const updatedMatch = await tx.match.update({
-        where: { id },
-        data: {
-          status: 'CLOSED' as MatchStatus,
-          winnerUserId,
-          p1Score: p1Score ?? null,
-          p2Score: p2Score ?? null,
-        },
-        include: {
-          p1: {
-            select: {
-              id: true,
-              username: true,
-              avatarUrl: true,
-              playerRef: true,
-            },
-          },
-          p2: {
-            select: {
-              id: true,
-              username: true,
-              avatarUrl: true,
-              playerRef: true,
-            },
-          },
-          winner: {
-            select: {
-              id: true,
-              username: true,
-              avatarUrl: true,
-            },
-          },
-        },
-      });
-
-      // 2. Si c'est un match de tournoi, avancer le gagnant
-      if (match.tournamentId && match.round !== null && match.gameIndex !== null) {
-        await this.advanceWinner(tx, match.tournamentId, winnerUserId, match.round, match.gameIndex);
-      }
-
-      return updatedMatch;
     });
   }
 
   // ==========================================
   // ADVANCE WINNER - Avancer le gagnant au round suivant
   // ==========================================
-
   private async advanceWinner(
     tx: any,
     tournamentId: string,
@@ -445,7 +645,7 @@ export class MatchService {
 
       await tx.tournament.update({
         where: { id: tournamentId },
-        data: { status: 'CLOSED' as TournamentStatus }, // enum: OPEN / RUNNING / CLOSED
+        data: { status: 'CLOSED' as TournamentStatus },
       });
 
       return;
@@ -466,258 +666,146 @@ export class MatchService {
     console.log(`[advanceWinner] ✅ Winner advanced successfully`);
   }
 
+    // ==========================================
+  // READ - Récupérer tous les matchs (avec filtre optionnel)
   // ==========================================
-  // DELETE - Supprimer un match
-  // ==========================================
+  async findAll(status?: MatchStatus): Promise<MatchResponse[]> {
+    const where = status ? { status } : {};
 
-  async delete(id: string): Promise<void> {
-    await prisma.match.delete({
-      where: { id },
-    });
-  }
-
-  // ==========================================
-  // HELPERS – Winner à partir des scores PlayersStats
-  // ==========================================
-
-  private determineWinner(stats: PlayedMatchResponse): PlayerIdResponse | null {
-    const { p1, p2 } = stats;
-
-	if (!p1 || !p2)
-		return null;
-    return p1.score > p2.score ? 'p1' : 'p2';
-  }
-
-
-
-////////////////////////////////////////////////////////////////
-//////////         FELIX              ////////////////////////
-
-///// ----- Creation de match Hors tournois, a la fin d'un Match ----- /////
-/// Je vais afficher les changements du model Prisma en commentaires a cote
-  async createAndRecordStats(data: PlayedMatchResponse): Promise<MatchResponse> {
-
-    const createData: any = { gameCode: "pong", status: 'CLOSED' as MatchStatus, };
-
-    //// Le p1
-    if (!data.p1IsGuest) {
-      const p1 = await prisma.user.findUnique({ where: { username: data.p1UserName } });
-      if (p1) {
-        // createData.p1 = p1 as User;         /// Je ne sais pas si c'est comme ca qu'on fait le lien d'une table a une autre 
-        // updatePlayerStats(data.p1 as PlayedMatchUserResponse, p1);
-      }                                     /// Pareil pour la founction au dessus, je sais pas comment on peut mettre a jour
-    }                                       /// les stats du player, je me dis que ca peut passer par ici.
-    createData.p1UserName = data.p1UserName;
-    createData.p1Score = data.p1Score;
-
-    //// Le p2
-    if (!data.p2IsGuest) {
-      const p2 = await prisma.user.findUnique({ where: { username: data.p2UserName } });
-      if (p2) {
-        // createData.p2 = p2 as User;
-        // updatePlayerStats(data.p2 as PlayedMatchUserResponse, p2);
-      }
-    }
-    createData.p2UserName = data.p2UserName;                          /// Changer userId en userName
-    createData.p2Score = data.p2Score;
-    
-
-    createData.totalPoints = data.totalPoints;
-    if (data.winnerName) createData.winnerName = data.winnerName;     /// Changer winnerUserId ->  winnerName
-    if (data.loserName) createData.loserName = data.loserName;        /// Ajouter loserName
-    createData.totalRallies = data.totalRallies;                      /// Ajouter totalRallies
-    createData.maxBounces = data.maxBounces;                          /// Ajouter maxBounces
-    createData.avgRallyBounces = data.avgRallyBounces;                /// Ajouter avgRallyBounces
-    createData.totalMatchTime = data.totalMatchTime;                  /// Ajouter totalMatchTime
-    createData.avgRallyTime = data.avgRallyTime;                      /// Ajouter avgRallyTime
-    
-
-    return await prisma.match.create({
-      data: createData,
-      include: {       /// Ici je ne sais pas trop comment ca fonctionne le retour je laisse comme ca
-      },
-    });
-  }
-
-
-// ==========================================
-// recordPlayersStats – appliquer tes 4 règles, SANS matchId
-// ==========================================
-async recordPlayersStats(stats: PlayedMatchResponse | any): Promise<MatchResponse | null> {
-  console.log("[recordPlayersStats] CALLED with:", stats);
-
-  if (!stats || typeof stats !== "object") {
-    console.warn("[recordPlayersStats] Invalid stats payload", stats);
-    return null;
-  }
-
-  const { p1, p2 } = stats as PlayedMatchResponse;
-
-  if (!p1 || !p2) {
-    console.warn("[recordPlayersStats] Missing p1 or p2", stats);
-    return null;
-  }
-  // ...
-
-
-  const bothGuests = stats.p1IsGuest && stats.p2IsGuest;
-  if (bothGuests) {
-    // Règle 1 : les deux guest → on ne touche pas à la DB
-    console.log("[recordPlayersStats] Both players are guests, nothing persisted.");
-    return null;
-  }
-
-  // Préparer la liste des usernames à chercher (uniquement les non-guests)
-  const usernamesToLookup: string[] = [];
-  if (!stats.p1IsGuest) usernamesToLookup.push(stats.p1UserName);
-  if (!stats.p2IsGuest) usernamesToLookup.push(stats.p2UserName);
-
-  const users =
-    usernamesToLookup.length > 0
-      ? await prisma.user.findMany({
-          where: {
-            username: { in: usernamesToLookup },
-          },
+    return await prisma.match.findMany({
+      where,
+      include: {
+        p1: {
           select: {
             id: true,
             username: true,
+            avatarUrl: true,
+            playerRef: true,
           },
-        })
-      : [];
-
-  const p1User = !stats.p1IsGuest
-    ? users.find((u) => u.username === stats.p1UserName)
-    : undefined;
-
-  const p2User = !stats.p2IsGuest
-    ? users.find((u) => u.username === stats.p2UserName)
-    : undefined;
-
-  // Déterminer le "winner" à partir des scores
-  const winnerSide = this.determineWinner(stats as PlayedMatchResponse);
-  let winnerUserId: string | null = null;
-
-  if (winnerSide === "p1" && p1User) {
-    winnerUserId = p1User.id;
-  } else if (winnerSide === "p2" && p2User) {
-    winnerUserId = p2User.id;
-  }
-
-  // Construction de l'objet data pour le CREATE Prisma
-  const data: any = {
-    status: "DB_ONLY" as MatchStatus, // 👈 match isolé pour les stats
-    gameCode: "pong",                 // adapte si tu veux
-    p1Score: stats.p1Score,
-    p2Score: stats.p2Score,
-  };
-
-  // Règle 2 & 3 : ne mettre p1UserId / p2UserId que pour les non-guests trouvés
-  if (p1User) {
-    data.p1UserId = p1User.id;
-  }
-
-  if (p2User) {
-    data.p2UserId = p2User.id;
-  }
-
-  // winnerUserId uniquement si on a pu l’identifier
-  if (winnerUserId) {
-    data.winnerUserId = winnerUserId;
-  }
-
-  console.log("[recordPlayersStats] stats reçues", stats);
-  console.log("[recordPlayersStats] data envoyée à Prisma", data);
-
-  
-  const created = await prisma.match.create({
-    data,
-    include: {
-      p1: {
-        select: {
-          id: true,
-          username: true,
-          avatarUrl: true,
-          playerRef: true,
-        },
-      },
-      p2: {
-        select: {
-          id: true,
-          username: true,
-          avatarUrl: true,
-          playerRef: true,
-        },
-      },
-      winner: {
-        select: {
-          id: true,
-          username: true,
-          avatarUrl: true,
-        },
-      },
-      tournament: {
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          mode: true,
-        },
-      },
-    },
-  });
-
-  console.log("[recordPlayersStats] created match", created.id);
-  return created;
-}
-
-
-
-  // ==========================================
-  // UTILITIES - Statistiques d'un match
-  // ==========================================
-
-  async getStats(id: string) {
-    const match = await this.findById(id);
-
-    if (!match) {
-      throw new Error('Match not found');
-    }
-
-    return {
-      match: {
-        id: match.id,
-        status: match.status,
-        round: match.round,
-        gameIndex: match.gameIndex,
-      },
-      players: {
-        p1: {
-          id: match.p1?.id,
-          username: match.p1?.username,
-          score: match.p1Score,
         },
         p2: {
-          id: match.p2?.id,
-          username: match.p2?.username,
-          score: match.p2Score,
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true,
+          },
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+        tournament: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            mode: true,
+          },
         },
       },
-      winner: match.winner
-        ? {
-            id: match.winner.id,
-            username: match.winner.username,
-          }
-        : null,
-      tournament: match.tournament
-        ? {
-            code: match.tournament.code,
-            name: match.tournament.name,
-          }
-        : null,
-      timestamps: {
-        createdAt: match.createdAt,
-        updatedAt: match.updatedAt,
+      orderBy: {
+        createdAt: 'desc',
       },
-    };
+    });
+  }
+
+  // ==========================================
+  // READ - Récupérer les matchs d'un tournoi
+  // ==========================================
+  async findByTournament(tournamentId: string): Promise<MatchResponse[]> {
+    return await prisma.match.findMany({
+      where: { tournamentId },
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true,
+          },
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true,
+          },
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+        tournament: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            mode: true,
+          },
+        },
+      },
+      orderBy: [
+        { round: 'asc' },
+        { gameIndex: 'asc' },
+      ],
+    });
+  }
+
+  // ==========================================
+  // READ - Récupérer les matchs d'un joueur
+  // ==========================================
+  async findByPlayer(userId: string): Promise<MatchResponse[]> {
+    return await prisma.match.findMany({
+      where: {
+        OR: [
+          { p1UserId: userId },
+          { p2UserId: userId },
+        ],
+      },
+      include: {
+        p1: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true,
+          },
+        },
+        p2: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            playerRef: true,
+          },
+        },
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+        tournament: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            mode: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 }

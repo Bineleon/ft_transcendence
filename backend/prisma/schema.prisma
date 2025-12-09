@@ -35,74 +35,105 @@ enum FriendStatus {
 }
 
 model User {
-  id                 String         @id @default(cuid())
-  username           String         @unique
-  email              String         @unique
+  id                 String             @id @default(cuid())
+  username           String             @unique
+  email              String             @unique
   passwordHash       String?
-  avatarUrl          String?        @map("avatar_url")
-  playerRef          String?        @unique @map("player_ref")
-  lastSeen           DateTime?      @default(now()) @map("last_seen")
+  avatarUrl          String?            @map("avatar_url")
+  playerRef          String?            @unique @map("player_ref")
+  lastSeen           DateTime?          @default(now()) @map("last_seen")
   TwoFactors         TwoFactor[]
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at")
-  friendOf           Friend[]       @relation("UserFriendOf")
-  friends            Friend[]       @relation("UserFriends")
-  matchesWon         Match[]        @relation("Winner")
-  matchesAsP2        Match[]        @relation("P2")
-  matchesAsP1        Match[]        @relation("P1")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
+  matchStats         PlayerMatchStats[]
+  friendOf           Friend[]           @relation("UserFriendOf")
+  friends            Friend[]           @relation("UserFriends")
+  matchesWon         Match[]            @relation("Winner")
+  matchesAsP2        Match[]            @relation("P2")
+  matchesAsP1        Match[]            @relation("P1")
   sessions           Session[]
-  createdTournaments Tournament[]   @relation("UserCreatedTournaments")
-  tournaments        Tournament[]   @relation("TournamentParticipants")
+  createdTournaments Tournament[]       @relation("UserCreatedTournaments")
+  tournaments        Tournament[]       @relation("TournamentParticipants")
   refreshTokens      RefreshToken[]
-  googleId           String?        @unique
+  googleId           String?            @unique
 }
 
 model Tournament {
-  id                String            @id @default(cuid())
-  code              String            @unique
-  name              String
-  status            TournamentStatus  @default(OPEN)
-  mode              TournamentMode   @default(CLASSIC)
-  maxParticipants   Int               @map("max_participants")
-  kingMaxTime       Int?              @map("king_max_time")
-  kingMaxRounds     Int?              @map("king_max_rounds")
-  createdBy         String?           @map("created_by")
-  createdAt         DateTime          @default(now()) @map("created_at")
-  matches           Match[]
-  creator           User?             @relation("UserCreatedTournaments", fields: [createdBy], references: [id])
-  participants      User[]            @relation("TournamentParticipants")
+  id              String           @id @default(cuid())
+  code            String           @unique
+  name            String
+  status          TournamentStatus @default(OPEN)
+  mode            TournamentMode   @default(CLASSIC)
+  maxParticipants Int              @map("max_participants")
+  kingMaxTime     Int?             @map("king_max_time")
+  kingMaxRounds   Int?             @map("king_max_rounds")
+  createdBy       String?          @map("created_by")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  matches         Match[]
+  creator         User?            @relation("UserCreatedTournaments", fields: [createdBy], references: [id])
+  participants    User[]           @relation("TournamentParticipants")
 
   @@index([status])
 }
 
 model Match {
-  id           String      @id @default(cuid())
-  tournamentId String?      @map("tournament_id")
-  gameCode     String      @default("pong") @map("game_code")
-  round        Int?
-  gameIndex    Int?        @map("game_index")
-  p1UserId     String?      @map("p1_user_id")
-  p1Ref        String?     @map("p1_ref")
-  p1Score      Int?        @map("p1_score")
-  p2UserId     String?      @map("p2_user_id")
-  p2Ref        String?     @map("p2_ref")
-  p2Score      Int?        @map("p2_score")
-  winnerUserId String?     @map("winner_user_id")
-  winnerRef    String?     @map("winner_ref")
-  status       MatchStatus @default(SCHEDULED)
-  txHash       String?     @map("tx_hash")
-  onchainAt    DateTime?   @map("onchain_at")
-  closedAt     DateTime?   @map("closed_at")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at")
-  winner       User?       @relation("Winner", fields: [winnerUserId], references: [id])
-  p2           User?       @relation("P2", fields: [p2UserId], references: [id])
-  p1           User?       @relation("P1", fields: [p1UserId], references: [id])
-  tournament   Tournament?  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  id              String             @id @default(cuid())
+  tournamentId    String?            @map("tournament_id")
+  gameCode        String             @default("pong") @map("game_code")
+  round           Int?
+  gameIndex       Int?               @map("game_index")
+  p1UserId        String?            @map("p1_user_id")
+  p1Ref           String?            @map("p1_ref")
+  p1Score         Int?               @map("p1_score")
+  p2UserId        String?            @map("p2_user_id")
+  p2Ref           String?            @map("p2_ref")
+  p2Score         Int?               @map("p2_score")
+  winnerUserId    String?            @map("winner_user_id")
+  winnerRef       String?            @map("winner_ref")
+  loserUserId     String?            @map("loser_user_id")
+  status          MatchStatus        @default(SCHEDULED)
+  txHash          String?            @map("tx_hash")
+  onchainAt       DateTime?          @map("onchain_at")
+  closedAt        DateTime?          @map("closed_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at")
+  totalPoints     Int?               @map("total_points") // 3 | 4 | 5
+  totalRallies    Int?               @map("total_rallies") // Nombre total d'échanges
+  maxBounces      Int?               @map("max_bounces") // Nombre max d'échanges en une partie
+  avgRallyBounces Float?             @map("avg_rally_bounces") // Moyenne des échanges par partie
+  totalMatchTime  Float?             @map("total_match_time") // Temps total du match (en secondes)
+  avgRallyTime    Float?             @map("avg_rally_time") // Temps moyen par partie (en secondes)
+  playerStats     PlayerMatchStats[]
+  winner          User?              @relation("Winner", fields: [winnerUserId], references: [id])
+  p2              User?              @relation("P2", fields: [p2UserId], references: [id])
+  p1              User?              @relation("P1", fields: [p1UserId], references: [id])
+  tournament      Tournament?        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, round, gameIndex])
   @@index([tournamentId])
   @@index([status])
+}
+
+model PlayerMatchStats {
+  id                   String   @id @default(cuid())
+  matchId              String   @map("match_id")
+  userId               String   @map("user_id")
+  score                Int      @default(0)
+  maxWins              Int      @default(0) @map("max_wins")
+  totalBallSpins       Int      @default(0) @map("total_ball_spins")
+  maxBouncesInWonRally Int      @default(0) @map("max_bounces_in_won_rally")
+  maxEffectsInWonRally Int      @default(0) @map("max_effects_in_won_rally")
+  maxBallSpeedWon      Float    @default(0) @map("max_ball_speed_won")
+  maxBallSpeedLost     Float    @default(0) @map("max_ball_speed_lost")
+  fastestWonRally      Float    @default(0) @map("fastest_won_rally") // en secondes
+  fastestLostRally     Float    @default(0) @map("fastest_lost_rally") // en secondes
+  createdAt            DateTime @default(now()) @map("created_at")
+  match                Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId]) // Un joueur = 1 ligne de stats par match
+  @@index([userId])
+  @@index([matchId])
 }
 
 model Session {
