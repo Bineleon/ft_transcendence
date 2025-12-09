@@ -2,11 +2,6 @@ import { getRouteTail } from "../router";
 import { createProfileViewWindow } from "./profile/view";
 import { updateProfileView } from "./profile/load";
 
-type DailyMatchStat = {
-	date: string;
-	totalMatches: number;
-	wins: number;
-};
 
 export function Profile(): HTMLElement {
     // Build the DOM structure for the profile page
