@@ -707,7 +707,7 @@
            flex justify-center;
   }
   .title-profile {
-    @apply px-4 pt-4 font-jmh w-full text-5xl tracking-widest;
+    @apply px-4 pt-4 font-jmh text-5xl tracking-widest;
   }
   .subtitle-hed {
     @apply font-im-great text-center 
@@ -1018,13 +1018,26 @@
     z-index: 0;
   }
 
+  .frame-profilepic {
+    @apply relative inline-block overflow-hidden;  
+  }
+  .frame-profilepic::before {
+    content: "";
+    @apply absolute inset-0 pointer-events-none;
+    background-image: url("/imgs/borders/frame6.png");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    mix-blend-mode: normal;
+    z-index: 10;
+  }
+
   .frame-photo {
     @apply relative inline-block overflow-hidden;  
   }
   .frame-photo::before {
     content: "";
     @apply absolute inset-0 pointer-events-none;
-    background-image: url('/imgs/borders/frame.png');
+    background-image: url('/imgs/borders/frame6s.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     mix-blend-mode: normal;

@@ -1,8 +1,9 @@
 import { el }         from "../../home";
 import type { GameState } from "../game/types";
-import { matchAlert } from "../../utils/alertBox";
+import { runAuthBox } from "../../utils/alertBox";
 import { getLoggedName, getUserDatas } from "../../utils/todb";
 import type { PlayerId, PlayerInfo } from "../game/types";
+import { getTournamentDatas } from "../../utils/todb";
 
 const currentPlayers: Record<PlayerId, PlayerInfo | null> = {
     p1: null,
@@ -130,13 +131,13 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     }
 
     syncProfileBtn.onclick = async () => { 
-        const info = await matchAlert("sync");
-        if (!info) return;
+        const info = await runAuthBox("M_SYNC");
+        if (!info || !info.userName || !info.avatarUrl) return;
         applyPlayerInfoToBox(PBox, info, player, state);
 
     };
     guestBtn.onclick = async () => { 
-        const info = await matchAlert("guest");
+        const info = await runAuthBox("M_GUEST");
         if (!info) return;
         applyPlayerInfoToBox(PBox, info, player, state);
     };
@@ -145,11 +146,43 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     return PBox;
 }
 
-function handleTournamentPlayerInfo(box: HTMLDivElement, player: PlayerId, state: GameState): HTMLDivElement {
-    const info: PlayerInfo = { userName: player === "p1" ? state.p1.userName : state.p2.userName,
-                               avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
-    applyPlayerInfoToBox(box, info, player, state);
-    return box;
+function updateGameStateWithPlayersInfoFromMatch(state: GameState, match: any): void {
+    if (match.p1User && match.p1User.user) {
+        const p1Info: PlayerInfo = {
+            userName: match.p1User.user.userName,
+            avatarUrl: match.p1User.user.avatarUrl || "/imgs/avatar.png",
+        };
+        state.p1.userName = p1Info.userName;
+        state.p1.avatarUrl = p1Info.avatarUrl;
+        setPlayerInfo("p1", p1Info);
+    }
+    if (match.p2User && match.p2User.user) {
+        const p2Info: PlayerInfo = {
+            userName: match.p2User.user.userName,
+            avatarUrl: match.p2User.user.avatarUrl || "/imgs/avatar.png",
+        };
+        state.p2.userName = p2Info.userName;
+        state.p2.avatarUrl = p2Info.avatarUrl;
+        setPlayerInfo("p2", p2Info);
+    }
+}
+
+function handleTournamentPlayersInfo(box: HTMLDivElement, state: GameState): void {
+    console.log("Handling tournament players info, tournament =", state.tournamentCode);
+    if (!state) return;
+
+    /// Find Next Match (status = "schedueled")
+    getTournamentDatas(state.tournamentCode).then((t) => {
+        const nextMatch = t.matches?.find((m) => m.status === "SCHEDULED");
+        if (!nextMatch) return;
+        
+        updateGameStateWithPlayersInfoFromMatch(state, nextMatch);
+        const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
+        const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
+        box.append(P1Box, P2Box);
+    }).catch((err) => {
+        console.error("Error fetching tournament data for players box:", err);
+    });
 }
 
 export function createPlayersBox(state: GameState): HTMLDivElement {
@@ -160,16 +193,9 @@ export function createPlayersBox(state: GameState): HTMLDivElement {
         xl:w-[1404px]
         xxl:w-[1950px]`) as HTMLDivElement;
 
-    if (state.tournament) {
-        const p1Info: PlayerInfo = { userName: state.p1.userName, avatarUrl: state.p1.avatarUrl };
-        const p2Info: PlayerInfo = { userName: state.p2.userName, avatarUrl: state.p2.avatarUrl };
-        const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
-        applyPlayerInfoToBox(P1Box, p1Info, "p1", state);
-        P1Box.classList.add("justify-self-start");
-        const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
-        applyPlayerInfoToBox(P2Box, p2Info, "p2", state);
-        P2Box.classList.add("justify-self-end");
-        playersBox.append(P1Box, P2Box);
+    console.log("Creating players box, tournament =", state.tournamentCode);
+    if (state.tournamentCode) {
+        handleTournamentPlayersInfo(playersBox, state);
     } else {
         const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
         P1Box.classList.add("justify-self-start");

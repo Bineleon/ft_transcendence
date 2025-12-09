@@ -43,16 +43,6 @@ export function initPlayersInfo(state: GameState) {
 }
 
 export function initState(tCode?: string): GameState {
-  let t: Tournament | undefined = undefined;
-  if (tCode) {
-    getTournamentDatas(tCode).then(tournament => {
-      t = tournament;
-    }).catch(() => {
-      t = undefined;
-    });
-  }
-  
-
   return {
     world: { w: 1500, h: 900 },   // logique, pas pixels
     ball: {
@@ -114,6 +104,5 @@ export function initState(tCode?: string): GameState {
     },
     p1: { userName: "P1", avatarUrl: "" }, p2: { userName: "P2", avatarUrl: "" },
     tournamentCode: tCode,
-    tournament: t
   } as GameState;
 }

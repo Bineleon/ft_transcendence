@@ -103,7 +103,8 @@ export type AuthMode =
 /// Definir les retours possibles
 export type AuthResult =
   | { kind: "logged"; userName: string; }
-  | { kind: "guest"; userName: string }
+  | { kind: "guest"; userName?: string; avatarUrl?: string; }
+  | { kind: "sync"; userName?: string; avatarUrl?: string; }
   | { kind: "join"; userName: string; }
   | { kind: "cancel" }
   | { kind: "unregister"; userName: string; };
@@ -232,7 +233,7 @@ const AUTH_CONFIG: Record<AuthMode, AuthUiConfig> = {
         showLoginInputs: true,
         show2FA: false,
         showGoogleBtn: false,
-        showAltBtn: true,
+        showAltBtn: false,
         submitLabel: "Sync Profile",
         behavior: "sync",
     },
@@ -338,10 +339,42 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
                 // 2) MATCH SYNC - Utilisateur déjà loggué
                 if (handleSubmitBehavior === "sync") {
                     dom.googleBtn.classList.add("hidden");
-                    const user = await getUserDatas(currentLogin || "").catch(() => null);
-                    const userName = user ? user.data.user.username : currentLogin || "Player";
+
+                    const userName = dom.inputLogin.value.trim();
+                    if (!userName) {
+                        pongAlert("Please enter your login to sync.", "error");
+                        dom.submitBtn.disabled = false;
+                        return;
+                    }
+                    const password = dom.inputPassword.value;
+                    if (!password) {
+                        pongAlert("Please enter your password to sync.", "error");
+                        dom.submitBtn.disabled = false;
+                        return;
+                    }
+
+                    const resp = await apiFetch("/api/auth/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: userName, password }),
+                        credentials: "include",
+                    });
+
+                    const data = await resp.json();
+
+                    if (!resp.ok) {
+                        const msg = data.error?.message || data.message || "Login failed";
+                        pongAlert(msg, "error");
+                        dom.submitBtn.disabled = false;
+                        return;
+                    }
+
+                    currentLogin = userName;
+
+                    console.log("Sync profile for logged user:", currentLogin);
+                    const user = await getUserDatas(currentLogin).catch(() => null);
                     const avatarUrl = user?.data.user.avatarUrl || "/imgs/avatar.png";
-                    finish({ kind: "logged", userName, avatarUrl });
+                    finish({ kind: "sync", userName, avatarUrl });
                     return;
                 }
 

@@ -121,6 +121,9 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
                         ${error instanceof Error ? error.message : "Network error"}`);
                 }
             };
+        } else if (getNbRegisteredPlayers(getAllPlayerNames(t)) >= t.maxParticipants) {
+            joinTournamentBtn.classList.add("hidden");
+            joinTournamentAsNewBtn.classList.add("hidden");
         } else {
             joinTournamentBtn.classList.add("hidden");
             joinTournamentAsNewBtn.classList.remove("hidden");
@@ -163,6 +166,7 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
             }
         };
     });
+
 
     div.append(joinTournamentAsNewBtn, joinTournamentBtn, unregisterFromTournamentBtn, deleteTournamentBtn);
     return div;

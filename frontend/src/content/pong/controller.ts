@@ -394,26 +394,41 @@ export class GameController {
         const stats = liveStatsToMatchStats(this.state.stats);
         const apiMatch = playedMatchStatsToApi(stats);
 
-        try {
-            const res = await fetch("/api/matches/played", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include", // pour envoyer les cookies JWT
-                body: JSON.stringify(apiMatch), // 👉 uniquement PlayersStats
-            });
+        if (!apiMatch.tournamentCode) {
+            try {
+                const res = await fetch("/api/matches/played", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: "include", // pour envoyer les cookies JWT
+                    body: JSON.stringify(apiMatch), // 👉 uniquement PlayersStats
+                });
 
-            if (!res.ok) {
-                const text = await res.text().catch(() => "");
-                console.error(
-                    "[GameController] Failed to send match stats",
-                    res.status,
-                    text
-                );
+                if (!res.ok) {
+                    const text = await res.text().catch(() => "");
+                    console.error(
+                        "[GameController] Failed to send match stats",
+                        res.status,
+                        text
+                    );
+                }
+            } catch (err) {
+                console.error("[GameController] Error while sending match stats", err);
             }
-        } catch (err) {
-            console.error("[GameController] Error while sending match stats", err);
+        } else {
+            try {
+                const res = await fetch(`/api/matches/${apiMatch.tournamentCode}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: "include", // pour envoyer les cookies JWT
+                    body: JSON.stringify(apiMatch), // 👉 uniquement PlayersStats
+                });
+            } catch (err) {
+                console.error("[GameController] Error while sending tournament match stats", err);
+            }
         }
     }
 

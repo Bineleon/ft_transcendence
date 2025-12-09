@@ -122,6 +122,5 @@ export interface GameState {
     p2: PlayerInfo;
 
     tournamentCode?: string;
-    tournament?: Tournament;
 }
 

@@ -26,8 +26,9 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
     return res;
   }
 
-  // si sur la page de jeu ou de tournoi → on ne fait rien
-  if (window.location.hash.startsWith("#/playpong/") || window.location.hash.startsWith("#/tournament/")) {
+  // si sur la page de jeu ou de tournoi ou de profile → on ne fait rien
+  if (window.location.hash.startsWith("#/playpong/") || window.location.hash.startsWith("#/tournament/")
+  || window.location.hash.includes("/profile/")) {
     return res;
   }
 
@@ -37,17 +38,16 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
       method: "POST",
       credentials: "include",
     });
-
     if (!refreshRes.ok) {
       // Refresh impossible → on considère la session expirée
-      pongAlert("Merci de vous reconnecter.");
+      pongAlert("Please log in again.");
       window.location.href = "/#/login";
       return res;
     }
 
     const refreshData = await refreshRes.json();
     if (!refreshData.success) {
-      pongAlert("Merci de vous reconnecter.");
+      pongAlert("! Please log in again.");
       window.location.href = "/#/login";
       return res;
     }
@@ -57,7 +57,7 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
     return res;
   } catch (err) {
     console.error("Refresh token error:", err);
-    pongAlert("Erreur d'authentification. Merci de vous reconnecter.");
+    pongAlert("Authentication error. Please log in again.");
     window.location.href = "/#/login";
     return res;
   }
