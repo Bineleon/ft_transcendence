@@ -170,3 +170,9 @@ export interface UpdateUserData {
   passwordHash?: string;
   avatarUrl?: string | null;
 }
+
+export type DailyMatchStat = {
+  date: string;
+  totalMatches: number;
+  wins: number;
+}

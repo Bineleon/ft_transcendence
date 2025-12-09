@@ -8,7 +8,8 @@ import type {
   UpdateUserData,
   PlayerStatsResponse,
   PlayerMatchHistoryResponse,
-  PlayerMatchItem         
+  PlayerMatchItem,
+  DailyMatchStat
 } from './users.model.js';
 import { hashPassword, comparePassword } from '../../shared/utils/password.js';
 import { formatUser } from '../../shared/utils/formatters.js';
@@ -48,6 +49,56 @@ export class UserService {
       createdAt: user.createdAt.toISOString()
     };
   }
+
+  // ---- Yoann : Fonction pour renvoyer un tableau de stats de matchs sur les 7 last days ----
+  async getDailyMatchStats(userId: string): Promise<DailyMatchStat[]> {
+	const start = new Date();
+	start.setDate(start.getDate() - 6);
+	start.setHours(0, 0, 0, 0);
+	
+	// now = Moment présent / start = 7 jours pile en arrière
+
+	const matches = await this.prisma.match.findMany({
+		where: { 
+			OR: [
+				{ p1UserId: userId }, // Soit le joueur est p1
+				{ p2UserId: userId }, // Soit le joueur est p2
+			],
+			status: "CLOSED", // Seulement les matchs terminés
+			closedAt: { gte: start}, // seulement les matchs depuis la date "start"
+		}
+	});
+	// matches contient tout les objet match de la db depuis les 7 derniers jours.
+	// Et on a besoin de les regrouper par jour, donc on utilise statsByDate
+	const statsByDate: Record<string, { totalMatches: number; wins: number }> = {};
+	
+	for(const match of matches) // Pour chaque objet match de matches
+	{
+		const matchDate = match.closedAt ?? match.createdAt;
+		const key = matchDate.toISOString().slice(0, 10); // On met la date au bon format
+		if(!statsByDate[key]) // Si il n'y a aucun match a la date key
+			statsByDate[key] = { totalMatches: 0, wins: 0};
+		statsByDate[key].totalMatches += 1;
+		if(match.winnerUserId === userId){
+			statsByDate[key].wins += 1;
+		}
+	}
+	const result: DailyMatchStat[] = [];
+	for(let i = 0; i < 7; i++)
+	{
+		const day = new Date(start);
+		day.setDate(start.getDate() + i);
+		const key = day.toISOString().slice(0, 10);
+		const dayStats = statsByDate[key] ?? { totalMatches: 0, wins: 0};
+		// ?? Signfie si la valeur de gauche est null, alors on attribue la valeur de droite.
+		result.push({
+			date: key,
+			totalMatches: dayStats.totalMatches,
+			wins: dayStats.wins,
+		});
+	}
+	return result;
+}
 
   async updateProfile(userId: string, data: UpdateProfileRequest): Promise<UserProfile> {
     const exists = await this.prisma.user.findUnique({ where: { id: userId } });

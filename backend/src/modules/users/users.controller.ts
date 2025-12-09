@@ -150,4 +150,17 @@ export function userController(app: FastifyInstance, userService: UserService) {
       return result;
     }
   );
+
+/** GET /api/profile/dashboard/daily-matches 
+ * Récupérer les matchs des 7 derniers jours pour le dashboard d'un user.
+*/
+  app.get(
+	'/api/profile/dashboard/daily-matches',
+	{ preHandler : authenticate },
+	async (request) => {
+		const userId = request.user!.userId;
+		const stats = await userService.getDailyMatchStats(userId);
+		return formatSuccess({ stats }, 'Daily match stats loaded');
+	}
+  );
 }

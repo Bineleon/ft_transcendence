@@ -2,12 +2,12 @@ import { getRouteTail } from "../router";
 import { createProfileViewWindow } from "./profile/view";
 import { updateProfileView } from "./profile/load";
 
-/**
- * Profile page component. This function creates the DOM structure for the
- * user profile using createProfileViewWindow() and then delegates data loading
- * and mode setup to updateProfileView(). It returns the root element to be
- * rendered by the router.
- */
+type DailyMatchStat = {
+	date: string;
+	totalMatches: number;
+	wins: number;
+};
+
 export function Profile(): HTMLElement {
     // Build the DOM structure for the profile page
     const view = createProfileViewWindow();
