@@ -171,8 +171,14 @@ export interface UpdateUserData {
   avatarUrl?: string | null;
 }
 
-export type DailyMatchStat = {
+export type DailyMatchStats = {
   date: string;
   totalMatches: number;
   wins: number;
 }
+
+export type RecentMatchRallyStat = {
+    date: string;          // "Game 1", ou "M-1", ou une date
+    avgRallyBounces: number;
+    avgRallyTime: number;   // en secondes, par ex.
+};
