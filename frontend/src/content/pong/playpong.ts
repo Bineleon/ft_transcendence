@@ -1,20 +1,25 @@
 import { createGameViewWindow }     from "./ui/view";
 import { setupCanvas }              from "./core/canvas";
 import { GameController }           from "./controller";
+import type { Tournament }          from "../tournament/uiTypes";
+import { getRouteTail } from "../../router";
 
 export function PlayPong(): HTMLElement {
     // Création de la fenêtre de jeu
     const view = createGameViewWindow();
-
     // Configuration du canvas Pong
     const context = setupCanvas(view.canvas);
 
-    // Configuration de l'overlay
-    const controller = new GameController({ context, view });
+    let tCode = getRouteTail("/playpong") || "";
+
+    const opts: any = { context, view };
+    if (tCode) opts.tCode = tCode;
+
+    const controller = new GameController(opts);
 
     controller.boot();
 
-    return view.main;
+    return view.root;
 }
 
 /*** MEMO **

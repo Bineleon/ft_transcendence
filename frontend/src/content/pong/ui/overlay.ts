@@ -1,6 +1,8 @@
 import type { GamePhase, GameState }        from "../game/types";
 import { el, text }                         from "../../home";
 import { GameController }                   from "../controller";
+import { pongAlert }                        from "../../utils/alertBox.ts"
+import { areBothPlayersRegistered }         from "./players";
 
 export class domOverlayManager {
     private gameController: GameController;
@@ -14,11 +16,15 @@ export class domOverlayManager {
     public bindHTMLElement(phase: GamePhase, state: GameState): HTMLElement {
         switch (phase) {
             case "START": {
-                const b = el("button", "px-4 py-2 border pointer-events-auto hover:bg-white/100");
+                const b = el("button", "btn-click");
                 b.textContent = "START";
                 b.addEventListener("click", (e) => {
                     e.stopPropagation();
-                    this.gameController.setPhase("WAITING");
+                    if (areBothPlayersRegistered(state)) {
+                        this.gameController.setPhase("WAITING");
+                    } else {
+                        pongAlert("Both players must be set before starting the game.");
+                    }
                 });
                 return b;
             }
@@ -36,7 +42,7 @@ export class domOverlayManager {
                 return wrap;
             }
             case "COUNTDOWN": {
-                const c = el("div", "text-6xl font-bold pointer-events-none");
+                const c = el("div", "text-6xl font-bold font-jmh pointer-events-none");
                 c.textContent = String(this.countdownLeft ?? 3);
                 return c;
             }
@@ -45,13 +51,13 @@ export class domOverlayManager {
             }
             case "PAUSED": {
                 const wrap = el("div", "text-center");
-                const b1 = el("button", "px-4 py-2 border pointer-events-auto hover:bg-white/100");
+                const b1 = el("button", "btn-click");
                 b1.textContent = "RESUME";
                 b1.addEventListener("click", (e) => {
                     e.stopPropagation();
                     this.gameController.setPhase("COUNTDOWN");
                 });
-                const b2 = el("button", "px-4 py-2 border pointer-events-auto hover:bg-white/100 mt-2");
+                const b2 = el("button", "btn-click mt-2");
                 b2.textContent = "RESTART";
                 b2.addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -66,7 +72,7 @@ export class domOverlayManager {
                 score.append(
                     text(`${state.stats.p1Score} - ${state.stats.p2Score}`)
                 );
-                const b = el("button", "px-4 py-2 border pointer-events-auto hover:bg-white/100");
+                const b = el("button", "btn-click");
                 b.textContent = "RESTART";
                 b.addEventListener("click", (e) => {
                     e.stopPropagation();

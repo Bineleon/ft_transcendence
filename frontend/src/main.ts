@@ -6,7 +6,9 @@ import { Game } from "./content/game";
 import { PlayPong } from "./content/pong/playpong";
 import { Profile } from "./content/profile";
 import { ChoseTournament } from "./content/tournament/tournament";
-
+import { classicTournament } from "./content/tournament/classic";
+import { PlaySnake } from "./content/snake/snake";
+import { Settings } from "./content/settings";
 
 // Structure des routes de l'application
 const routes = {
@@ -14,12 +16,27 @@ const routes = {
   "/login": LoginPage,
   "/game": Game,
   "/profile": Profile,
-  "/gameon": PlayPong,
-  "/tournament": ChoseTournament,
-  // "/tournament/classic": classicTournament,
-  // "/tournament/ladder": ladderTournament,
+  "/playpong": PlayPong,
+  "/tournament/classic": classicTournament,
+  // "/tournament/king": kingTournament,
   // "/tournament/gauntlet": gauntletTournament,
+  "/tournament": ChoseTournament,
+  "/snake": PlaySnake,
+  "/settings": Settings,
 };
 
-// 
-createRouter("app", routes);  // le router écoute et rend tout seul
+// ✅ Gérer le state de Google OAuth AVANT d'initialiser le router
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  const state = params.get("state");
+
+  if (state) {
+    // On enlève ?state=... de l’URL pour garder un truc propre
+    window.history.replaceState({}, "", window.location.origin);
+    // On renvoie vers la route d’origine (#/...)
+    window.location.hash = state;
+  }
+
+  // Le router écoute et rend tout seul
+  createRouter("app", routes);
+})();

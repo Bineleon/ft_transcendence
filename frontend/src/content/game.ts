@@ -28,7 +28,11 @@ export function Game(): HTMLElement {
   const leftTitle = el(
     "h3", "items-center border-4 font-jmh uppercase text-xl mb-4"
   );
-  leftTitle.append(text("Breaking News !"));
+  const snakeLink = el("a", "text-black underline decoration-4 hover:bg-black hover:text-white");
+  snakeLink.href = "#/snake";
+  snakeLink.append(text("YOU SHOULD CLICK"));
+  leftTitle.append(snakeLink);
+
 
   const leftContent = el(
     "p", "font-modern-type text-justify text-xl"
@@ -65,26 +69,20 @@ export function Game(): HTMLElement {
 
   /// Partie basse
   const bottomDivider = el(
-    "div", "grid grid-cols-1 md:grid-cols-2 gap-4 items"
-  );
+    "div", "grid grid-cols-1 md:grid-cols-2 gap-4 flex items-center");
   const centerBottom = el(
-    "section",  "p-4 border-4 border-dashed border-black"
-  );
+    "section",  "p-4 border-4 border-dashed border-black");
   const centerBottomTitle = el(
-    "h2", "font-royalvogue text-2xl mb-4"
-  );
+    "h2", "font-royalvogue text-2xl mb-4");
   centerBottomTitle.append(
-    text("Last Tournament"), el("br"), text("Top 3 Players")
-  );
+    text("Last Tournament"), el("br"), text("Top 3 Players"));
   
   const centerBottomContent = el(
-    "ul", "font-modern-type text-md"
-  );
+    "ul", "font-modern-type text-md");
   const players = [
     "1. Player One - 1000 points",
     "2. Player Two - 900 points",
-    "3. Player Three - 800 points"
-  ];
+    "3. Player Three - 800 points"];
   players.forEach(player => {
     const listItem = el("li", "border-b border-gray-300 py-2");
     listItem.append(text(player));
@@ -94,15 +92,15 @@ export function Game(): HTMLElement {
   centerBottom.append(centerBottomTitle, centerBottomContent);
 
   const tournament = el(
-    "a", "box-dark in-dark-box"
-  ) as HTMLAnchorElement;
+    "a", `img-newspaper p-4 -m-4 my-9 box-dark in-dark-box whitespace-pre-line
+          items-center text-2xl`) as HTMLAnchorElement;
   tournament.href = "#/tournament";
   tournament.setAttribute("aria-label", "Tournament Details");
-  tournament.append(
-    text("Next tournament starts"),
-    el("br"), // une ligne vide si besoin mettre deux <br>
-    text("July 15, 2024")
-  );
+  tournament.append(text(`
+    click here to
+    know more about
+    `));
+  tournament.append(el("h1", "font-im-double text-3xl underline", text(`TOURNAMENTS\n\n\n`)));
   bottomDivider.append(centerBottom, tournament);
   //////////////////////////////////////////////////////
 
@@ -120,7 +118,7 @@ export function Game(): HTMLElement {
   photoFrame.append(photo);
 
   const playButton = el("a", "btn-click mt-6") as HTMLAnchorElement;
-  playButton.href = "#/gameon";
+  playButton.href = "#/playpong";
   playButton.append(text("Play Pong"));
   right.append(photoTitle, photoFrame, playButton);
   ////////////////////////////////////////////////

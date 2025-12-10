@@ -1,4 +1,6 @@
 import { el, text } from "./home";
+import { pongAlert } from "./utils/alertBox";
+import { apiFetch } from "./utils/apiFetch";
 
 /* Fonction Login */
 function login(): HTMLElement {
@@ -7,9 +9,13 @@ function login(): HTMLElement {
     loginBox.append(text("WELCOME BACK"));
 
     const subTitle = el("h3", "font-ocean-type text-2xl text-center mb-6");
-    subTitle.append(text("Please login to access the game and continue your adventure! We missed you !"));
+    subTitle.append(
+        text(
+            "Please login to access the game and continue your adventure! We missed you !"
+        )
+    );
 
-    const form = el("form", "flex flex-col gap-4");
+    const form = el("form", "flex flex-col gap-4") as HTMLFormElement;
 
     // --- Inputs login / password ---
     const inputLogin = el("input", "btn-input") as HTMLInputElement;
@@ -41,20 +47,28 @@ function login(): HTMLElement {
             // --- Phase 2: envoi du code 2FA ---
             if (!input2FA.classList.contains("hidden")) {
                 const code = input2FA.value;
-                const response = await fetch("/api/auth/verify-2fa", {
+                const doToken = true;
+                const response = await apiFetch("/api/auth/verify-2fa", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: input2FA.dataset.userId, code }),
-                    credentials: "include"
+                    body: JSON.stringify({ userId: input2FA.dataset.userId, code, doToken }),
+                    credentials: "include",
                 });
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert("2FA verified! Login successful.");
-                    window.location.hash = "#/profile";
+                    pongAlert("2FA verified! Login successful.");
+                    try {
+                        window.dispatchEvent(new Event("auth-changed"));
+                    } catch (_e) {}
+
+                    const ID = inputLogin.value;
+                    // Pour l’instant on garde ton comportement existant :
+                    // redirection vers le profil de l’utilisateur
+                    window.location.hash = `#/profile/${ID}`;
                 } else {
-                    const errorMessage = data.error?.message || data.message || 'Invalid 2FA code';
-                    alert(`2FA verification failed: ${errorMessage}`);
+                    const errorMessage = data.error?.message || data.message || "Invalid 2FA code";
+                    pongAlert(`2FA verification failed: ${errorMessage}`);
                     inputSubmit.disabled = false;
                 }
                 return;
@@ -62,17 +76,17 @@ function login(): HTMLElement {
 
             // --- Phase login classique ---
             if (!inputLogin.value || !inputPassword.value) {
-                alert("Please fill in all fields.");
+                pongAlert("Please fill in all fields.");
                 inputSubmit.disabled = false;
                 return;
             }
 
             const payload = { username: inputLogin.value, password: inputPassword.value };
-            const response = await fetch("/api/auth/login", {
+            const response = await apiFetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                credentials: "include"
+                credentials: "include",
             });
             const data = await response.json();
 
@@ -80,21 +94,44 @@ function login(): HTMLElement {
                 input2FA.classList.remove("hidden");
                 input2FA.dataset.userId = data.data.userId;
                 input2FA.focus();
-                alert("Login successful! Please enter your 2FA code sent by email.");
+                pongAlert("Login successful! Please enter your 2FA code sent by email.");
             } else {
-                const errorMessage = data.error?.message || data.message || 'Login failed';
-                alert(`Login failed: ${errorMessage}`);
+                const errorMessage = data.error?.message || data.message || "Login failed";
+                pongAlert(`Login failed: ${errorMessage}`);
                 inputSubmit.disabled = false;
             }
-
         } catch (error) {
             console.error("Login error:", error);
-            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            pongAlert(
+                `An error occurred: ${
+                    error instanceof Error ? error.message : "Network error"
+                }`
+            );
             inputSubmit.disabled = false;
         }
     });
 
-    form.append(inputLogin, inputPassword, input2FA, inputSubmit);
+    // --- Bouton Google OAuth ---
+    const divider = el("div", "text-center text-sm text-gray-400 my-2");
+    divider.textContent = "OR";
+
+    // On ne met plus un href fixe, on construit l’URL avec le state côté JS
+    const googleBtn = el(
+        "button",
+        "btn-click flex items-center justify-center gap-2"
+    ) as HTMLButtonElement;
+    googleBtn.type = "button";
+    googleBtn.textContent = "Sign in with Google";
+    const ID = inputLogin.value;
+
+    googleBtn.addEventListener("click", () => {
+        // On prend la route courante (hash) comme state
+        window.location.hash = `#/profile/${ID}`;
+        const state = encodeURIComponent(window.location.hash);
+        window.location.href = `/api/auth/google?state=${state}`;
+    });
+
+    form.append(inputLogin, inputPassword, input2FA, inputSubmit, divider, googleBtn);
     panel.append(loginBox, subTitle, form);
     return panel;
 }
@@ -106,10 +143,14 @@ function register(): HTMLElement {
     title.append(text("SUBSCRIBE TODAY !!!"));
 
     const subTitle = el("h3", "font-modern-type text-2xl text-justify mb-6");
-    subTitle.append(text("and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"));
+    subTitle.append(
+        text(
+            "and receive exclusive access to the game, become a wonderful member of our community, and enjoy special perks!"
+        )
+    );
 
     const form = el("form", "flex flex-col gap-4") as HTMLFormElement;
-    form.noValidate = true; // ⬅️ ajout pour ne plus bloquer le submit par la validation HTML5
+    form.noValidate = true; // on laisse le backend gérer la validation métier
 
     const inputEmail = el("input", "btn-input") as HTMLInputElement;
     inputEmail.type = "email";
@@ -135,45 +176,51 @@ function register(): HTMLElement {
     submit.type = "submit";
     submit.textContent = "Submit";
 
-    form.addEventListener("input", () => submit.disabled = !form.checkValidity());
+    form.addEventListener("input", () => (submit.disabled = !form.checkValidity()));
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         if (!inputEmail.value || !inputLogin.value || !inputPassword.value) {
-            alert("Please fill in all fields."); return;
+            pongAlert("Please fill in all fields.");
+            return;
         }
         if (inputPassword.value !== confirmPassword.value) {
-            alert("Passwords do not match!"); return;
+            pongAlert("Passwords do not match!");
+            return;
         }
 
         submit.disabled = true;
         const payload = { email: inputEmail.value, username: inputLogin.value, password: inputPassword.value };
 
         try {
-            const response = await fetch("/api/auth/register", {
+            const response = await apiFetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                credentials: "include"
+                credentials: "include",
             });
             const data = await response.json();
 
             if (response.ok) {
-                alert("Registration successful! You can now log in.");
-                window.location.hash = "#/profile";
+                pongAlert("Registration successful! You can now log in.");
+                window.location.hash = "#/login";
             } else {
                 const errorMessage =
-                    (Array.isArray(data?.error?.messages) && data.error.messages.join('\n')) ||
+                    (Array.isArray(data?.error?.messages) && data.error.messages.join("\n")) ||
                     data?.error?.message ||
                     data?.message ||
-                    'Unknown error';
+                    "Unknown error";
 
-                alert(`Registration failed:\n${errorMessage}`);
+                pongAlert(`Registration failed:\n${errorMessage}`);
             }
         } catch (error) {
             console.error("Registration error:", error);
-            alert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
+            pongAlert(
+                `An error occurred: ${
+                    error instanceof Error ? error.message : "Network error"
+                }`
+            );
         } finally {
             submit.disabled = false;
         }

@@ -9,6 +9,7 @@ import { generateToken } from '../../shared/utils/jwt.js';
 import { ValidationError, ConflictError, AuthError } from '../../shared/errors/index.js';
 import bcrypt from 'bcrypt';
 import { MailService } from '../../shared/services/mail.service.js';
+import { validateLoginFields } from './auth.validation.js';
 
 export class AuthService {
   private mailService: MailService;
@@ -19,12 +20,8 @@ export class AuthService {
 
   /**
    * Enregistrement d’un nouvel utilisateur.
-   * Crée le user et lui envoie un code 2FA obligatoire par email.
    */
-
   async register(data: RegisterRequest): Promise<{ userId: string; message: string }> {
-    this.validateRegisterData(data);
-
     const existingEmail = await this.prisma.user.findUnique({ where: { email: data.email } });
     if (existingEmail) throw new ConflictError('Email already in use');
 
@@ -47,10 +44,19 @@ export class AuthService {
    * Login avec vérification du mot de passe.
    */
   async login(data: LoginRequest): Promise<{ userId: string; message: string }> {
-    this.validateLoginData(data);
+    const errors = validateLoginFields(data);
+
+    if (errors.length > 0) {
+      throw new ValidationError(errors.join(" | "));
+    }
 
     const user = await this.prisma.user.findUnique({ where: { username: data.username } });
     if (!user) throw new AuthError('Invalid username or password');
+
+    // 🔥 Correction : si pas de passwordHash → compte Google
+    if (!user.passwordHash) {
+      throw new AuthError("This account was created via Google OAuth and has no password. Please log in with Google.");
+    }
 
     const isPasswordValid = await comparePassword(data.password, user.passwordHash);
     if (!isPasswordValid) throw new AuthError('Invalid username or password');
@@ -58,10 +64,8 @@ export class AuthService {
     // Nettoyage anciens codes expirés
     await this.prisma.twoFactor.deleteMany({ where: { expiresAt: { lt: new Date() } } });
 
-    // Génération + stockage du code 2FA
     const code = await this.generateAndStore2FACode(user.id);
 
-    // Envoi par email via MailService
     await this.mailService.send2FACode(user.email, code);
 
     return {
@@ -110,32 +114,12 @@ export class AuthService {
   private async generateAndStore2FACode(userId: string): Promise<string> {
     const code = (Math.floor(100000 + Math.random() * 900000)).toString();
     const hashedCode = await bcrypt.hash(code, 10);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await this.prisma.twoFactor.create({
       data: { userId, code: hashedCode, expiresAt }
     });
 
     return code;
-  }
-
-  /**
-   * Validation des données
-   */
-  private validateRegisterData(data: RegisterRequest): void {
-    if (!data.email || typeof data.email !== 'string') throw new ValidationError('Email is required');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) throw new ValidationError('Invalid email format');
-
-    if (!data.username || typeof data.username !== 'string') throw new ValidationError('Username is required');
-    if (data.username.length < 3 || data.username.length > 20) throw new ValidationError('Username must be between 3 and 20 characters');
-    if (!/^[a-zA-Z0-9_-]+$/.test(data.username)) throw new ValidationError('Username can only contain letters, numbers, underscores and hyphens');
-
-    if (!data.password || typeof data.password !== 'string') throw new ValidationError('Password is required');
-    if (data.password.length < 8) throw new ValidationError('Password must be at least 8 characters long');
-  }
-
-  private validateLoginData(data: LoginRequest): void {
-    if (!data.username || typeof data.username !== 'string') throw new ValidationError('Username is required');
-    if (!data.password || typeof data.password !== 'string') throw new ValidationError('Password is required');
   }
 }

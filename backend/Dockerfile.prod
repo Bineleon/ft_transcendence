@@ -18,7 +18,7 @@ RUN npm ci
 
 # Copier le reste du code et générer le client Prisma
 COPY . .
-RUN mkdir -p database && chown -R node:node database
+RUN mkdir -p database && chown -R node:node /app/database
 RUN npx prisma generate
 
 

@@ -1,11 +1,7 @@
-/**
- * Models et types pour le module User
- */
-
 import type { User } from '@prisma/client';
 
 // ============================================
-// 1. TYPES DE REQUÊTE (ce que le client envoie)
+//  TYPES DE REQUÊTE (ce que le client envoie)
 // ============================================
 
 /**
@@ -34,7 +30,7 @@ export interface SearchUsersQuery {
 }
 
 // ============================================
-// 2. TYPES DE RÉPONSE (ce que le serveur renvoie)
+//  TYPES DE RÉPONSE (ce que le serveur renvoie)
 // ============================================
 
 /**
@@ -72,7 +68,91 @@ export interface UserListItem {
 }
 
 // ============================================
-// 3. TYPES UTILITAIRES (usage interne)
+//  STATS D'UN JOUEUR
+// ============================================
+
+/**
+ * Stats globales d'un joueur (tous matchs confondus)
+ */
+export interface PlayerStatsResponse {
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+  
+  // Stats générales
+  totalMatches: number;           // Nombre total de matchs joués
+  totalWins: number;              // Nombre de victoires
+  totalLosses: number;            // Nombre de défaites
+  winRate: number;                // Taux de victoire (0-100)
+  
+  // Stats en tournoi
+  tournamentsPlayed: number;      // Nombre de tournois joués
+  tournamentsWon: number;         // Nombre de tournois gagnés
+  
+  // Records personnels
+  longestWinStreak: number;       // Plus longue série de victoires
+  currentWinStreak: number;       // Série de victoires actuelle
+  
+  maxBouncesInMatch: number;      // Plus long échange de tous les matchs
+  maxBallSpeedEver: number;       // Vitesse de balle max jamais atteinte
+  totalBallSpins: number;         // Nombre total d'effets utilisés
+  
+  fastestWinEver: number;         // Victoire la plus rapide (secondes)
+  avgMatchDuration: number;       // Durée moyenne d'un match
+  
+  // Stats de performances
+  avgScorePerMatch: number;       // Score moyen par match
+  avgBouncesPerRally: number;     // Moyenne d'échanges par partie
+}
+
+/**
+ * Un match dans l'historique d'un joueur
+ */
+export interface PlayerMatchItem {
+  id: string;
+  createdAt: Date;
+  closedAt: Date | null;
+  
+  // Informations du joueur dans ce match
+  playerScore: number;            // Score du joueur
+  isWinner: boolean;              // Le joueur a-t-il gagné ?
+  
+  // Informations de l'adversaire
+  wasP1: boolean;                 // Le joueur était-il P1 ?
+  p1UserId: string | null;        // ID de P1 (null si guest)
+  p1Username: string;             // Username de P1
+  p1AvatarUrl: string | null;     // Avatar de P1
+  p1Score: number;                // Score de P1
+  
+  p2UserId: string | null;        // ID de P2 (null si guest)
+  p2Username: string;             // Username de P2
+  p2AvatarUrl: string | null;     // Avatar de P2
+  p2Score: number;                // Score de P2
+  
+  // Stats du match
+  duration: number;               // Durée du match
+  longestRally: number;           // Plus long échange
+  maxBallSpeed: number;           // Vitesse max de balle
+  effectsUsed: number;            // Effets utilisés par le joueur
+  
+  // Tournoi (si applicable)
+  tournamentId: string | null;
+  tournamentName: string | null;
+  round: number | null;
+}
+
+/**
+ * Historique de matchs d'un joueur avec pagination
+ */
+export interface PlayerMatchHistoryResponse {
+  userId: string;
+  username: string;
+  totalMatches: number;           // Nombre total de matchs (pour pagination)
+  matches: PlayerMatchItem[];     // Liste des matchs
+}
+
+// ============================================
+//  TYPES UTILITAIRES (usage interne)
 // ============================================
 
 /**
@@ -89,4 +169,10 @@ export interface UpdateUserData {
   username?: string;
   passwordHash?: string;
   avatarUrl?: string | null;
+}
+
+export type DailyMatchStat = {
+  date: string;
+  totalMatches: number;
+  wins: number;
 }
