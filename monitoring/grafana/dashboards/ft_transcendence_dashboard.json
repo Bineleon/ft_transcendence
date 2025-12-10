@@ -1,0 +1,96 @@
+{
+    "id": null,
+    "title": "FT Transcendence Monitoring",
+    "uid": "ft-transcendence",
+    "tags": [
+        "fastify",
+        "prometheus",
+        "docker"
+    ],
+    "timezone": "browser",
+    "schemaVersion": 30,
+    "version": 1,
+    "refresh": "5s",
+    "panels": [
+        {
+            "type": "stat",
+            "title": "Total HTTP Requests",
+            "targets": [
+                {
+                    "expr": "sum(http_requests_total)",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            }
+        },
+        {
+            "type": "graph",
+            "title": "Request Duration (seconds)",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 12,
+                "h": 4
+            }
+        },
+        {
+            "type": "stat",
+            "title": "CPU Usage (Node)",
+            "targets": [
+                {
+                    "expr": "100 - (avg by(instance)(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 6,
+                "h": 4
+            }
+        },
+        {
+            "type": "stat",
+            "title": "Memory Usage (Node)",
+            "targets": [
+                {
+                    "expr": "1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "x": 6,
+                "y": 4,
+                "w": 6,
+                "h": 4
+            }
+        },
+        {
+            "type": "stat",
+            "title": "Running Containers",
+            "targets": [
+                {
+                    "expr": "count(container_start_time_seconds)",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "x": 12,
+                "y": 4,
+                "w": 6,
+                "h": 4
+            }
+        }
+    ]
+}
