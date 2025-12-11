@@ -13,6 +13,15 @@ export type RecentMatchAvgStats = {
     avgRallyTime: number;   // en secondes, par ex.
 };
 
+type RecentMatchSummary = {
+    p1Username: string;
+    p2Username: string;
+    p1Score: number;
+    p2Score: number;
+    winnerUsername: string;
+    playedAt?: string; // optionnel, si tu veux afficher la date plus tard
+};
+
 export async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
 	// 1. Appel à l'API pour récupérer les stats
 	// const res = await apiFetch("/api/profile/dashboard/daily-matches", {
@@ -133,7 +142,53 @@ export function renderDailyMatchesChart(
     ];
 
     renderRecentRalliesChart(ralliesSection, fakeRallies);
+
+	    // --- Section du 3e bloc : "Last matches" ---
+    const historySection = el("div", "w-full mt-6");
+    dashboard.append(historySection);
+
+    // Fake data pour tester (on branchera le backend plus tard)
+    const fakeHistory: RecentMatchSummary[] = [
+        {
+            p1Username: "Alice",
+            p2Username: "Bob",
+            p1Score: 5,
+            p2Score: 3,
+            winnerUsername: "Alice",
+        },
+        {
+            p1Username: "Charlie",
+            p2Username: "Dana",
+            p1Score: 2,
+            p2Score: 5,
+            winnerUsername: "Dana",
+        },
+        {
+            p1Username: "Eve",
+            p2Username: "Frank",
+            p1Score: 4,
+            p2Score: 4,
+            winnerUsername: "Eve", 
+        },
+        {
+            p1Username: "Grace",
+            p2Username: "Heidi",
+            p1Score: 1,
+            p2Score: 5,
+            winnerUsername: "Heidi",
+        },
+        {
+            p1Username: "Ivan",
+            p2Username: "Judy",
+            p1Score: 5,
+            p2Score: 0,
+            winnerUsername: "Ivan",
+        },
+    ];
+
+    renderRecentMatchesHistory(historySection, fakeHistory);
 }
+
 
 export function renderRecentRalliesChart(
     container: HTMLElement,
@@ -229,4 +284,67 @@ export function renderRecentRalliesChart(
         col.append(barGroup, matchLabel, numbers);
         rows.append(col);
     }
+}
+
+export function renderRecentMatchesHistory(
+    container: HTMLElement,
+    matches: RecentMatchSummary[]
+) {
+    // On nettoie le conteneur
+    container.innerHTML = "";
+
+    // Titre de la section
+    const title = el("h3", "font-royalvogue text-2xl mt-6 mb-3");
+    title.textContent = "Last matches";
+
+    // Liste des matchs
+    const list = el(
+        "ul",
+        "w-full space-y-2 font-modern-type text-sm"
+    ) as HTMLUListElement;
+
+    // Si aucun match
+    if (!matches.length) {
+        const li = document.createElement("li");
+        li.className = "italic text-stone-500";
+        li.textContent = "No recent matches.";
+        list.append(li);
+    } else {
+        // On limite à 5 matches (au cas où on en reçoit plus)
+        const sliced = matches.slice(0, 5);
+
+        for (const match of sliced) {
+            const li = document.createElement("li");
+            li.className =
+                "flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-stone-300 pb-1";
+
+            // Partie gauche : p1 vs p2 + score
+            const players = el(
+                "div",
+                "flex flex-wrap items-baseline gap-2"
+            );
+            const names = el("span", "font-semibold");
+            names.textContent = `${match.p1Username} vs ${match.p2Username}`;
+
+            const score = el(
+                "span",
+                "text-xs text-stone-700"
+            );
+            score.textContent = `Score: ${match.p1Score} - ${match.p2Score}`;
+
+            players.append(names, score);
+
+            // Partie droite : winner (+ éventuellement date)
+            const meta = el(
+                "div",
+                "text-xs text-stone-600 mt-1 sm:mt-0 text-right"
+            );
+            meta.textContent = `Winner: ${match.winnerUsername}`;
+
+            li.append(players, meta);
+            list.append(li);
+        }
+    }
+
+    container.append(title, list);
 }
