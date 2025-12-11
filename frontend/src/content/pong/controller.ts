@@ -18,6 +18,9 @@ import type { GameGuards }               from "./ui/guards";
 import { createPongStatsPanel }          from "./ui/terminal";
 import { createPlayersBox, resetPlayersCache } from "./ui/players";
 import type { Tournament }               from "../tournament/uiTypes";
+import type { ApiMatch } from "../tournament/apiTypes";
+import { finishMatch, createMatchWithStats, getUserIdByName }                    from "../utils/todb"
+import { liveStatsToMatchStats, playedMatchStatsToApi, fromMatchStatsToApiMatchStatsDTO, fromPlayerMatchStatsToApiPlayerStatsBase } from "../tournament/mapper";
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
@@ -135,6 +138,7 @@ export class GameController {
     }
 
     private onPlayersUpdated = (_e: Event) => {
+        console.log("Players Updated");
         this.refreshTerminal();
     };
 
@@ -144,7 +148,7 @@ export class GameController {
         this.state.phase = phase;
 
         this.terminal.replaceChildren(createPongStatsPanel(this.state));
-        this.view.playersBox.replaceChildren(createPlayersBox(this.state));
+        // this.view.playersBox.replaceChildren(createPlayersBox(this.state));
 
         if (phase === "PLAYING" || phase === "COUNTDOWN" || phase === "SCORED") {
             this.gameGuards.enable();
@@ -174,6 +178,7 @@ export class GameController {
             initPlayersInfo(this.state);
 
             this.view.playersBox.replaceChildren(createPlayersBox(this.state));
+
             launchBall(this.state, this.getNextServer(this.state), 500);
             break;
 
@@ -194,6 +199,7 @@ export class GameController {
             this.view.overlay.replaceChildren(
                 this.domOverlay.bindHTMLElement(phase, this.state)
             );
+
             if (this.state.PrevPhase === "PAUSED") break;
             break;
 
@@ -204,6 +210,7 @@ export class GameController {
             this.view.overlay.replaceChildren(
                 this.domOverlay.bindHTMLElement(phase, this.state)
             );
+
             break;
 
         case "PAUSED":
@@ -220,8 +227,7 @@ export class GameController {
             );
             this.unwireControls();
 
-            void this.handleStats();
-
+            this.handleStats();
             this.resetGame();
             break;
 
@@ -238,6 +244,7 @@ export class GameController {
         }
     }
 
+    // STATE & STATS ACTIONS
     private startRallyTime() {
         this.state.stats.rallyStartAt = performance.now();
         if (this.state.stats.pauseStartAt !== undefined) this.endPauseRallyTime();
@@ -293,15 +300,15 @@ export class GameController {
 
     public setPlayer(id: PlayerId, info: PlayerInfo | null): void {
         if (id === "p1") {
-            this.state.p1 = info ? info : { userName: "P1", avatarUrl: "" };
+            this.state.p1 = info ? info : { id: "", userName: "P1", avatarUrl: "" };
         } else {
-            this.state.p2 = info ? info : { userName: "P2", avatarUrl: "" };
+            this.state.p2 = info ? info : { id: "", userName: "P2", avatarUrl: "" };
         }
     }
 
     public clearPlayers(): void {
-        this.state.p1 = { userName: "P1", avatarUrl: "" };
-        this.state.p2 = { userName: "P2", avatarUrl: "" };
+        this.state.p1 = { id: "", userName: "P1", avatarUrl: "" };
+        this.state.p2 = { id: "", userName: "P2", avatarUrl: "" };
     }
 
     // ----  Actions sur le Jeu  ----- //
@@ -385,50 +392,65 @@ export class GameController {
             this.loopCtrl.stop();
             this.loopCtrl = null;
         }
-        this.state = initState();
-        this.context = setupCanvas(this.view.canvas);
+        // initBoard(this.state);
+        // this.context = setupCanvas(this.view.canvas);
     }
 
     // ----- Envoi des stats au backend ----- //
     private async handleStats() {
-        const stats = liveStatsToMatchStats(this.state.stats);
-        const apiMatch = playedMatchStatsToApi(stats);
+        const stats: MatchStats = liveStatsToMatchStats(this.state.stats);
+        const apiMatchStats: ApiMatchStatsDTO = fromMatchStatsToApiMatchStatsDTO(stats);
+        const tCode: string = this.state.stats.tournamentCode || undefined;
 
-        if (!apiMatch.tournamentCode) {
-            try {
-                const res = await fetch("/api/matches/played", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include", // pour envoyer les cookies JWT
-                    body: JSON.stringify(apiMatch), // 👉 uniquement PlayersStats
-                });
+        const p1Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p1);
+        const p2Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p2);
 
-                if (!res.ok) {
-                    const text = await res.text().catch(() => "");
-                    console.error(
-                        "[GameController] Failed to send match stats",
-                        res.status,
-                        text
-                    );
-                }
-            } catch (err) {
-                console.error("[GameController] Error while sending match stats", err);
+        // On enrichit avec les userId s'ils existent en DB
+        const [p1UserId, p2UserId] = await Promise.all([
+            getUserIdByName(stats.p1.userName),
+            getUserIdByName(stats.p2.userName),
+        ]);
+        console.log("p1UserId:", p1UserId);
+        console.log("p2UserId:", p2UserId);
+
+        const p1PlStats: ApiPlayerStatsDTO = {
+            ...(p1UserId ? { userId: p1UserId } : {}),
+            ...p1Base,
+        };
+
+        const p2PlStats: ApiPlayerStatsDTO = {
+            ...(p2UserId ? { userId: p2UserId } : {}),
+            ...p2Base,
+        };
+
+        console.log("p1Stats :", p1PlStats);
+        console.log("p2Stats :", p2PlStats);
+        if (tCode) {
+            const matchId = this.state.stats.matchId;
+            const payload: ApiFinishMatchDTO = {
+                // winnerUserId: stats.winnerId,
+                matchStats: apiMatchStats,
+                p1Stats: p1PlStats,
+                p2Stats: p2PlStats,
             }
+            console.log("Payload FinishMatch :", payload);
+            try {
+                await finishMatch(matchId, payload);
+            } catch (e) {
+                console.error("HandleStats DOWN:", e);
+                pongAlert("Error while saving match stats", "error");
+            }        
         } else {
-            try {
-                const res = await fetch(`/api/matches/${apiMatch.tournamentCode}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include", // pour envoyer les cookies JWT
-                    body: JSON.stringify(apiMatch), // 👉 uniquement PlayersStats
-                });
-            } catch (err) {
-                console.error("[GameController] Error while sending tournament match stats", err);
+            const payload: ApiPlayedMatchDTO = {
+                p1Username: stats.p1.userName,
+                p2Username: stats.p2.userName,
+                p1IsGuest: this.state.stats.p1.isGuest,
+                p2IsGuest: this.state.stats.p2.isGuest,
+                matchStats: apiMatchStats,
+                p1Stats: p1Stats,
+                p2Stats: p2stats,
             }
+            const resp = await createMatchWithStats(payload);
         }
     }
 

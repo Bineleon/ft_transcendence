@@ -232,12 +232,12 @@ export class MatchService {
   // ==========================================
   async finishMatchWithStats(
     matchId: string,
-    winnerUserId: string,
+    // winnerUserId: string,
     matchStats: MatchStatsDTO,
-    p1Stats: PlayerStatsDTO & { userId: string },
-    p2Stats: PlayerStatsDTO & { userId: string }
+    p1Stats: PlayerStatsDTO,
+    p2Stats: PlayerStatsDTO
   ): Promise<MatchResponse> {
-    
+    console.log("dataaas :", matchId);
     const match = await prisma.match.findUnique({
       where: { id: matchId },
       select: {
@@ -254,14 +254,28 @@ export class MatchService {
       throw new Error('Match not found');
     }
 
-    if (match.status !== 'IN_PROGRESS') {
-      throw new Error(`Cannot finish match with status ${match.status}`);
+    if (match.status !== 'SCHEDULED') {
+      throw new Error(`error: Match status for uploading stats is ${match.status}`);
     }
 
-    // Vérifier que le gagnant est un participant
-    if (winnerUserId !== match.p1UserId && winnerUserId !== match.p2UserId) {
-      throw new Error('Winner must be one of the match participants');
+    let winnerUserId: string | null = p1Stats.userId ?? null;
+
+    if (p1Stats.score < p2Stats.score) {
+      winnerUserId = p2Stats.userId ?? null;
     }
+
+    // Fallback / sécurité : si pas de userId dans les stats, on peut se rabattre sur le match lui-même
+    if (!winnerUserId) {
+      if (match.p1UserId && match.p2UserId) {
+        winnerUserId = p1Stats.score > p2Stats.score ? match.p1UserId : match.p2UserId;
+      } else {
+        throw new Error('Winner user id cannot be determined');
+      }
+    }
+    // Vérifier que le gagnant est un participant
+    // if (winnerUserId !== match.p1UserId && winnerUserId !== match.p2UserId) {
+    //   throw new Error('Winner must be one of the match participants');
+    // }
 
     return await prisma.$transaction(async (tx) => {
       
@@ -392,6 +406,9 @@ export class MatchService {
     if (!match.winnerUserId || !match.totalPoints || !match.totalRallies) {
       throw new Error('Match is missing required stats');
     }
+
+    ///// A AJOUTER 
+    // Retrouver l'id du tournoi par raport a son code 
 
     const p1Stats = match.playerStats.find(s => s.userId === match.p1UserId);
     const p2Stats = match.playerStats.find(s => s.userId === match.p2UserId);

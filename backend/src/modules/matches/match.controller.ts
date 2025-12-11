@@ -151,38 +151,6 @@ export function matchController(
   );
 
   // ==========================================
-  // POST /api/matches/:id/finish - Terminer un match de tournoi
-  // ==========================================
-  app.post<{
-    Params: { id: string };
-    Body: FinishMatchDTO;
-  }>(
-    '/api/matches/:id/finish',
-    { preHandler: authenticate },
-    async (request, reply) => {
-      try {
-        const { id } = request.params;
-        const { winnerUserId, matchStats, p1Stats, p2Stats } = request.body;
-
-        const match = await matchService.finishMatchWithStats(
-          id,
-          winnerUserId,
-          matchStats,
-          p1Stats,
-          p2Stats
-        );
-
-        return formatSuccess(match, 'Match finished successfully');
-      } catch (error) {
-        const errorResponse = formatGenericError(
-          error instanceof Error ? error : new Error('Failed to finish match')
-        );
-        return reply.status(errorResponse.error.statusCode).send(errorResponse);
-      }
-    }
-  );
-
-  // ==========================================
   // DELETE /api/matches/:id - Supprimer un match
   // ==========================================
   app.delete<{ Params: { id: string } }>(
@@ -195,6 +163,37 @@ export function matchController(
       } catch (error) {
         const errorResponse = formatGenericError(
           error instanceof Error ? error : new Error('Failed to delete match')
+        );
+        return reply.status(errorResponse.error.statusCode).send(errorResponse);
+      }
+    }
+  );
+
+  // ==========================================
+  // POST /api/matches/:id/finish - Terminer un match de tournoi
+  // ==========================================
+  app.post<{
+    Params: { id: string };
+    Body: FinishMatchDTO;
+  }>(
+    '/api/matches/:id/finish',
+    async (request, reply) => {
+      console.log("body :", request.body);
+      try {
+        const { id } = request.params as { id: string };
+        const { matchStats, p1Stats, p2Stats } = request.body;
+
+        const match = await matchService.finishMatchWithStats(
+          id,
+          matchStats,
+          p1Stats,
+          p2Stats
+        );
+
+        return formatSuccess(match, 'Match finished successfully');
+      } catch (error) {
+        const errorResponse = formatGenericError(
+          error instanceof Error ? error : new Error('Failed to finish match')
         );
         return reply.status(errorResponse.error.statusCode).send(errorResponse);
       }

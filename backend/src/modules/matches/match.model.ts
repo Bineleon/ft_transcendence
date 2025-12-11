@@ -64,10 +64,7 @@ export interface PlayedMatchUserResponse {
 // Match complet avec toutes les stats
 export interface PlayedMatchResponse {
   id: string;
-  tournamentId: string | null;
-  gameCode: string;
-  round: number | null;
-  gameIndex: number | null;
+  tournamentCode?: string | null;
   status: string;
   createdAt: Date;
   closedAt: Date | null;
@@ -126,9 +123,8 @@ export interface PlayerStatsDTO {
 
 
 // Body pour terminer un match de tournoi
-
 export interface FinishMatchDTO {
-  winnerUserId: string;
+  // winnerUserId: string;
   matchStats: MatchStatsDTO;
   p1Stats: PlayerStatsDTO & { userId: string };  // userId obligatoire
   p2Stats: PlayerStatsDTO & { userId: string };  // userId obligatoire

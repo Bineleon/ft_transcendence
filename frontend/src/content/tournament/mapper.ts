@@ -3,6 +3,7 @@
 import type { ApiTournament, ApiMatch, ApiMatchUser } from "./apiTypes";
 import type { Tournament, Match, User, tStatus } from "./uiTypes";
 import type { tournamentMode } from "../tournament/tournament";
+import { pongAlert } from "../utils/alertBox"
 
 function userFromApi(apiUser: ApiMatchUser): User {
   return {
@@ -36,7 +37,7 @@ function matchUserFromApi(apiMUser: ApiMatchUser | null, score: number | null, i
   };
 }
 
-function matchFromApi(apiM: ApiMatch): Match {
+export function matchFromApi(apiM: ApiMatch): Match {
   return {
     matchId: apiM.id,
     round: apiM.round,
@@ -72,10 +73,7 @@ export function tournamentFromApi(apiT: ApiTournament): Tournament {
 }
 
 
-export function playedMatchStatsToApi(
-  matchStats: MatchStats,
-  meta: MatchMeta
-): ApiMatch {
+export function playedMatchStatsToApi(matchStats: MatchStats, tCode?: string, tMode?: tournamentMode): ApiMatch {
   const { p1, p2 } = matchStats;
 
   const apiP1: ApiMatchUser = {
@@ -109,19 +107,19 @@ export function playedMatchStatsToApi(
   };
 
   return {
-    id: meta.id,
-    tournamentId: meta.tournamentId,
-    gameCode: meta.gameCode,
-    round: meta.round,
-    gameIndex: meta.gameIndex,
+    id: matchStats.matchId,
+    tournamentCode: tCode,
+    gameCode: tMode,
+    round: matchStats.round,
+    gameIndex: matchStats.gameIndex,
 
     p1UserName: p1.userName,
     p1Score: p1.score,
-    p1IsGuest: meta.p1IsGuest,
+    p1IsGuest: matchStats.p1IsGuest,
 
     p2UserName: p2.userName,
     p2Score: p2.score,
-    p2IsGuest: meta.p2IsGuest,
+    p2IsGuest: matchStats.p2IsGuest,
 
     // Match stats
     totalPoints: matchStats.totalPoints,
@@ -139,61 +137,67 @@ export function playedMatchStatsToApi(
 }
 
 export function liveStatsToMatchStats(live: LiveMatchStats): MatchStats {
-  const { p1Stats, p2Stats, totalBounces, totalRallies, lastScorer } = live;
+  console.log("STATS :", live);
+  const { p1, p2, totalBounces, totalRallies, lastScorer } = live;
 
-  const totalPoints = p1Stats.score + p2Stats.score;
+  const totalPoints = live.p1.score + live.p2.score;
 
   let winnerName: string;
   let loserName: string;
+  let winnerUserId: string;
 
-  if (p1Stats.score > p2Stats.score) {
-    winnerName = p1Stats.name;
-    loserName = p2Stats.name;
-  } else
-    winnerName = p2Stats.name;
-    loserName = p1Stats.name;
+  if (live.p1.score > live.p2.score) {
+    winnerName = live.p1.name;
+    loserName = live.p2.name;
+    winnerUserId = live.p1.userId;
+  } else {
+    winnerName = live.p2.name;
+    loserName = live.p1.name;
+    winnerUserId = live.p2.userId;
+  }
 
 
-  const maxBounces = Math.max(p1Stats.maxBounces, p2Stats.maxBounces);
+  const maxBounces = Math.max(live.p1.maxBounces, live.p2.maxBounces);
   const avgRallyBounces = totalRallies > 0 ? totalBounces / totalRallies : 0;
 
   const totalMatchTime = live.rallyDurationsMs.reduce((s, v) => s + v, 0);
   const avgRallyTime = live.rallyDurationsMs.length > 0 ? totalMatchTime / live.rallyDurationsMs.length : 0;
 
   // ----- Player Stats -----
-  const p1: PlayerMatchStats = {
-    userName: p1Stats.name,
-    score: p1Stats.score,
-    maxWins: p1Stats.currentWins,
-    totalBallSpins: p1Stats.effects,
-    maxBouncesInWonRally: p1Stats.maxBounces,
-    maxEffectsInWonRally: p1Stats.maxEffects,
+  const p1St: PlayerMatchStats = {
+    userName: p1.name,
+    score: p1.score,
+    maxWins: p1.currentWins,
+    totalBallSpins: p1.effects,
+    maxBouncesInWonRally: p1.maxBounces,
+    maxEffectsInWonRally: p1.maxEffects,
 
     fastestWonRally: 0,
     fastestLostRally: 0,
 
-    ralliesWon: p1Stats.score,
-    ralliesLost: p2Stats.score,
+    ralliesWon: p1.score,
+    ralliesLost: p2.score,
   };
 
-  const p2: PlayerMatchStats = {
-    userName: p2Stats.name,
-    score: p2Stats.score,
-    maxWins: p2Stats.currentWins,
-    totalBallSpins: p2Stats.effects,
-    maxBouncesInWonRally: p2Stats.maxBounces,
-    maxEffectsInWonRally: p2Stats.maxEffects,
+  const p2St: PlayerMatchStats = {
+    userName: p2.name,
+    score: p2.score,
+    maxWins: p2.currentWins,
+    totalBallSpins: p2.effects,
+    maxBouncesInWonRally: p2.maxBounces,
+    maxEffectsInWonRally: p2.maxEffects,
 
     fastestWonRally: 0,
     fastestLostRally: 0,
 
-    ralliesWon: p2Stats.score,
-    ralliesLost: p1Stats.score,
+    ralliesWon: p2.score,
+    ralliesLost: p1.score,
   };
 
   return {
     totalPoints,
     winnerName,
+    winnerUserId,
     loserName,
 
     totalRallies,
@@ -203,7 +207,36 @@ export function liveStatsToMatchStats(live: LiveMatchStats): MatchStats {
     totalMatchTime,
     avgRallyTime,
 
-    p1,
-    p2,
+    p1: p1St,
+    p2: p2St,
+  };
+}
+
+export function fromMatchStatsToApiMatchStatsDTO(match: MatchStats): ApiMatchStatsDTO {
+  console.log("MatchStats :", match);
+  return {
+    p1Score: match.p1.score,
+    p2Score: match.p2.score,
+    totalPoints: match.totalPoints,
+    totalRallies: match.totalRallies,
+    maxBounces: match.maxBounces,
+    avgRallyBounces: match.avgRallyBounces,
+    totalMatchTime: match.totalMatchTime,
+    avgRallyTime: match.avgRallyTime,
+  }
+}
+
+export function fromPlayerMatchStatsToApiPlayerStatsBase(pStats: PlayerMatchStats): ApiPlayerStatsDTO {
+
+  return {
+    score: pStats.score,
+    maxWins: pStats.maxWins,
+    totalBallSpins: pStats.totalBallSpins, 
+    maxBouncesInWonRally: pStats.maxBouncesInWonRally,
+    maxEffectsInWonRally: pStats.maxEffectsInWonRally,
+    maxBallSpeedWon: pStats.maxBallSpeedWon,
+    maxBallSpeedLost: pStats.maxBallSpeedLost,
+    fastestWonRally: pStats.fastestWonRally,
+    fastestLostRally: pStats.fastestLostRally,
   };
 }
