@@ -1,14 +1,10 @@
 import { el, text } from "../home";
+import type { RecentMatchAvgStats } from "./dashboard.ts"
 import type { Tournament } from "../tournament/uiTypes";
 import type { PlayerId } from "../pong/game/metrics";
 import type { PlayerInfo, GameViewHooks } from "../pong/game/uiTypes";
 
-// Y : Dashboard related
-type DailyMatchStat = {
-  date: string;        // ex: "2025-12-09"
-  totalMatches: number;
-  wins: number;
-};
+
 
 // ------------------ Définitions de la vue Profil ---------------------
 //
@@ -158,7 +154,7 @@ export function createProfileViewWindow(): ProfileViewWindow {
     /// DASHBOARD
     const dashboard = el(
 		"div", 
-		"p-4 bg-white/80 border border-stone-300 rounded-md shadow-sm flex flex-col gap-4"
+		"p-4 bg-white/80 mix-blend-multiply border border-stone-300 rounded-md shadow-sm flex flex-col gap-4"
 		);
 	const dashboardTitle = el("h2", "font-royalvogue text-3xl mb-2");
 	dashboardTitle.append(text("Matches (Last 7 days)"));
@@ -196,29 +192,5 @@ export function createProfileViewWindow(): ProfileViewWindow {
     };
 };
 
-// Y : Pour afficher graph dashboard
-export function renderDailyMatchesChart(dashboard: HTMLElement, stats: DailyMatchStat[]){
 
-	dashboard.innerHTML = "";
-	const title = el("h2", "font-royalvogue text-3xl mb-2");
-	title.textContent = "Matches (Last 7 days)";
-	const bars = el("div", "flex items-end gap-2 h-40 w-full");
-	dashboard.append(title, bars);
-	const maxMatches = stats.reduce( // Reduce garde la plus grande valeur de total matches
-		(max, day) => day.totalMatches > max ? day.totalMatches : max, 0
-	);
-	for(const day of stats)
-	{
-		const heightPercent = maxMatches === 0
-		? 0
-		: (day.totalMatches / maxMatches) * 100;
-		const col = el("div", "flex flex-col items-center gap-1 flex-1");
-		const bar = el("div", "w-full bg-black/60 rounded-t-md");
-		(bar as HTMLDivElement).style.height = `${heightPercent}%`;
-		const label = el("span", "text-xs font-modern-type");
-		label.textContent = day.date.slice(5);
-		col.append(bar, label);
-		bars.append(col);
-	}
 
-}
