@@ -190,6 +190,7 @@ function updateGameStateWithPlayersInfoFromMatch(state: GameState, match: Match)
 
 function updateTitle(state: GameState, t: Tournament, m: Match): void {
     state.stats.tournamentCode = t.tCode;
+    state.stats.tournamentId = m.tournamentId;
     state.stats.tournamentMode = t.tMode;
     state.stats.tournamentName = t.name;
     state.stats.matchRound = m.round;

@@ -232,7 +232,6 @@ export class MatchService {
   // ==========================================
   async finishMatchWithStats(
     matchId: string,
-    // winnerUserId: string,
     matchStats: MatchStatsDTO,
     p1Stats: PlayerStatsDTO,
     p2Stats: PlayerStatsDTO
@@ -272,10 +271,6 @@ export class MatchService {
         throw new Error('Winner user id cannot be determined');
       }
     }
-    // Vérifier que le gagnant est un participant
-    // if (winnerUserId !== match.p1UserId && winnerUserId !== match.p2UserId) {
-    //   throw new Error('Winner must be one of the match participants');
-    // }
 
     return await prisma.$transaction(async (tx) => {
       
@@ -420,13 +415,14 @@ export class MatchService {
     // Déterminer le perdant
     const loserId = match.winnerUserId === match.p1UserId ? match.p2UserId! : match.p1UserId!;
 
+
     return {
       // Infos de base
       id: match.id,
       tournamentId: match.tournamentId,
-      gameCode: match.gameCode,
-      round: match.round,
-      gameIndex: match.gameIndex,
+      // gameCode: match.gameCode,
+      // round: match.round,
+      // gameIndex: match.gameIndex,
       status: match.status,
       createdAt: match.createdAt,
       closedAt: match.closedAt,

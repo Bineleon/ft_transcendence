@@ -428,7 +428,6 @@ export class GameController {
         if (tCode) {
             const matchId = this.state.stats.matchId;
             const payload: ApiFinishMatchDTO = {
-                // winnerUserId: stats.winnerId,
                 matchStats: apiMatchStats,
                 p1Stats: p1PlStats,
                 p2Stats: p2PlStats,
