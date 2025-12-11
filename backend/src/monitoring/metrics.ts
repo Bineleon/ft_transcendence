@@ -1,13 +1,13 @@
 import fp from "fastify-plugin";
 import client from "prom-client";
 
-export default fp(async function metricsPlugin(fastify) {
+async function metricsPlugin(fastify) {
     const register = new client.Registry();
 
-    // Collect default Node.js process metrics
+    // Collect default Node.js + V8 metrics
     client.collectDefaultMetrics({ register });
 
-    // --- 1) Counter: HTTP requests ---
+    // --- COUNTER: HTTP Requests ---
     const httpRequestsTotal = new client.Counter({
         name: "http_requests_total",
         help: "Total number of HTTP requests",
@@ -15,7 +15,7 @@ export default fp(async function metricsPlugin(fastify) {
     });
     register.registerMetric(httpRequestsTotal);
 
-    // --- 2) Histogram: Request duration ---
+    // --- HISTOGRAM: Request Duration ---
     const httpRequestDuration = new client.Histogram({
         name: "http_request_duration_seconds",
         help: "Duration of HTTP requests in seconds",
@@ -24,35 +24,65 @@ export default fp(async function metricsPlugin(fastify) {
     });
     register.registerMetric(httpRequestDuration);
 
-    // Hook: start time
+    // Start time
     fastify.addHook("onRequest", (req, _, done) => {
-        req.startTime = process.hrtime(); // [seconds, nanoseconds]
+        // store precise time for duration measurement
+        req.startTime = process.hrtime();
+
         done();
     });
 
-    // Hook: record metrics after response
+    // Extract best possible route name
+    function getRouteName(req) {
+        return (
+            req.routerPath ||                      // Fastify internal (best)
+            req.context?.config?.url ||            // Most accurate fallback
+            req.routeOptions?.url ||               // Classic fallback
+            req.raw.url                            // Real URL (last fallback)
+        );
+    }
+
     fastify.addHook("onResponse", (req, reply, done) => {
-        const route = req.routeOptions?.url || req.raw.url;
+        const route = getRouteName(req);
+
+        // Ignore /metrics itself (avoid breaking dashboards)
+        if (route === "/metrics") {
+            done();
+            return;
+        }
+
         const status = reply.statusCode;
 
-        // Counter
-        httpRequestsTotal.inc({ method: req.method, route, status_code: status });
+        // --- Counter increment ---
+        httpRequestsTotal.inc({
+            method: req.method,
+            route,
+            status_code: status,
+        });
 
-        // Duration
+        // --- Duration ---
         if (req.startTime) {
             const diff = process.hrtime(req.startTime);
-            const duration = diff[0] + diff[1] / 1e9;
+            const durationSeconds = diff[0] + diff[1] / 1e9;
+
             httpRequestDuration.observe(
                 { method: req.method, route, status_code: status },
-                duration
+                durationSeconds
             );
         }
 
         done();
     });
 
-    // Expose /metrics endpoint
+    // /metrics endpoint
     fastify.get("/metrics", async (_, reply) => {
         reply.type(register.contentType).send(await register.metrics());
     });
+}
+
+// Ensure plugin loads AFTER all routes, so fastify.routerPath is valid
+export default fp(metricsPlugin, {
+    name: "metrics-plugin",
+    encapsulate: false
 });
+

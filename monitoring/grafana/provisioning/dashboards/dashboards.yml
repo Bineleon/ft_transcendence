@@ -1,10 +1,12 @@
 apiVersion: 1
 
 providers:
-  - name: "ft_transcendence_dashboards"
-    folder: "ft_transcendence"
+  - name: 'ft_transcendence'
+    folder: 'FT Transcendence'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 10
+    updateIntervalSeconds: 5
+    allowUiUpdates: true
     options:
       path: /etc/grafana/dashboards
+
