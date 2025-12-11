@@ -4,7 +4,7 @@ import type {
   CreateMatchDTO, 
   UpdateMatchDTO, 
   MatchResponse, 
-  PlayedMatchResponse,
+  // PlayedMatchResponse,
   PlayedMatchDTO,
   MatchStatsDTO,
   PlayerStatsDTO
@@ -232,12 +232,11 @@ export class MatchService {
   // ==========================================
   async finishMatchWithStats(
     matchId: string,
-    winnerUserId: string,
     matchStats: MatchStatsDTO,
-    p1Stats: PlayerStatsDTO & { userId: string },
-    p2Stats: PlayerStatsDTO & { userId: string }
+    p1Stats: PlayerStatsDTO,
+    p2Stats: PlayerStatsDTO
   ): Promise<MatchResponse> {
-    
+    console.log("dataaas :", matchId);
     const match = await prisma.match.findUnique({
       where: { id: matchId },
       select: {
@@ -254,13 +253,23 @@ export class MatchService {
       throw new Error('Match not found');
     }
 
-    if (match.status !== 'IN_PROGRESS') {
-      throw new Error(`Cannot finish match with status ${match.status}`);
+    if (match.status !== 'SCHEDULED') {
+      throw new Error(`error: Match status for uploading stats is ${match.status}`);
     }
 
-    // Vérifier que le gagnant est un participant
-    if (winnerUserId !== match.p1UserId && winnerUserId !== match.p2UserId) {
-      throw new Error('Winner must be one of the match participants');
+    let winnerUserId: string | null = p1Stats.userId ?? null;
+
+    if (p1Stats.score < p2Stats.score) {
+      winnerUserId = p2Stats.userId ?? null;
+    }
+
+    // Fallback / sécurité : si pas de userId dans les stats, on peut se rabattre sur le match lui-même
+    if (!winnerUserId) {
+      if (match.p1UserId && match.p2UserId) {
+        winnerUserId = p1Stats.score > p2Stats.score ? match.p1UserId : match.p2UserId;
+      } else {
+        throw new Error('Winner user id cannot be determined');
+      }
     }
 
     return await prisma.$transaction(async (tx) => {
@@ -364,112 +373,116 @@ export class MatchService {
   // ==========================================
   // READ - Récupérer les détails complets d'un match terminé
   // ==========================================
-  async getPlayedMatchDetails(matchId: string): Promise<PlayedMatchResponse> {
-    const match = await prisma.match.findUnique({
-      where: { id: matchId },
-      include: {
-        p1: { select: { id: true, username: true, avatarUrl: true } },
-        p2: { select: { id: true, username: true, avatarUrl: true } },
-        winner: { select: { id: true } },
-        playerStats: {
-          include: {
-            user: { select: { id: true, username: true, avatarUrl: true } }
-          }
-        }
-      }
-    });
+  // async getPlayedMatchDetails(matchId: string): Promise<PlayedMatchResponse> {
+  //   const match = await prisma.match.findUnique({
+  //     where: { id: matchId },
+  //     include: {
+  //       p1: { select: { id: true, username: true, avatarUrl: true } },
+  //       p2: { select: { id: true, username: true, avatarUrl: true } },
+  //       winner: { select: { id: true } },
+  //       playerStats: {
+  //         include: {
+  //           user: { select: { id: true, username: true, avatarUrl: true } }
+  //         }
+  //       }
+  //     }
+  //   });
 
-    if (!match) {
-      throw new Error('Match not found');
-    }
+  //   if (!match) {
+  //     throw new Error('Match not found');
+  //   }
 
-    // Vérifier que le match est terminé
-    if (match.status !== 'CLOSED') {
-      throw new Error('Match is not finished yet');
-    }
+  //   // Vérifier que le match est terminé
+  //   if (match.status !== 'CLOSED') {
+  //     throw new Error('Match is not finished yet');
+  //   }
 
-    // Vérifier que toutes les données obligatoires sont présentes
-    if (!match.winnerUserId || !match.totalPoints || !match.totalRallies) {
-      throw new Error('Match is missing required stats');
-    }
+  //   // Vérifier que toutes les données obligatoires sont présentes
+  //   if (!match.winnerUserId || !match.totalPoints || !match.totalRallies) {
+  //     throw new Error('Match is missing required stats');
+  //   }
 
-    const p1Stats = match.playerStats.find(s => s.userId === match.p1UserId);
-    const p2Stats = match.playerStats.find(s => s.userId === match.p2UserId);
+  //   ///// A AJOUTER 
+  //   // Retrouver l'id du tournoi par raport a son code 
 
-    if (!p1Stats || !p2Stats) {
-      throw new Error('Player stats not found');
-    }
+  //   const p1Stats = match.playerStats.find(s => s.userId === match.p1UserId);
+  //   const p2Stats = match.playerStats.find(s => s.userId === match.p2UserId);
 
-    // Déterminer le perdant
-    const loserId = match.winnerUserId === match.p1UserId ? match.p2UserId! : match.p1UserId!;
+  //   if (!p1Stats || !p2Stats) {
+  //     throw new Error('Player stats not found');
+  //   }
 
-    return {
-      // Infos de base
-      id: match.id,
-      tournamentId: match.tournamentId,
-      gameCode: match.gameCode,
-      round: match.round,
-      gameIndex: match.gameIndex,
-      status: match.status,
-      createdAt: match.createdAt,
-      closedAt: match.closedAt,
+  //   // Déterminer le perdant
+  //   const loserId = match.winnerUserId === match.p1UserId ? match.p2UserId! : match.p1UserId!;
 
-      // Joueurs
-      p1UserId: match.p1UserId,
-      p1Score: match.p1Score,
-      p1IsGuest: !match.p1UserId,
 
-      p2UserId: match.p2UserId,
-      p2Score: match.p2Score,
-      p2IsGuest: !match.p2UserId,
+  //   return {
+  //     // Infos de base
+  //     id: match.id,
+  //     tournamentId: match.tournamentId,
+  //     // gameCode: match.gameCode,
+  //     // round: match.round,
+  //     // gameIndex: match.gameIndex,
+  //     status: match.status,
+  //     createdAt: match.createdAt,
+  //     closedAt: match.closedAt,
 
-      // Stats globales (toutes NON NULL car match CLOSED)
-      totalPoints: match.totalPoints,
-      winnerId: match.winnerUserId,
-      loserId: loserId,
-      totalRallies: match.totalRallies,
-      maxBounces: match.maxBounces!,
-      avgRallyBounces: match.avgRallyBounces!,
-      totalMatchTime: match.totalMatchTime!,
-      avgRallyTime: match.avgRallyTime!,
+  //     // Joueurs
+  //     p1UserId: match.p1UserId,
+  //     p1Score: match.p1Score,
+  //     p1IsGuest: !match.p1UserId,
 
-      // Stats individuelles P1
-      p1: {
-        userId: p1Stats.userId,
-        username: p1Stats.user.username,
-        avatarUrl: p1Stats.user.avatarUrl,
-        score: p1Stats.score,
-        maxWins: p1Stats.maxWins,
-        totalBallSpins: p1Stats.totalBallSpins,
-        maxBouncesInWonRally: p1Stats.maxBouncesInWonRally,
-        maxEffectsInWonRally: p1Stats.maxEffectsInWonRally,
-        maxBallSpeedWon: p1Stats.maxBallSpeedWon,
-        maxBallSpeedLost: p1Stats.maxBallSpeedLost,
-        fastestWonRally: p1Stats.fastestWonRally,
-        fastestLostRally: p1Stats.fastestLostRally,
-        ralliesWon: match.p1Score!,
-        ralliesLost: match.p2Score!
-      },
+  //     p2UserId: match.p2UserId,
+  //     p2Score: match.p2Score,
+  //     p2IsGuest: !match.p2UserId,
 
-      // Stats individuelles P2
-      p2: {
-        userId: p2Stats.userId,
-        username: p2Stats.user.username,
-        avatarUrl: p2Stats.user.avatarUrl,
-        score: p2Stats.score,
-        maxWins: p2Stats.maxWins,
-        totalBallSpins: p2Stats.totalBallSpins,
-        maxBouncesInWonRally: p2Stats.maxBouncesInWonRally,
-        maxEffectsInWonRally: p2Stats.maxEffectsInWonRally,
-        maxBallSpeedWon: p2Stats.maxBallSpeedWon,
-        maxBallSpeedLost: p2Stats.maxBallSpeedLost,
-        fastestWonRally: p2Stats.fastestWonRally,
-        fastestLostRally: p2Stats.fastestLostRally,
-        ralliesWon: match.p2Score!,
-        ralliesLost: match.p1Score!
-      }
-    };
-  }
+  //     // Stats globales (toutes NON NULL car match CLOSED)
+  //     totalPoints: match.totalPoints,
+  //     winnerId: match.winnerUserId,
+  //     loserId: loserId,
+  //     totalRallies: match.totalRallies,
+  //     maxBounces: match.maxBounces!,
+  //     avgRallyBounces: match.avgRallyBounces!,
+  //     totalMatchTime: match.totalMatchTime!,
+  //     avgRallyTime: match.avgRallyTime!,
+
+  //     // Stats individuelles P1
+  //     p1: {
+  //       userId: p1Stats.userId,
+  //       username: p1Stats.user.username,
+  //       avatarUrl: p1Stats.user.avatarUrl,
+  //       score: p1Stats.score,
+  //       maxWins: p1Stats.maxWins,
+  //       totalBallSpins: p1Stats.totalBallSpins,
+  //       maxBouncesInWonRally: p1Stats.maxBouncesInWonRally,
+  //       maxEffectsInWonRally: p1Stats.maxEffectsInWonRally,
+  //       maxBallSpeedWon: p1Stats.maxBallSpeedWon,
+  //       maxBallSpeedLost: p1Stats.maxBallSpeedLost,
+  //       fastestWonRally: p1Stats.fastestWonRally,
+  //       fastestLostRally: p1Stats.fastestLostRally,
+  //       ralliesWon: match.p1Score!,
+  //       ralliesLost: match.p2Score!
+  //     },
+
+  //     // Stats individuelles P2
+  //     p2: {
+  //       userId: p2Stats.userId,
+  //       username: p2Stats.user.username,
+  //       avatarUrl: p2Stats.user.avatarUrl,
+  //       score: p2Stats.score,
+  //       maxWins: p2Stats.maxWins,
+  //       totalBallSpins: p2Stats.totalBallSpins,
+  //       maxBouncesInWonRally: p2Stats.maxBouncesInWonRally,
+  //       maxEffectsInWonRally: p2Stats.maxEffectsInWonRally,
+  //       maxBallSpeedWon: p2Stats.maxBallSpeedWon,
+  //       maxBallSpeedLost: p2Stats.maxBallSpeedLost,
+  //       fastestWonRally: p2Stats.fastestWonRally,
+  //       fastestLostRally: p2Stats.fastestLostRally,
+  //       ralliesWon: match.p2Score!,
+  //       ralliesLost: match.p1Score!
+  //     }
+  //   };
+  // }
 
   // ==========================================
   // READ - Récupérer un match par ID

@@ -25,9 +25,9 @@ function createArrowDiv(vel: Vec2): HTMLElement {
 
 function getMaxBouncesPerPlayer(state: GameState, player: PlayerId): number {
   if (player === "p1") {
-    return state.stats.p1MaxBounces || 0;
+    return state.stats.p1.maxBounces || 0;
   } else {
-    return state.stats.p2MaxBounces || 0;
+    return state.stats.p2.maxBounces || 0;
   }
 }
 
@@ -101,18 +101,17 @@ export function createPongStatsPanel(state: GameState): HTMLElement {
 
   gameLiveStats.append(
     statLine("Speed :", `${speed.toFixed(1)} px/s`),
-    statLine("Bounces :", `${state.stats.bounces}`)
+    statLine("Bounces :", `${state.stats.totalBounces}`)
   );
 
   function playerCol(id: "p1" | "p2", state: GameState, align: "left" | "right"): HTMLElement {
     const box = el("div", "terminal-text-score");
     const statsDiv = el("div", "text-" + align);
 
-    const playerStats = id === "p1" ? state.stats.p1Score : state.stats.p2Score;
+    const playerStats = id === "p1" ? state.stats.p1.score : state.stats.p2.score;
 
-    statsDiv.append(
-      (() => { const n = el("div", "mx-2"); n.textContent = `${playerStats}`; return n; })(),
-    );
+    const n = el("div", "mx-2"); n.textContent = `${playerStats}`;
+    statsDiv.append(n);
 
     box.append(statsDiv);
     return box;
@@ -139,19 +138,18 @@ export function createPongStatsPanel(state: GameState): HTMLElement {
   const PlayersStats = el("div", "grid grid-cols-3 gap-2 terminal-text text-sm");
 
   const p1Effects = el("div", "text-left");
-  p1Effects.textContent = `${state.stats.p1Effects}`;
+  p1Effects.textContent = `${state.stats.p1.effects}`;
   const effectsLabel = el("div", "text-center terminal-text");
   effectsLabel.textContent = "Effects";
   const p2Effects = el("div", "text-right");
-  p2Effects.textContent = `${state.stats.p2Effects}`;
+  p2Effects.textContent = `${state.stats.p2.effects}`;
 
   const p1MaxBounces = el("div", "text-left");
   p1MaxBounces.textContent = `${getMaxBouncesPerPlayer(state, "p1")}`;
   const maxBouncesLabel = el("div", "text-center terminal-text");
   maxBouncesLabel.textContent = "Max Bounces";
   const p2MaxBounces = el("div", "text-right");
-  p2MaxBounces.textContent = `${getMaxBouncesPerPlayer(state, "p2")}`;
-
+  p2MaxBounces.textContent = `${state.stats.p2.maxBounces || 0}`;
 
 
   PlayersStats.append(p1Effects, effectsLabel, p2Effects);

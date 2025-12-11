@@ -65,9 +65,6 @@ export interface PlayedMatchUserResponse {
 export interface PlayedMatchResponse {
   id: string;
   tournamentId: string | null;
-  gameCode: string;
-  round: number | null;
-  gameIndex: number | null;
   status: string;
   createdAt: Date;
   closedAt: Date | null;
@@ -112,7 +109,7 @@ export interface MatchStatsDTO {
 // Stats individuelles d'un joueur
 
 export interface PlayerStatsDTO {
-  userId?: string;  // Optionnel pour createMatchWithStats (on utilise username)
+  userId: string;  // Optionnel pour createMatchWithStats (on utilise username)
   score: number;
   maxWins: number;
   totalBallSpins: number;
@@ -126,9 +123,8 @@ export interface PlayerStatsDTO {
 
 
 // Body pour terminer un match de tournoi
-
 export interface FinishMatchDTO {
-  winnerUserId: string;
+  tournamentId: string | null;
   matchStats: MatchStatsDTO;
   p1Stats: PlayerStatsDTO & { userId: string };  // userId obligatoire
   p2Stats: PlayerStatsDTO & { userId: string };  // userId obligatoire

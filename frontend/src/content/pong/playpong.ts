@@ -2,7 +2,7 @@ import { createGameViewWindow }     from "./ui/view";
 import { setupCanvas }              from "./core/canvas";
 import { GameController }           from "./controller";
 import type { Tournament }          from "../tournament/uiTypes";
-import { getRouteTail } from "../../router";
+import { getRouteTail }             from "../../router";
 
 export function PlayPong(): HTMLElement {
     // Création de la fenêtre de jeu

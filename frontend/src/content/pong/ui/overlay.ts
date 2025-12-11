@@ -70,7 +70,7 @@ export class domOverlayManager {
                 const wrap = el("div", "text-center");
                 const score = el("div", "text-9xl mb-2");
                 score.append(
-                    text(`${state.stats.p1Score} - ${state.stats.p2Score}`)
+                    text(`${state.stats.p1.score} - ${state.stats.p2.score}`)
                 );
                 const b = el("button", "btn-click");
                 b.textContent = "RESTART";
@@ -85,7 +85,7 @@ export class domOverlayManager {
                 const wrap = el("div", "text-center");
                 const score = el("div", "text-9xl mb-2");
                 score.append(
-                    text(`${state.stats.p1Score} - ${state.stats.p2Score}`)
+                    text(`${state.stats.p1.score} - ${state.stats.p2.score}`)
                 );
 
                 wrap.append(score);

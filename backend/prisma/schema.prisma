@@ -117,7 +117,7 @@ model Match {
 model PlayerMatchStats {
   id                   String   @id @default(cuid())
   matchId              String   @map("match_id")
-  userId               String   @map("user_id")
+  userId               String?  @map("user_id")
   score                Int      @default(0)
   maxWins              Int      @default(0) @map("max_wins")
   totalBallSpins       Int      @default(0) @map("total_ball_spins")
@@ -129,7 +129,7 @@ model PlayerMatchStats {
   fastestLostRally     Float    @default(0) @map("fastest_lost_rally") // en secondes
   createdAt            DateTime @default(now()) @map("created_at")
   match                Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, userId]) // Un joueur = 1 ligne de stats par match
   @@index([userId])

@@ -61,7 +61,7 @@ export function collision(state: GameState, gameController: GameController) {
 
         if (bW <= p1x && bN <= p1yS && bS >= p1yN) {
             ball.vel.x *= -1;
-            state.stats.bounces++;
+            state.stats.totalBounces++;
             moreVelocity(state, gameController);
         }
     }
@@ -72,7 +72,7 @@ export function collision(state: GameState, gameController: GameController) {
 
         if (bE >= p2x && bN <= p2yS && bS >= p2yN) { 
             ball.vel.x *= -1;
-            state.stats.bounces++;
+            state.stats.totalBounces++;
             moreVelocity(state, gameController);
         }
     }
@@ -83,17 +83,17 @@ export function score(state: GameState): boolean {
     const bE = state.ball.pos.x + state.ball.r;
 
     if (bW <= 0) {
-        state.stats.p2Score += 1;
+        state.stats.p2.score += 1;
         state.stats.lastScorer = "p2";
-        if (state.stats.bounces > state.stats.p2MaxBounces)
-            state.stats.p2MaxBounces = state.stats.bounces;
+        if (state.stats.totalBounces > state.stats.p2.maxBounces)
+            state.stats.p2.maxBounces = state.stats.totalBounces;
         return true;    
     }
     if (bE >= state.world.w) {
-        state.stats.p1Score += 1;
+        state.stats.p1.score += 1;
         state.stats.lastScorer = "p1";
-        if (state.stats.bounces > state.stats.p1MaxBounces)
-            state.stats.p1MaxBounces = state.stats.bounces;
+        if (state.stats.totalBounces > state.stats.p1.maxBounces)
+            state.stats.p1.maxBounces = state.stats.totalBounces;
         return true;
     }
     return false;
@@ -122,8 +122,8 @@ export function moreVelocity(state: GameState, gameController: GameController) {
     || p2Down.down && ballDir.includes("S") && ballSide === "p2" && !paddleIsAtEdge(p2Face)) {
         state.ball.vel.y -= 20;
         state.ball.vel.x += 50;
-        if (ballSide === "p1") state.stats.p1Effects++;
-        else state.stats.p2Effects++;
+        if (ballSide === "p1") state.stats.p1.effects++;
+        else state.stats.p2.effects++;
     }
     if (p1Down.down && ballDir.includes("N") && ballSide === "p1" && !paddleIsAtEdge(p1Face)
     || p2Down.down && ballDir.includes("N") && ballSide === "p2" && !paddleIsAtEdge(p2Face)
@@ -131,8 +131,8 @@ export function moreVelocity(state: GameState, gameController: GameController) {
     || p2Up.down && ballDir.includes("S") && ballSide === "p2" && !paddleIsAtEdge(p2Face)) {
         state.ball.vel.y += 20;
         state.ball.vel.x += 50;
-        if (ballSide === "p1") state.stats.p1Effects++;
-        else  state.stats.p2Effects++;
+        if (ballSide === "p1") state.stats.p1.effects++;
+        else  state.stats.p2.effects++;
     }
     
     // simple augmentation de la vitesse tous les 3 rebonds
@@ -160,7 +160,7 @@ export function update(gameController: GameController, delta: number) {
 
     collision(state, gameController);
     if (score(state)) {
-        if (state.stats.p1Score >= 3 || state.stats.p2Score >= 3) {
+        if (state.stats.p1.score >= 3 || state.stats.p2.score >= 3) {
             gameController.setPhase("GAMEOVER");
         } else {
             gameController.setPhase("SCORED");

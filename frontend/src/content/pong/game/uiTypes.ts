@@ -7,6 +7,7 @@ export interface GameViewHooks {
 }
 
 export interface PlayerInfo {
+    id: string;
     userName: string;
     avatarUrl: string;
 }
@@ -25,8 +26,10 @@ export interface Controls {
 }
 
 export interface MatchStats {
+    matchId: string;
     totalPoints: number;        // 3 | 4 | 5
     winnerName: string;
+    winnerUserId: string;
     loserName: string;
 
     totalRallies: number;       // Nombre total d'echanges sur le match entier
@@ -70,7 +73,14 @@ export interface LiveMatchStats {
     rallyStartAt?: number;           
     rallyDurationsMs: number[];   
     pauseStartAt?: number;  
-    totalPauseMs: number; 
+    totalPauseMs: number;
+
+    tournamentCode?: string;
+    tournamentId?: string;
+    tournamentMode?: string;
+    tournamentName?: string;
+    matchRound?: string:
+    matchStatus?: string:
 }
 
 export interface LivePlayerStats {
@@ -117,10 +127,9 @@ export interface GameState {
     PrevPhase?: GamePhase;
     ready: { p1: boolean; p2: boolean };
 
+    matchId?: string;
     stats: LiveMatchStats;
     p1: PlayerInfo; 
     p2: PlayerInfo;
-
-    tournamentCode?: string;
 }
 
