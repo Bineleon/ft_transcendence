@@ -109,7 +109,7 @@ export interface MatchStatsDTO {
 // Stats individuelles d'un joueur
 
 export interface PlayerStatsDTO {
-  userId?: string;  // Optionnel pour createMatchWithStats (on utilise username)
+  userId: string;  // Optionnel pour createMatchWithStats (on utilise username)
   score: number;
   maxWins: number;
   totalBallSpins: number;

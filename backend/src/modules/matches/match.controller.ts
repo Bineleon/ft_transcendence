@@ -242,22 +242,22 @@ export function matchController(
   // ==========================================
   // GET /api/matches/:id/details - Détails complets d'un match terminé
   // ==========================================
-  app.get<{ Params: { id: string } }>(
-    '/api/matches/:id/details',
-    { preHandler: authenticate },
-    async (request, reply) => {
-      try {
-        const { id } = request.params;
+//   app.get<{ Params: { id: string } }>(
+//     '/api/matches/:id/details',
+//     { preHandler: authenticate },
+//     async (request, reply) => {
+//       try {
+//         const { id } = request.params;
         
-        const details = await matchService.getPlayedMatchDetails(id);
-        return formatSuccess(details, 'Match details retrieved successfully');
+//         const details = await matchService.getPlayedMatchDetails(id);
+//         return formatSuccess(details, 'Match details retrieved successfully');
         
-      } catch (error) {
-        const errorResponse = formatGenericError(
-          error instanceof Error ? error : new Error('Failed to get match details')
-        );
-        return reply.status(errorResponse.error.statusCode).send(errorResponse);
-      }
-    }
-  );
+//       } catch (error) {
+//         const errorResponse = formatGenericError(
+//           error instanceof Error ? error : new Error('Failed to get match details')
+//         );
+//         return reply.status(errorResponse.error.statusCode).send(errorResponse);
+//       }
+//     }
+  // );
 }
