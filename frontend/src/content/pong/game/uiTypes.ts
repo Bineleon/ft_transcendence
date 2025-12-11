@@ -79,8 +79,8 @@ export interface LiveMatchStats {
     tournamentId?: string;
     tournamentMode?: string;
     tournamentName?: string;
-    matchRound?: string:
-    matchStatus?: string:
+    matchRound?: string;
+    matchStatus?: string;
 }
 
 export interface LivePlayerStats {

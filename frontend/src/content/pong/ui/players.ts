@@ -94,22 +94,23 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     PBox.append(syncProfileBtn, guestBtn);
 
     if (state.tournament) {
-        const info: PlayerInfo = { id: player === "p1" ? state.p1.id : state.p2.id,
-                                   userName: player === "p1" ? state.p1.userName : state.p2.userName,
-                                   avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
-        setPlayerInfo(player, info);
-    } else {
-
-        const existing = getPlayerInfo(player);
-        if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
-
-
-        if (player === "p1" && arePlayersRegistered(state).p1 === false) {
-            getLoggedName().then((name) => {
-                if (!name) return; // personne log → on garde les boutons
-                
-                getUserDatas(name).then((user) => {
-                    if (!user) return;
+		const info: PlayerInfo = { id: player === "p1" ? state.p1.id : state.p2.id,
+			userName: player === "p1" ? state.p1.userName : state.p2.userName,
+			avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
+			setPlayerInfo(player, info);
+		} else {
+			
+			const existing = getPlayerInfo(player);
+			if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
+			
+			
+			if (player === "p1" && arePlayersRegistered(state).p1 === false) {
+				getLoggedName().then((name) => {
+					if (!name) return; // personne log → on garde les boutons
+					
+					getUserDatas(name).then((user) => {
+						console.log("HELLLLLLLLP");
+						if (!user) return;
                     // Robustly handle either: User OR { data: { user: User } }
                     const resolvedUser: any = (user as any)?.data?.user ?? user;
                     const id = resolvedUser?.id ?? resolvedUser?.id ?? "";
