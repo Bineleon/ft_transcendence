@@ -3,19 +3,9 @@ import { setupSelfMode, setupOtherMode } from "./utils.ts";
 import { apiFetch } from "../utils/apiFetch.ts";
 import { pongAlert } from "../utils/alertBox.ts";
 import type { ProfileViewWindow } from "./view";
-import { renderDailyMatchesChart } from "./view";
+import { loadDailyMatchesDashboard } from "./dashboard.ts"
 
-type DailyMatchStat = {
-  date: string;        // ex: "2025-12-09"
-  totalMatches: number;
-  wins: number;
-};
 
-export type RecentMatchAvgStats = {
-    label: string;          // "Game 1", ou "M-1", ou une date
-    avgRallyBounces: number;
-    avgRallyTime: number;   // en secondes, par ex.
-};
 
 
 // --- Contrôleur principal de la vue profil ---
@@ -193,40 +183,40 @@ async function loadProfileData(
     // Profile data loaded
 }
 
-async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
-    // 1. Appel à l'API pour récupérer les stats
-    // const res = await apiFetch("/api/profile/dashboard/daily-matches", {
-    //     credentials: "include",
-    // });
+// async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
+//     // 1. Appel à l'API pour récupérer les stats
+//     // const res = await apiFetch("/api/profile/dashboard/daily-matches", {
+//     //     credentials: "include",
+//     // });
 
-    // 2. Vérifier si la réponse est OK (code 2xx)
-    // if (!res.ok) {
-    //     console.error("Failed to load daily matches stats", res.status);
-    //     dashboard.innerHTML = "";
-    //     const p = document.createElement("p");
-    //     p.className = "article-base";
-    //     p.textContent = "Unable to load match statistics.";
-    //     dashboard.append(p);
-    //     return;
-    // }
-	    const fakeStats: DailyMatchStat[] = [
-        { date: "2025-12-04", totalMatches: 1, wins: 1 },
-        { date: "2025-12-05", totalMatches: 3, wins: 2 },
-        { date: "2025-12-06", totalMatches: 0, wins: 0 },
-        { date: "2025-12-07", totalMatches: 2, wins: 1 },
-        { date: "2025-12-08", totalMatches: 9, wins: 4 },
-        { date: "2025-12-09", totalMatches: 4, wins: 2 },
-        { date: "2025-12-10", totalMatches: 1, wins: 0 },
-    ];
-    // 3. Lire le JSON de la réponse
-    // const body = await res.json();
+//     // 2. Vérifier si la réponse est OK (code 2xx)
+//     // if (!res.ok) {
+//     //     console.error("Failed to load daily matches stats", res.status);
+//     //     dashboard.innerHTML = "";
+//     //     const p = document.createElement("p");
+//     //     p.className = "article-base";
+//     //     p.textContent = "Unable to load match statistics.";
+//     //     dashboard.append(p);
+//     //     return;
+//     // }
+// 	    const fakeStats: DailyMatchStat[] = [
+//         { date: "2025-12-04", totalMatches: 1, wins: 1 },
+//         { date: "2025-12-05", totalMatches: 3, wins: 2 },
+//         { date: "2025-12-06", totalMatches: 0, wins: 0 },
+//         { date: "2025-12-07", totalMatches: 2, wins: 1 },
+//         { date: "2025-12-08", totalMatches: 9, wins: 4 },
+//         { date: "2025-12-09", totalMatches: 4, wins: 2 },
+//         { date: "2025-12-10", totalMatches: 1, wins: 0 },
+//     ];
+//     // 3. Lire le JSON de la réponse
+//     // const body = await res.json();
 
-    // 4. Extraire le tableau de stats depuis body.data.stats
-    // const stats = (body.data?.stats ?? []) as DailyMatchStat[];
+//     // 4. Extraire le tableau de stats depuis body.data.stats
+//     // const stats = (body.data?.stats ?? []) as DailyMatchStat[];
 
-    // 5. Appeler le renderer pour afficher le graph
-    renderDailyMatchesChart(dashboard, fakeStats);
-}
+//     // 5. Appeler le renderer pour afficher le graph
+//     renderDailyMatchesChart(dashboard, fakeStats);
+// }
 
 
 
