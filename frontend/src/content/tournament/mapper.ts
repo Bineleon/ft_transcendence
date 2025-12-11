@@ -161,7 +161,15 @@ export function liveStatsToMatchStats(live: LiveMatchStats): MatchStats {
   const avgRallyBounces = totalRallies > 0 ? totalBounces / totalRallies : 0;
 
   const totalMatchTime = live.rallyDurationsMs.reduce((s, v) => s + v, 0);
-  const avgRallyTime = live.rallyDurationsMs.length > 0 ? totalMatchTime / live.rallyDurationsMs.length : 0;
+  // const avgRallyTime = live.rallyDurationsMs.length > 0 ? totalMatchTime / live.rallyDurationsMs.length : 0;
+
+  let avgRallyTime = 0;
+
+if (live.rallyDurationsMs.length > 0) {
+    const totalRallyTimeMs = live.rallyDurationsMs.reduce((a: number, b: number) => a + b, 0);
+    avgRallyTime = (totalRallyTimeMs / live.rallyDurationsMs.length) / 1000; 
+}
+
 
   // ----- Player Stats -----
   const p1St: PlayerMatchStats = {

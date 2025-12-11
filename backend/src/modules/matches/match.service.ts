@@ -7,7 +7,8 @@ import type {
   // PlayedMatchResponse,
   PlayedMatchDTO,
   MatchStatsDTO,
-  PlayerStatsDTO
+  PlayerStatsDTO,
+  RecentRallyStat
 } from './match.model.js';
 
 const prisma = getPrismaClient();
@@ -642,7 +643,7 @@ export class MatchService {
     console.log(
       `[advanceWinner] → Moving to Round ${nextRound}, Match ${nextGameIndex}`,
     );
-
+    
     const nextMatch = await tx.match.findFirst({
       where: {
         tournamentId,
@@ -663,10 +664,10 @@ export class MatchService {
 
       return;
     }
-
+    
     const isP1 = currentGameIndex % 2 === 0;
     const slot = isP1 ? 'p1UserId' : 'p2UserId';
-
+    
     console.log(`[advanceWinner] → Assigning winner to ${slot} of next match`);
 
     await tx.match.update({
@@ -678,8 +679,8 @@ export class MatchService {
 
     console.log(`[advanceWinner] ✅ Winner advanced successfully`);
   }
-
-    // ==========================================
+  
+  // ==========================================
   // READ - Récupérer tous les matchs (avec filtre optionnel)
   // ==========================================
   async findAll(status?: MatchStatus): Promise<MatchResponse[]> {
@@ -725,7 +726,7 @@ export class MatchService {
       },
     });
   }
-
+  
   // ==========================================
   // READ - Récupérer les matchs d'un tournoi
   // ==========================================
@@ -771,7 +772,7 @@ export class MatchService {
       ],
     });
   }
-
+  
   // ==========================================
   // READ - Récupérer les matchs d'un joueur
   // ==========================================
@@ -821,4 +822,31 @@ export class MatchService {
       },
     });
   }
+
+// DASHBOARD GRAPH 2
+    async getRecentRalliesForUser(userId: string): Promise<RecentRallyStat[]> {
+    const matches = await prisma.match.findMany({
+      where: {
+        status: 'CLOSED',
+        OR: [
+          { p1UserId: userId },
+          { p2UserId: userId },
+        ],
+      },
+      orderBy: {
+        closedAt: 'desc',
+      },
+      take: 3,
+    });
+    
+    // On mappe vers la forme attendue par le front
+    return matches.map((match, index) => ({
+      // Label : tu peux aussi utiliser la date, par ex:
+      // label: match.closedAt ? match.closedAt.toISOString().slice(0, 10) : `Game ${index + 1}`,
+      label: `Game ${index + 1}`,
+      avgRallyBounces: match.avgRallyBounces ?? 0,
+      avgRallyTime: match.avgRallyTime ?? 0,
+    }));
+  }
+  
 }

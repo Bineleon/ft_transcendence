@@ -140,3 +140,10 @@ export interface PlayedMatchDTO {
   p1Stats: PlayerStatsDTO;
   p2Stats: PlayerStatsDTO;
 }
+
+
+export type RecentRallyStat = {
+  label: string;          // ex: "Game 1" ou "2025-12-10"
+  avgRallyBounces: number;
+  avgRallyTime: number;
+};

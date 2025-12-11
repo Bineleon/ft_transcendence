@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { MatchService } from './match.service.js';
-import type { CreateMatchDTO, UpdateMatchDTO, FinishMatchDTO, PlayedMatchDTO  } from './match.model.js';
+import type { CreateMatchDTO, UpdateMatchDTO, FinishMatchDTO, PlayedMatchDTO } from './match.model.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
 import { formatSuccess } from '../../shared/utils/formatters.js';
 import { formatGenericError } from '../../shared/errors/formatters.js';
@@ -236,6 +236,19 @@ export function matchController(
         );
         return reply.status(errorResponse.error.statusCode).send(errorResponse);
       }
+    }
+  );
+
+    // ===============================================
+  // GET /api/matches/:id/start - Dashboard graph 2
+  // ===============================================
+    app.get(
+    '/api/profile/dashboard/recent-rallies',
+    { preHandler: authenticate },
+    async (request) => {
+      const userId = request.user!.userId;
+      const stats = await matchService.getRecentRalliesForUser(userId);
+      return formatSuccess({ stats }, 'Recent rallies loaded');
     }
   );
 

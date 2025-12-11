@@ -28,6 +28,7 @@ export async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
 	const res = await apiFetch("/api/profile/dashboard/daily-matches", {
 	    credentials: "include",
 	});
+    
 
 	// 2. Vérifier si la réponse est OK (code 2xx)
 	if (!res.ok) {
@@ -39,6 +40,21 @@ export async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
 	    dashboard.append(p);
 	    return;
 	}
+
+    // 2 bis - Fetch data graph 2
+    const resRallies = await apiFetch("/api/profile/dashboard/recent-rallies", {
+        credentials: "include",
+    });
+
+    let rallies: RecentMatchAvgStats[] = [];
+
+    if (resRallies.ok) {
+        const bodyRallies = await resRallies.json();
+        rallies = (bodyRallies.data?.stats ?? []) as RecentMatchAvgStats[];
+    } else {
+        console.error("Failed to load recent rallies", resRallies.status);
+    }
+
 	// 	const fakeStats: DailyMatchStat[] = [
 	// 	{ date: "2025-12-04", totalMatches: 1, wins: 1 },
 	// 	{ date: "2025-12-05", totalMatches: 3, wins: 2 },
@@ -55,7 +71,7 @@ export async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
 	const stats = (body.data?.stats ?? []) as DailyMatchStat[];
 
 	// 5. Appeler le renderer pour afficher le graph
-	renderDailyMatchesChart(dashboard, stats);
+	renderDailyMatchesChart(dashboard, stats, rallies);
 }
 
 
@@ -63,7 +79,8 @@ export async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
 // Y : Pour afficher graph dashboard
 export function renderDailyMatchesChart(
     dashboard: HTMLElement,
-    stats: DailyMatchStat[]
+    stats: DailyMatchStat[],
+    rallies: RecentMatchAvgStats[]
 ) {
     // On vide le dashboard
     dashboard.innerHTML = "";
@@ -136,13 +153,13 @@ export function renderDailyMatchesChart(
     dashboard.append(ralliesSection);
 
     // Fake data pour tester (on branchera le backend plus tard)
-    const fakeRallies: RecentMatchAvgStats[] = [
-        { label: "Game 1", avgRallyBounces: 6.2, avgRallyTime: 3.4 },
-        { label: "Game 2", avgRallyBounces: 3.8, avgRallyTime: 2.1 },
-        { label: "Game 3", avgRallyBounces: 9.1, avgRallyTime: 4.7 },
-    ];
+    // const fakeRallies: RecentMatchAvgStats[] = [
+    //     { label: "Game 1", avgRallyBounces: 6.2, avgRallyTime: 3.4 },
+    //     { label: "Game 2", avgRallyBounces: 3.8, avgRallyTime: 2.1 },
+    //     { label: "Game 3", avgRallyBounces: 9.1, avgRallyTime: 4.7 },
+    // ];
 
-    renderRecentRalliesChart(ralliesSection, fakeRallies);
+    renderRecentRalliesChart(ralliesSection, rallies);
 
 	    // --- Section du 3e bloc : "Last matches" ---
     const historySection = el("div", "w-full mt-6");
