@@ -3,7 +3,7 @@ import type { TournamentFormDatas } from "../tournament/tournament.ts";
 import { apiFetch } from "./apiFetch";
 import { pongAlert } from "./alertBox.ts";
 import type { Tournament, User } from "../tournament/uiTypes.ts";
-import type { ApiTournament } from "../tournament/apiTypes.ts";
+import type { ApiTournament, ApiFinishMatchDTO, ApiPlayedMatchDTO } from "../tournament/apiTypes.ts";
 import { tournamentFromApi } from "../tournament/mapper.ts";
 import { areAllMatchesClosed } from "../pong/ui/players.ts";
 
@@ -107,7 +107,7 @@ export async function finishMatch(
 
 export async function createMatchWithStats(payload: ApiPlayedMatchDTO) {
     try {
-        const resp = apiFetch(`/api/matches/played`, {
+        const resp = await apiFetch(`/api/matches/played`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
