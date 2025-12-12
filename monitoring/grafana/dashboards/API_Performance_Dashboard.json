@@ -106,6 +106,113 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "fieldMinMax": true,
+                    "mappings": [
+                        {
+                            "options": {
+                                "from": 0,
+                                "result": {
+                                    "color": "green",
+                                    "index": 0,
+                                    "text": "HEALTHY"
+                                },
+                                "to": 1
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "options": {
+                                "from": 1,
+                                "result": {
+                                    "color": "yellow",
+                                    "index": 1,
+                                    "text": "DEGRADED"
+                                },
+                                "to": 5
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "options": {
+                                "from": 5,
+                                "result": {
+                                    "color": "red",
+                                    "index": 2,
+                                    "text": "ERROR"
+                                },
+                                "to": 100
+                            },
+                            "type": "range"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    },
+                    "unit": "percent"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 24,
+                "x": 0,
+                "y": 4
+            },
+            "id": 7,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": true,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "editorMode": "code",
+                    "expr": "(\n  sum(rate(http_requests_total{status_code=~\"5..\"}[$__rate_interval])) or vector(0)\n)\n/\nclamp_min(sum(rate(http_requests_total[$__rate_interval])), 1)\n* 100\n",
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "HTTP ERRORS",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Show active API",
             "fieldConfig": {
                 "defaults": {
@@ -143,7 +250,7 @@
                 "h": 14,
                 "w": 24,
                 "x": 0,
-                "y": 4
+                "y": 7
             },
             "id": 5,
             "options": {
@@ -238,7 +345,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 0,
-                "y": 18
+                "y": 21
             },
             "id": 1,
             "options": {
@@ -338,7 +445,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 12,
-                "y": 18
+                "y": 21
             },
             "id": 2,
             "options": {
@@ -442,7 +549,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 0,
-                "y": 27
+                "y": 30
             },
             "id": 3,
             "options": {
@@ -559,7 +666,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 12,
-                "y": 27
+                "y": 30
             },
             "id": 4,
             "options": {
@@ -614,5 +721,5 @@
     "timezone": "browser",
     "title": "API Performance Dashboard",
     "uid": "api-performance-v31",
-    "version": 1
+    "version": 5
 }
