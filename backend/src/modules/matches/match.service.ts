@@ -1,5 +1,5 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
-import type { MatchStatus, TournamentStatus } from '@prisma/client';
+import type { MatchStatus } from '@prisma/client';
 import type { 
   CreateMatchDTO, 
   UpdateMatchDTO, 
