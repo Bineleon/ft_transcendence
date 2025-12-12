@@ -144,7 +144,7 @@ export class MatchService {
           totalPoints: data.matchStats.totalPoints,
           totalRallies: data.matchStats.totalRallies,
           maxBounces: data.matchStats.maxBounces,
-          avgRallyBounces: data.matchStats.avgRallyBounces,
+          s: data.matchStats.avgRallyBounces,
           totalMatchTime: data.matchStats.totalMatchTime,
           avgRallyTime: data.matchStats.avgRallyTime,
           
@@ -849,4 +849,42 @@ export class MatchService {
     }));
   }
   
+  // DASHBOARD GRAPH 3 - Match history (5 derniers matchs)
+async getRecentMatchesForUser(userId: string): Promise<{
+  p1Username: string;
+  p2Username: string;
+  winnerUsername: string;
+  p1Score: number;
+  p2Score: number;
+  playedAt: string;
+}[]> {
+  const matches = await prisma.match.findMany({
+    where: {
+      status: 'CLOSED',
+      OR: [{ p1UserId: userId }, { p2UserId: userId }],
+      closedAt: { not: null },
+    },
+    orderBy: { closedAt: 'desc' },
+    take: 5,
+    select: {
+      closedAt: true,
+      p1Score: true,
+      p2Score: true,
+      p1: { select: { username: true } },
+      p2: { select: { username: true } },
+      winner: { select: { username: true } },
+    },
+  });
+
+  return matches.map((m) => ({
+    p1Username: m.p1?.username ?? 'Guest',
+    p2Username: m.p2?.username ?? 'Guest',
+    winnerUsername: m.winner?.username ?? 'Unknown',
+    p1Score: m.p1Score ?? 0,
+    p2Score: m.p2Score ?? 0,
+    playedAt: (m.closedAt ?? new Date()).toISOString(),
+  }));
+}
+
+
 }
