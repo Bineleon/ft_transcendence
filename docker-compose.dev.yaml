@@ -107,6 +107,19 @@ services:
     networks:
       - app_network
 
+## --- NGINX-EXPORTER --- ###
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    command:
+      - "--nginx.scrape-uri=http://nginx:80/stub_status"
+    ports:
+      - "9113:9113"
+    depends_on:
+      - nginx
+    networks:
+      - app_network
+
 volumes:
   db-data:
   avatars-data:
