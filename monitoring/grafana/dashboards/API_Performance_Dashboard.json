@@ -19,9 +19,88 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 0,
+    "id": 4,
     "links": [],
     "panels": [
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "color": "dark-red",
+                                    "index": 1,
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "index": 0,
+                                    "text": "UP"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 6,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "editorMode": "code",
+                    "expr": "up{job=\"backend\"}\n",
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Backend Status",
+            "type": "stat"
+        },
         {
             "datasource": {
                 "type": "prometheus",
@@ -64,7 +143,7 @@
                 "h": 14,
                 "w": 24,
                 "x": 0,
-                "y": 0
+                "y": 4
             },
             "id": 5,
             "options": {
@@ -159,7 +238,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 0,
-                "y": 14
+                "y": 18
             },
             "id": 1,
             "options": {
@@ -259,7 +338,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 12,
-                "y": 14
+                "y": 18
             },
             "id": 2,
             "options": {
@@ -363,7 +442,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 0,
-                "y": 23
+                "y": 27
             },
             "id": 3,
             "options": {
@@ -480,7 +559,7 @@
                 "h": 9,
                 "w": 12,
                 "x": 12,
-                "y": 23
+                "y": 27
             },
             "id": 4,
             "options": {
@@ -535,5 +614,5 @@
     "timezone": "browser",
     "title": "API Performance Dashboard",
     "uid": "api-performance-v31",
-    "version": 6
+    "version": 1
 }
