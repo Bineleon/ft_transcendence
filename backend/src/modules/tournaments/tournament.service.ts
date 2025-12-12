@@ -684,18 +684,18 @@ export class TournamentService {
   // }
 
 /**
- * Clôturer un tournoi et sauvegarder sur la blockchain
+ * Close a tournament and save it to the blockchain
  */
 async close(code: string): Promise<TournamentResponse> {
-  // 1. Vérifier le statut
+  // 1. Check status and get tournament data
   const tournament = await prisma.tournament.findUnique({
     where: { code },
     include: {
       matches: {
         where: { status: 'CLOSED' },
         include: {
-          p1: { select: { username: true } },
-          p2: { select: { username: true } },
+          p1: { select: { username: true, id: true } },
+          p2: { select: { username: true, id: true } },
           winner: { select: { username: true } }
         }
       },
@@ -711,16 +711,43 @@ async close(code: string): Promise<TournamentResponse> {
     throw new Error(`Cannot close tournament with status ${tournament.status}`);
   }
 
-  // 2. Fermer le tournoi dans la DB
-  await prisma.tournament.update({
-    where: { code },
-    data: { status: 'CLOSED' }
+  // 2. Build participants list from matches if needed
+  const participantUsernames = new Set<string>();
+  const participantIds = new Set<string>();
+  
+  tournament.matches.forEach(match => {
+    if (match.p1?.username) {
+      participantUsernames.add(match.p1.username);
+      participantIds.add(match.p1.id);
+    }
+    if (match.p2?.username) {
+      participantUsernames.add(match.p2.username);
+      participantIds.add(match.p2.id);
+    }
   });
 
-  // 3. Sauvegarder sur blockchain (si des matchs ont été joués)
+  const playersArray = Array.from(participantUsernames);
+
+  // 3. Verify minimum players
+  if (playersArray.length < 2) {
+    throw new Error('At least 2 players required to close tournament');
+  }
+
+  // 4. Close the tournament in DB
+  await prisma.tournament.update({
+    where: { code },
+    data: { 
+      status: 'CLOSED',
+      participants: {
+        connect: Array.from(participantIds).map(id => ({ id }))
+      }
+    }
+  });
+
+  // 5. Save to blockchain (if matches were played)
   if (tournament.matches.length > 0) {
     try {
-      // Déterminer le gagnant
+      // Determine the winner
       const winnerStats: Record<string, number> = {};
       tournament.matches.forEach((match) => {
         if (match.winner?.username) {
@@ -728,15 +755,22 @@ async close(code: string): Promise<TournamentResponse> {
         }
       });
       
-      const winner = Object.keys(winnerStats).reduce((a, b) => 
-        winnerStats[a] > winnerStats[b] ? a : b
-      );
+      const winner = Object.keys(winnerStats).length > 0
+        ? Object.keys(winnerStats).reduce((a, b) => 
+            winnerStats[a] > winnerStats[b] ? a : b
+          )
+        : playersArray[0]; // Fallback to first player
 
-      // Enregistrer sur blockchain
+      console.log('📊 Data to send to blockchain:');
+      console.log('  Winner:', winner);
+      console.log('  Players:', playersArray);
+      console.log('  Matches:', tournament.matches.length);
+
+      // Record on blockchain
       const txHash = await this.blockchainService.recordTournament(
         parseInt(tournament.id.replace(/\D/g, '').slice(0, 10)),
         winner,
-        tournament.participants.map(p => p.username),
+        playersArray,
         tournament.matches.map(m => ({
           matchId: parseInt(m.id.replace(/\D/g, '').slice(0, 10)),
           player1: m.p1?.username || '',
@@ -748,7 +782,7 @@ async close(code: string): Promise<TournamentResponse> {
         }))
       );
 
-      // Mettre à jour avec le txHash
+      // Update with txHash
       await prisma.tournament.update({
         where: { code },
         data: { 
@@ -757,11 +791,64 @@ async close(code: string): Promise<TournamentResponse> {
         }
       });
 
-      console.log(`✅ Tournament ${code} saved to blockchain`);
-      console.log(`🔗 ${this.blockchainService.getExplorerUrl(txHash)}`);
+      //  LOG BLOCKCHAIN DATA
+      console.log('\n' + '═'.repeat(60));
+      console.log('🎉 TOURNAMENT RECORDED ON BLOCKCHAIN');
+      console.log('═'.repeat(60) + '\n');
+      
+      console.log('📋 Tournament information:');
+      console.log('  Code:', code);
+      console.log('  TX Hash:', txHash);
+      console.log('  🔗 Explorer:', this.blockchainService.getExplorerUrl(txHash));
+      console.log('');
+
+      // Read back from blockchain
+      try {
+        const tournamentId = parseInt(tournament.id.replace(/\D/g, '').slice(0, 10));
+        const blockchainData = await this.blockchainService.getTournament(tournamentId);
+
+        console.log('⛓️  DATA STORED ON AVALANCHE:');
+        console.log('─'.repeat(60));
+        console.log('🏆 Winner:', blockchainData.winner);
+        console.log('👥 Players:', blockchainData.players.join(', '));
+        console.log('📅 Timestamp:', new Date(blockchainData.timestamp * 1000).toLocaleString());
+        console.log('');
+        console.log(`📊 ${blockchainData.matches.length} matches recorded:\n`);
+
+        blockchainData.matches.forEach((match, i) => {
+          console.log(`  🎮 Match ${i + 1}:`);
+          console.log(`     ${match.player1.padEnd(15)} ${match.scorePlayer1} - ${match.scorePlayer2} ${match.player2}`);
+          console.log(`     🏆 Winner: ${match.winner}`);
+          console.log(`     📅 ${new Date(match.timestamp * 1000).toLocaleString()}`);
+          console.log('');
+        });
+
+        // Calculate ranking
+        const winCount: Record<string, number> = {};
+        blockchainData.players.forEach(p => winCount[p] = 0);
+        blockchainData.matches.forEach(m => {
+          if (m.winner) winCount[m.winner]++;
+        });
+
+        const ranking = Object.entries(winCount).sort(([, a], [, b]) => b - a);
+
+        console.log('📊 FINAL RANKING:');
+        console.log('─'.repeat(60));
+        ranking.forEach(([player, wins], index) => {
+          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '  ';
+          console.log(`  ${medal} ${index + 1}. ${player.padEnd(15)} ${wins} win(s)`);
+        });
+
+        console.log('\n' + '═'.repeat(60));
+        console.log('✅ SCORES ARE IMMUTABLE AND VERIFIABLE ON BLOCKCHAIN');
+        console.log('═'.repeat(60) + '\n');
+
+      } catch (readError) {
+        console.error('⚠️ Unable to read back from blockchain:', readError);
+      }
 
     } catch (error) {
-      // Ne pas bloquer la clôture si blockchain échoue
+      // Don't block tournament closure if blockchain fails
       console.error('⚠️ Blockchain error:', error);
       await prisma.tournament.update({
         where: { code },

@@ -2,19 +2,10 @@ import { ethers } from "ethers";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import type { Match, Tournament } from "./blockchain.model.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-interface Match {
-  matchId: number;
-  player1: string;
-  player2: string;
-  scorePlayer1: number;
-  scorePlayer2: number;
-  winner: string;
-  timestamp: number;
-}
 
 export class BlockchainService {
   private contract: ethers.Contract;
@@ -40,10 +31,6 @@ export class BlockchainService {
     console.log("✅ Blockchain service initialized");
   }
 
-  /**
-   * Enregistrer un tournoi sur la blockchain
-   * @returns Transaction hash
-   */
   async recordTournament(
     tournamentId: number,
     winner: string,
@@ -53,13 +40,11 @@ export class BlockchainService {
     try {
       console.log(`📤 Recording tournament ${tournamentId}...`);
 
-      // Vérifier si existe déjà
       const exists = await this.contract.tournamentExists(tournamentId);
       if (exists) {
         throw new Error(`Tournament ${tournamentId} already exists on blockchain`);
       }
 
-      // Envoyer la transaction
       const tx = await this.contract.recordTournament(
         tournamentId,
         winner,
@@ -78,9 +63,43 @@ export class BlockchainService {
     }
   }
 
-  /**
-   * URL de l'explorateur
-   */
+  async getTournament(tournamentId: number): Promise<Tournament> {
+    try {
+      console.log(`📖 Reading tournament ${tournamentId} from blockchain...`);
+
+      const exists = await this.contract.tournamentExists(tournamentId);
+      if (!exists) {
+        throw new Error(`Tournament ${tournamentId} not found on blockchain`);
+      }
+
+      const data = await this.contract.getTournament(tournamentId);
+
+      const tournament: Tournament = {
+        id: Number(data[0]),
+        winner: data[1],
+        players: data[2],
+        matches: data[3].map((m: any) => ({
+          matchId: Number(m.matchId),
+          player1: m.player1,
+          player2: m.player2,
+          scorePlayer1: Number(m.scorePlayer1),
+          scorePlayer2: Number(m.scorePlayer2),
+          winner: m.winner,
+          timestamp: Number(m.timestamp)
+        })),
+        timestamp: Number(data[4]),
+        exists: true
+      };
+
+      console.log(`✅ Tournament ${tournamentId} retrieved from blockchain`);
+      return tournament;
+
+    } catch (error: any) {
+      console.error("❌ Error reading tournament:", error);
+      throw new Error(`Blockchain read error: ${error.message}`);
+    }
+  }
+
   getExplorerUrl(txHash: string): string {
     return `https://testnet.snowtrace.io/tx/${txHash}`;
   }
