@@ -104,7 +104,7 @@ export function moreVelocity(state: GameState, gameController: GameController) {
     const IncrementY = state.ball.velIncrement.y;
 
     // const maxSpeed = 1500;
-    let bounces = state.stats.bounces;
+    let bounces = state.stats.totalBounces;
     const { p1Up, p1Down, p2Up, p2Down } = gameController.pongControls;
     const ballDir = getDirectionFromVec(state.ball.vel);
     const ballSide = getBallSide(state.ball);

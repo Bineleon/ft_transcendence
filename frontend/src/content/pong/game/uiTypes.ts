@@ -131,5 +131,6 @@ export interface GameState {
     stats: LiveMatchStats;
     p1: PlayerInfo; 
     p2: PlayerInfo;
+    tournamentCode?: string;
 }
 

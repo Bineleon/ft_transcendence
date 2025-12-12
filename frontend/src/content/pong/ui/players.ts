@@ -1,9 +1,9 @@
 import { el, text }         from "../../home";
 import type { GameState } from "../game/types";
 import { runAuthBox } from "../../utils/alertBox";
-import { getLoggedName, getUserDatas } from "../../utils/todb";
+import { getLoggedName, getUserDatas, closeTournament } from "../../utils/todb";
 import type { PlayerId, PlayerInfo } from "../game/types";
-import { getTournamentDatas } from "../../utils/todb";
+import { getTournamentDatas, notLoggedIn } from "../../utils/todb";
 import { matchFromApi } from "../../tournament/mapper";
 
 const currentPlayers: Record<PlayerId, PlayerInfo | null> = {
@@ -48,6 +48,17 @@ export function areBothPlayersRegistered(state: GameState): boolean {
     return r.p1 && r.p2;
 }
 
+export function areAllMatchesClosed(m?: Match[]): boolean {
+    while (m && m.length > 0) 
+    {
+        m = m.filter((match) => match.status !== "CLOSED");
+        if (m.length > 0) return false;
+    }
+    
+    return true;
+}
+
+
 function applyPlayerInfoToBox(box: HTMLDivElement, info: PlayerInfo, player: "p1" | "p2", state: GameState): void {
     const img = document.createElement("img");
     img.src = info.avatarUrl || "/imgs/avatar.png";
@@ -83,58 +94,62 @@ function applyPlayerInfoToBox(box: HTMLDivElement, info: PlayerInfo, player: "p1
 }
 
 function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElement {
-    const PBox = el("div", `grid gap-2 h-[8rem]`) as HTMLDivElement;
+    const PBox = el("div", `grid gap-2 h-[8rem] w-full`) as HTMLDivElement;
 
-    const syncProfileBtn = el("button", "btn-click text-xs px-2 py-1") as HTMLButtonElement;
+    if (player === "p1") PBox.classList.add("grid-cols-[auto_1fr]");
+    else PBox.classList.add("grid-cols-[1fr_auto]");
+
+    const syncProfileBtn = el("button", "btn-click text-xs px-2 py-1 h-[2rem]") as HTMLButtonElement;
     syncProfileBtn.textContent = "Sync Profile";
 
-    const guestBtn = el("button", "btn-click text-xs px-2 py-1") as HTMLButtonElement;
+    const guestBtn = el("button", "btn-click text-xs px-2 py-1 h-[2rem]") as HTMLButtonElement;
     guestBtn.textContent = "Guest";
 
-    PBox.append(syncProfileBtn, guestBtn);
+    const btnRow = el(
+        "div",
+        "col-span-2 flex gap-2 items-center " + (player === "p1" ? "justify-start" : "justify-end")
+    ) as HTMLDivElement;
 
-    if (state.tournament) {
-        const info: PlayerInfo = { id: player === "p1" ? state.p1.id : state.p2.id,
-                                   userName: player === "p1" ? state.p1.userName : state.p2.userName,
-                                   avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
-        setPlayerInfo(player, info);
+    btnRow.append(syncProfileBtn, guestBtn);
+    PBox.append(btnRow);
+
+    if (state.tournamentCode) {
+        const existing = getPlayerInfo(player);
+        if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
     } else {
 
         const existing = getPlayerInfo(player);
         if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
 
 
-        if (player === "p1" && arePlayersRegistered(state).p1 === false) {
-            getLoggedName().then((name) => {
-                if (!name) return; // personne log → on garde les boutons
-                
-                getUserDatas(name).then((user) => {
-                    if (!user) return;
-                    // Robustly handle either: User OR { data: { user: User } }
-                    const resolvedUser: any = (user as any)?.data?.user ?? user;
-                    const id = resolvedUser?.id ?? resolvedUser?.id ?? "";
-                    const username = resolvedUser?.username ?? resolvedUser?.userName ?? name;
-                    const avatar   = resolvedUser?.avatarUrl ?? resolvedUser?.avatar ?? "";
+        if (player === "p1") {
+            notLoggedIn().then((isNotLoggedIn) => {
+                if (!isNotLoggedIn) {
+                    getLoggedName().then((name) => {
+                        if (!name) return; // personne log → on garde les boutons
+                        
+                        getUserDatas(name).then((user) => {
+                            if (!user) return;
+                            // Robustly handle either: User OR { data: { user: User } }
+                            const resolvedUser: any = (user as any)?.data?.user ?? user;
+                            const id = resolvedUser?.id ?? resolvedUser?.id ?? "";
+                            const username = resolvedUser?.username ?? resolvedUser?.userName ?? name;
+                            const avatar   = resolvedUser?.avatarUrl ?? resolvedUser?.avatar ?? "";
 
-                    state.p1.id = id;
-                    state.p1.userName = username;
-                    state.p1.avatarUrl = avatar || "";
-                    applyPlayerInfoToBox(PBox, state.p1, player, state);
-                    document.dispatchEvent(new CustomEvent("playersUpdated", { detail: { state } }));
-                }).catch((err) => {
-                    console.error("getUserDatas error:", err);
-                });
-            }).catch((err) => {
-                console.error("getLoggedName error:", err);
+                            state.p1.id = id;
+                            state.p1.userName = username;
+                            state.p1.avatarUrl = avatar || "";
+                            // applyPlayerInfoToBox(PBox, state.p1, player, state);
+                            document.dispatchEvent(new CustomEvent("playersUpdated", { detail: { state } }));
+                        }).catch((err) => {
+                            console.error("getUserDatas error:", err);
+                        });
+                    }).catch((err) => {
+                        console.error("getLoggedName error:", err);
+                    });
+                }
             });
         }
-    }
-
-    if (player === "p1") {
-        PBox.classList.add("grid-cols-[auto_1fr]");
-
-    } else {
-        PBox.classList.add("grid-cols-[1fr_auto]");
     }
 
     syncProfileBtn.onclick = async () => { 
@@ -145,7 +160,7 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     };
     guestBtn.onclick = async () => { 
         const info = await runAuthBox("M_GUEST");
-        if (!info) return;
+        if (!info || !info.userName) return;
         applyPlayerInfoToBox(PBox, info, player, state);
     };
 
@@ -204,16 +219,23 @@ function handleTournamentPlayersInfo(mainBox: HTMLDivElement, playersBox: HTMLDi
     /// Find Next Match (status = "schedueled")
 
     getTournamentDatas(state.tournamentCode).then((t) => {
+        if (!t) {
+            console.error("Tournament data not found for code:", state.tournamentCode);
+            return;
+        }
         const nextMatch = t.matches?.find((m) => m.status === "SCHEDULED");
+
         if (!nextMatch) return;
+
 
         state.stats.matchId = nextMatch.matchId;
         state.stats.p1.isGuest = false;
         state.stats.p2.isGuest = false;
+        state.p1.userId = nextMatch.p1User?.user?.userId || "";
+        state.p2.userId = nextMatch.p2User?.user?.userId || "";
 
         updateTitle(state, t, nextMatch);
         updateGameStateWithPlayersInfoFromMatch(state, nextMatch);
-        console.log("Gamestate :", state);
         const matchStats: LiveMatchStats = state.stats;
 
         const title: HTMLDivElement = createMatchTitle(state);
@@ -232,7 +254,6 @@ function handleTournamentPlayersInfo(mainBox: HTMLDivElement, playersBox: HTMLDi
 export function createPlayersBox(state: GameState): HTMLDivElement {
     const playersBox = el("div", `w-full grid grid-cols-2`) as HTMLDivElement;
 
-    console.log("PlayerBox Created");
     if (state.tournamentCode) {
         const tournamentPlayersBox = el("div", `mt-4 grid grid-rows-2
             w-full
@@ -243,12 +264,18 @@ export function createPlayersBox(state: GameState): HTMLDivElement {
         const matchStats = handleTournamentPlayersInfo(tournamentPlayersBox, playersBox, state);
         return tournamentPlayersBox;
     } else {
+        const tournamentPlayersBox = el("div", `mt-4
+            w-full
+            lg:w-[910px] 
+            xl:w-[1404px]
+            xxl:w-[1950px]`);
         const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
         P1Box.classList.add("justify-self-start");
         const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
         P2Box.classList.add("justify-self-end");
         playersBox.append(P1Box, P2Box);
-        return playersBox;
+        tournamentPlayersBox.append(playersBox);
+        return tournamentPlayersBox;
     }
         
 }

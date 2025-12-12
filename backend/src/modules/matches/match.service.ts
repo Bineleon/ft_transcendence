@@ -656,10 +656,10 @@ export class MatchService {
         `[advanceWinner] 🏆 Tournament ${tournamentId} finished! Winner: ${winnerId}`,
       );
 
-      await tx.tournament.update({
-        where: { id: tournamentId },
-        data: { status: 'CLOSED' as TournamentStatus },
-      });
+      // await tx.tournament.update({
+      //   where: { id: tournamentId },
+      //   data: { status: 'CLOSED' as TournamentStatus },
+      // });
 
       return;
     }

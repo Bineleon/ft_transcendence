@@ -179,7 +179,7 @@ export class GameController {
 
             this.view.playersBox.replaceChildren(createPlayersBox(this.state));
 
-            launchBall(this.state, this.getNextServer(this.state), 500);
+            launchBall(this.state, this.getNextServer(this.state), 1000);
             break;
 
         case "RESTART":
@@ -236,7 +236,7 @@ export class GameController {
             this.pausePlaying();
             this.scoredCountdown();
             initBoard(this.state);
-            launchBall(this.state, this.getNextServer(this.state), 500);
+            launchBall(this.state, this.getNextServer(this.state), 1000);
             this.view.overlay.replaceChildren(
                 this.domOverlay.bindHTMLElement(phase, this.state)
             );
@@ -434,7 +434,7 @@ export class GameController {
             }
             console.log("Payload FinishMatch :", payload);
             try {
-                await finishMatch(matchId, payload);
+                await finishMatch(matchId, tCode, payload);
             } catch (e) {
                 console.error("HandleStats DOWN:", e);
                 pongAlert("Error while saving match stats", "error");
@@ -449,6 +449,7 @@ export class GameController {
                 p1Stats: p1Stats,
                 p2Stats: p2stats,
             }
+            console.log("Payload CreateMatchWithStats :", payload);
             const resp = await createMatchWithStats(payload);
         }
     }
