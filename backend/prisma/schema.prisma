@@ -69,6 +69,10 @@ model Tournament {
   kingMaxRounds   Int?             @map("king_max_rounds")
   createdBy       String?          @map("created_by")
   createdAt       DateTime         @default(now()) @map("created_at")
+  txHash          String?          @map("tx_hash")
+  blockNumber     Int?             @map("block_number")
+  onchainAt       DateTime?        @map("onchain_at")
+  blockchainError String?          @map("blockchain_error")
   matches         Match[]
   creator         User?            @relation("UserCreatedTournaments", fields: [createdBy], references: [id])
   participants    User[]           @relation("TournamentParticipants")
@@ -92,7 +96,6 @@ model Match {
   winnerRef       String?            @map("winner_ref")
   loserUserId     String?            @map("loser_user_id")
   status          MatchStatus        @default(SCHEDULED)
-  txHash          String?            @map("tx_hash")
   onchainAt       DateTime?          @map("onchain_at")
   closedAt        DateTime?          @map("closed_at")
   createdAt       DateTime           @default(now()) @map("created_at")

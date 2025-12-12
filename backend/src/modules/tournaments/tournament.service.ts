@@ -1,11 +1,18 @@
 import { getPrismaClient } from '../../shared/database/prisma.js';
 import type { TournamentMode, TournamentStatus, MatchStatus } from '@prisma/client';
 import type { CreateTournamentDTO, TournamentResponse } from './tournament.model.js';
+import { BlockchainService } from '../blockchain/blockchain.service.js';
 // import { comparePassword } from '../../shared/utils/password.js';
 
 const prisma = getPrismaClient();
 
 export class TournamentService {
+  private blockchainService: BlockchainService;
+
+  constructor() {
+    this.blockchainService = new BlockchainService();
+  }
+
   // ==========================================
   // CREATE
   // ==========================================
@@ -638,22 +645,6 @@ export class TournamentService {
     return await this.updateStatus(code, 'RUNNING');
   }
 
-  async close(code: string): Promise<TournamentResponse> {
-    const tournament = await prisma.tournament.findUnique({
-      where: { code }
-    });
-
-    if (!tournament) {
-      throw new Error('Tournament not found');
-    }
-
-    if (tournament.status !== 'RUNNING') {
-      throw new Error(`Cannot close tournament with status ${tournament.status}`);
-    }
-
-    return await this.updateStatus(code, 'CLOSED');
-  }
-
   async delete(code: string): Promise<void> {
     await prisma.tournament.delete({
       where: { code }
@@ -667,6 +658,115 @@ export class TournamentService {
     });
     return !!tournament;
   }
+
+  // async close(code: string): Promise<TournamentResponse> {
+  //   const tournament = await prisma.tournament.findUnique({
+  //     where: { code }
+  //   });
+
+  //   if (!tournament) {
+  //     throw new Error('Tournament not found');
+  //   }
+
+  //   if (tournament.status !== 'RUNNING') {
+  //     throw new Error(`Cannot close tournament with status ${tournament.status}`);
+  //   }
+
+  //   return await this.updateStatus(code, 'CLOSED');
+  // }
+
+/**
+ * Clôturer un tournoi et sauvegarder sur la blockchain
+ */
+async close(code: string): Promise<TournamentResponse> {
+  // 1. Vérifier le statut
+  const tournament = await prisma.tournament.findUnique({
+    where: { code },
+    include: {
+      matches: {
+        where: { status: 'CLOSED' },
+        include: {
+          p1: { select: { username: true } },
+          p2: { select: { username: true } },
+          winner: { select: { username: true } }
+        }
+      },
+      participants: { select: { username: true } }
+    }
+  });
+
+  if (!tournament) {
+    throw new Error('Tournament not found');
+  }
+
+  if (tournament.status !== 'RUNNING') {
+    throw new Error(`Cannot close tournament with status ${tournament.status}`);
+  }
+
+  // 2. Fermer le tournoi dans la DB
+  await prisma.tournament.update({
+    where: { code },
+    data: { status: 'CLOSED' }
+  });
+
+  // 3. Sauvegarder sur blockchain (si des matchs ont été joués)
+  if (tournament.matches.length > 0) {
+    try {
+      // Déterminer le gagnant
+      const winnerStats: Record<string, number> = {};
+      tournament.matches.forEach((match) => {
+        if (match.winner?.username) {
+          winnerStats[match.winner.username] = (winnerStats[match.winner.username] || 0) + 1;
+        }
+      });
+      
+      const winner = Object.keys(winnerStats).reduce((a, b) => 
+        winnerStats[a] > winnerStats[b] ? a : b
+      );
+
+      // Enregistrer sur blockchain
+      const txHash = await this.blockchainService.recordTournament(
+        parseInt(tournament.id.replace(/\D/g, '').slice(0, 10)),
+        winner,
+        tournament.participants.map(p => p.username),
+        tournament.matches.map(m => ({
+          matchId: parseInt(m.id.replace(/\D/g, '').slice(0, 10)),
+          player1: m.p1?.username || '',
+          player2: m.p2?.username || '',
+          scorePlayer1: m.p1Score || 0,
+          scorePlayer2: m.p2Score || 0,
+          winner: m.winner?.username || '',
+          timestamp: Math.floor((m.closedAt || m.createdAt).getTime() / 1000)
+        }))
+      );
+
+      // Mettre à jour avec le txHash
+      await prisma.tournament.update({
+        where: { code },
+        data: { 
+          txHash,
+          onchainAt: new Date()
+        }
+      });
+
+      console.log(`✅ Tournament ${code} saved to blockchain`);
+      console.log(`🔗 ${this.blockchainService.getExplorerUrl(txHash)}`);
+
+    } catch (error) {
+      // Ne pas bloquer la clôture si blockchain échoue
+      console.error('⚠️ Blockchain error:', error);
+      await prisma.tournament.update({
+        where: { code },
+        data: { 
+          blockchainError: error instanceof Error ? error.message : 'Unknown error' 
+        }
+      });
+    }
+  }
+
+  return await this.findByCode(code) as TournamentResponse;
+}
+
 
   async registerPlayerByUsername(code: string, username: string) {
     // (tu peux garder ou supprimer cette fonction selon ce que tu utilises)

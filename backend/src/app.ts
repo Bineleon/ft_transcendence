@@ -14,7 +14,6 @@ import { setupTournamentModule } from './modules/tournaments/index.js';
 import { setupMatchModule } from './modules/matches/index.js';
 import { userController } from './modules/users/users.controller.js';
 import { UserService } from './modules/users/users.service.js';
-import { setupBlockchainModule } from './modules/blockchain/index.js';
 
 // Configuration
 import { env } from './shared/config/environment.js';
@@ -55,15 +54,8 @@ export function createApp() {
   // --- Modules ---
   setupAuthModule(app, prisma);
   setupFriendsModule(app);
-  console.log("Setting up Tournament Module...");
   setupTournamentModule(app);
   setupMatchModule(app);
-  console.log("Setting up Blockchain Module...");
-  try {
-    setupBlockchainModule(app);
-  } catch (error) {
-    console.error("⚠️  Blockchain module failed to initialize:", error);
-  }
 
   // --- Users module ---
   const userService = new UserService(prisma);
