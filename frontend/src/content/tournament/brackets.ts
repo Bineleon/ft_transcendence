@@ -18,7 +18,11 @@ function listFt(label: string, extraClass = "", whithId?: string): HTMLLIElement
         if (whithId) li.id = whithId;
 
     const userLink = el("a", "flex-1") as HTMLAnchorElement;
-    userLink.href = `#/profile/${label}`;
+    if (label === "Unassigned" || label === `soon`) {
+        userLink.clickable = false;
+    } else {
+        userLink.href = `#/profile/${label}`;
+    }
     userLink.append(text(label));
     li.append(spanCirlcle(), userLink);
     return li;
@@ -34,33 +38,80 @@ export function renderBracket(t: Tournament): HTMLElement {
     });
     wrapper.append(firstRound);
 
+    let roundNb = 2;
     for (let nbPlayers = t.maxParticipants / 2; nbPlayers >= 1; nbPlayers /= 2) {
         // tu peux garder ton ID basé sur le nombre de joueurs restants si tu veux
-        const roundID = `round-${nbPlayers}`;
 
         const roundColumn = renderNextRoundsColumns(
-            roundID,
+            roundNb,
             nbPlayers - 1,          // ⬅ nombre de slots à dessiner pour CE round
-            { markAnchorOnIndex: 0, extraLiClass: "" }
+            { markAnchorOnIndex: 0, extraLiClass: "", t: t }
         );
         wrapper.append(roundColumn);
+        roundNb++;
     }
 
     return wrapper;
 }
 
-function renderNextRoundsColumns(roundId: string, playersCount:number,options?:
-{ markAnchorOnIndex?: number, extraLiClass?: string } ): HTMLOListElement {
-    const ol = el("ol", `flex flex-1 flex-col justify-around round`);
-    
-    for (let i = 0; i <= playersCount; i++) {
-        const isAnchor = options?.markAnchorOnIndex === i;
-        const liId = isAnchor && roundId ? roundId : undefined;
-        let userName = "  'soon'  ";
-        const li = listFt(userName, `font-royalvogue ${options?.extraLiClass ?? ""}`, liId);
-        ol.append(li);
+function renderNextRoundsColumns(
+  roundNb: number,
+  playersCount: number,
+  options?: { markAnchorOnIndex?: number; extraLiClass?: string; t: Tournament }
+): HTMLOListElement {
+  const ol = el("ol", "flex flex-1 flex-col justify-around round");
+
+  const prevMatches = options?.t.matches.filter(m => m.round === roundNb - 1) ?? [];
+  const nextMatches = options?.t.matches.filter(m => m.round === roundNb) ?? [];
+
+  for (let i = 0; i <= playersCount; i++) {
+    const isAnchor = options?.markAnchorOnIndex === i;
+    const liId = isAnchor ? `round-${roundNb}` : undefined;
+
+    const prev = prevMatches[i];
+    let userName = "soon";
+    let border = "";
+
+    if (prev && prev.status === "CLOSED") {
+      userName = getWinnerNameFromMatch(prev);
+
+      // Le match suivant correspondant à ce slot:
+      const next = nextMatches[Math.floor(i / 2)];
+
+      if (next && next.status === "CLOSED") {
+        const nextWinner = getWinnerNameFromMatch(next);
+        if (nextWinner === userName) {
+          border = "border-6 border-double border-stone-400";
+        }
+      }
     }
-    return ol;
+    const lastMatchRound = Math.max(...(options?.t.matches ?? []).map(m => m.round));
+    const isChampionColumn = (roundNb === lastMatchRound + 1) && (playersCount === 0);
+
+    if (isChampionColumn) {
+        if (userName !== "soon") {
+            border = "border-8 border-double border-yellow-500 shadow-lg scale-105";
+        }
+    }
+    const li = listFt(
+      userName,
+      `font-royalvogue ${options?.extraLiClass ?? ""} ${border}`,
+      liId
+    );
+    ol.append(li);
+  }
+
+  return ol;
+}
+
+function getWinnerNameFromMatch(m: any): string {
+    if (m.status !== "CLOSED") return "soon";
+
+    if ((m.p1User?.winner ?? 0) > (m.p2User?.winner ?? 0)) {
+        return m.p1User?.user?.userName ?? "soon";
+    } else {
+        return m.p2User?.user?.userName ?? "soon";
+    }
 }
 
 function renderFirstRoundColumn(t: Tournament, roundId: string, playersCount: number,
@@ -89,10 +140,23 @@ function renderFirstRoundColumn(t: Tournament, roundId: string, playersCount: nu
         const liId = isAnchor && roundId ? roundId : undefined;
 
         const userName = slots[i] ?? "Unassigned";
+    
+        let border = "";
+
+        if (t.matches) {
+            for (const m of t.matches) {
+                if (m.status === "CLOSED") {
+                    const winnerName = getWinnerNameFromMatch(m);
+                    if (winnerName === userName) {
+                        border = "border-6 border-double border-stone-400";
+                    }
+                }
+            }
+        }
 
         const li = listFt(
             userName,
-            `font-royalvogue ${options?.extraLiClass ?? ""}`,
+            `font-royalvogue ${options?.extraLiClass ?? ""} ${border}`,
             liId
         );
 
