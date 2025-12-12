@@ -1,7 +1,7 @@
 import type { Ball, GameState, PlayerId, PlayersStats } from "./types";
 import { GameController } from "../controller";
 import { createPongStatsPanel } from "../ui/terminal";
-import type { Vec2 } from "./types";
+import type { Vec2 } from "./uiTypes";
 import { getPaddleFacePoints, type PaddleFacePoints } from "./geometry";
 
 export type CardinalDirection = "NE" | "NO" | "SE" | "SO" | "CENTER";
@@ -61,7 +61,7 @@ export function collision(state: GameState, gameController: GameController) {
 
         if (bW <= p1x && bN <= p1yS && bS >= p1yN) {
             ball.vel.x *= -1;
-            state.stats.totalBounces++;
+            state.stats.currentBounces++;
             moreVelocity(state, gameController);
         }
     }
@@ -72,7 +72,7 @@ export function collision(state: GameState, gameController: GameController) {
 
         if (bE >= p2x && bN <= p2yS && bS >= p2yN) { 
             ball.vel.x *= -1;
-            state.stats.totalBounces++;
+            state.stats.currentBounces++;
             moreVelocity(state, gameController);
         }
     }
@@ -85,15 +85,15 @@ export function score(state: GameState): boolean {
     if (bW <= 0) {
         state.stats.p2.score += 1;
         state.stats.lastScorer = "p2";
-        if (state.stats.totalBounces > state.stats.p2.maxBounces)
-            state.stats.p2.maxBounces = state.stats.totalBounces;
+        if (state.stats.currentBounces > state.stats.p2.maxBounces)
+            state.stats.p2.maxBounces = state.stats.currentBounces;
         return true;    
     }
     if (bE >= state.world.w) {
         state.stats.p1.score += 1;
         state.stats.lastScorer = "p1";
-        if (state.stats.totalBounces > state.stats.p1.maxBounces)
-            state.stats.p1.maxBounces = state.stats.totalBounces;
+        if (state.stats.currentBounces > state.stats.p1.maxBounces)
+            state.stats.p1.maxBounces = state.stats.currentBounces;
         return true;
     }
     return false;
@@ -104,7 +104,7 @@ export function moreVelocity(state: GameState, gameController: GameController) {
     const IncrementY = state.ball.velIncrement.y;
 
     // const maxSpeed = 1500;
-    let bounces = state.stats.bounces;
+    let bounces = state.stats.totalBounces;
     const { p1Up, p1Down, p2Up, p2Down } = gameController.pongControls;
     const ballDir = getDirectionFromVec(state.ball.vel);
     const ballSide = getBallSide(state.ball);

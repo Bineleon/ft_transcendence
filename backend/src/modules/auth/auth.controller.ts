@@ -106,9 +106,10 @@ export function authController(
       },
     },
     async (request) => {
-    //   const { userId, code } = request.body as { userId: string; code: string };
-    //   const result = await authService.verify2FA(userId, code);
+      // const { userId, code } = request.body as { userId: string; code: string };
+      // const result = await authService.verify2FA(userId, code);
 
+      // return formatSuccess(result, '2FA verified. Login successful.');
       return formatSuccess('2FA verified. Login successful.');
     }
   );

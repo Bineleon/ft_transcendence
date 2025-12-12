@@ -101,7 +101,7 @@ export function createPongStatsPanel(state: GameState): HTMLElement {
 
   gameLiveStats.append(
     statLine("Speed :", `${speed.toFixed(1)} px/s`),
-    statLine("Bounces :", `${state.stats.totalBounces}`)
+    statLine("Bounces :", `${state.stats.currentBounces}`)
   );
 
   function playerCol(id: "p1" | "p2", state: GameState, align: "left" | "right"): HTMLElement {

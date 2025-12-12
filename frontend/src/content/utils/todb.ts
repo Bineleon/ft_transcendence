@@ -5,6 +5,7 @@ import { pongAlert } from "./alertBox.ts";
 import type { Tournament, User } from "../tournament/uiTypes.ts";
 import type { ApiTournament } from "../tournament/apiTypes.ts";
 import { tournamentFromApi } from "../tournament/mapper.ts";
+import { areAllMatchesClosed } from "../pong/ui/players.ts";
 
 
 /// ------      CHECK CHECK CHECK       ------ ///
@@ -60,6 +61,7 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
 // -----        MATCH MATCH MATCH        ------ //
 export async function finishMatch(
   matchId: string, 
+  tCode: string,
   payload: ApiFinishMatchDTO): Promise<void> {
   try {
     console.log("FinishMatch Payload :", payload);
@@ -77,7 +79,26 @@ export async function finishMatch(
       throw new Error(data.error?.message);
     }
     
-    pongAlert('Match finished! Winner advanced to next round.', "success",);
+    if (tCode) {
+        getTournamentDatas(tCode).then((t) => {
+            if (!t) {
+                console.error("Tournament not found after finishing match");
+                return;
+            }
+            console.log("Tournament fetched after finishing match:", t);
+            if (areAllMatchesClosed(t.matches)) {
+                console.log("All matches closed, closing tournament:", tCode);
+                closeTournament(tCode).catch((err) => {
+                    console.error("Error closing tournament after finishing match:", err);
+                });
+                pongAlert('Tournament completed! All matches are closed.', "success");
+            }
+        }).catch((err) => {
+            console.error("Error fetching tournament after finishing match:", err);
+        });
+
+    }
+    pongAlert('Match finished! Winner advanced to next round.', "success", { title: "Match Finished", onClose: () => { window.location.reload(); } });
     } catch (error) {
       console.error("Finish match error:", error);
       throw error;
@@ -103,6 +124,31 @@ export async function createMatchWithStats(payload: ApiPlayedMatchDTO) {
     } catch (error) {
         console.error("Failed to create and update Regular Match Stats");
         pongAlert("error", `An error occurred: ${error instanceof Error ? error.message : `Regular Match Stats creation`}`)
+    }
+}
+
+/// ------     TOURNAMENT TOURNAMENT TOURNAMENT      ------ ///
+export async function closeTournament(tCode: string): Promise<void> {
+    try {
+        const resp = await apiFetch(`/api/tournaments/${tCode}/close`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(tCode),
+            credentials: "include"
+        });
+        const data = await resp.json();
+
+        if (resp.ok) {
+            document.dispatchEvent(new CustomEvent("tournamentUpdated"));
+            pongAlert(`Tournament closed successfully.`, "success",  { title: "Tournament Completed", onClose: () => { window.location.hash = `#/tournament/classic/${tCode}`; } });
+        } else {
+            pongAlert(`Failed to close tournament: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Close Tournament Error" });
+        }
+    }
+    catch (error) {
+        console.error("Close tournament error:", error);
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error" , { title: "Close Tournament Error" });
+        throw error;
     }
 }
 

@@ -252,6 +252,20 @@ export function matchController(
     }
   );
 
+	// ===============================================
+	// GET /api/profile/dashboard/recent-matches - Dashboard graph 3
+	// ===============================================
+	app.get(
+	'/api/profile/dashboard/recent-matches',
+	{ preHandler: authenticate },
+	async (request) => {
+		const userId = request.user!.userId;
+		const matches = await matchService.getRecentMatchesForUser(userId);
+		return formatSuccess({ matches }, 'Recent matches loaded');
+	}
+	);
+
+
   // ==========================================
   // GET /api/matches/:id/details - Détails complets d'un match terminé
   // ==========================================

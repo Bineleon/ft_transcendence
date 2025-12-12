@@ -98,8 +98,7 @@ export class TournamentService {
           p2UserId: null,
           p1Score: null,
           p2Score: null,
-          winnerUserId: null,
-          txHash: null
+          winnerUserId: null
         });
       }
 
@@ -459,6 +458,15 @@ export class TournamentService {
     if (!assigned) {
       throw new Error('Could not assign player to a match');
     }
+
+    await prisma.tournament.update({
+      where: { code },
+      data: {
+        participants: {
+          connect: { id: user.id }
+        }
+      }
+    });
 
     const updatedTournament = await prisma.tournament.findUnique({
       where: { code },

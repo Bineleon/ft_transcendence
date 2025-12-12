@@ -34,7 +34,9 @@ export function initBoard(state: GameState) {
         size: { x: 20, y: 250 },
         speed: 1000
     };
-    state.stats.totalBounces = 0;
+    state.stats.totalBounces += state.stats.currentBounces;
+	state.stats.currentBounces = 0;
+
 }
 
 export function initPlayersInfo(state: GameState) {
