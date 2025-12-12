@@ -10,7 +10,9 @@ export type MatchStatus =
   | "FAILED";
 
 export interface ApiMatchUser {
+  userId: string;
   username: string;
+  avatarUrl?: string | null;  // AJOUT : Avatar
 
   score: number;                  // 0 | 1 | 2 | 3
   maxWins: number;                // max points consécutifs
@@ -28,30 +30,30 @@ export interface ApiMatchUser {
 
 export interface ApiMatch {
   id: string;
-  tournamentId: string | null;
-  gameCode: string;
-  round: number | null;
-  gameIndex: number | null;
+  tournamentCode?: string | null;
+  status: string;
+  createdAt: Date;
+  closedAt: Date | null;
 
+  // Joueurs
   p1UserName: string | null;
   p1Score: number | null;
-  p1IsGuest: boolean | null;
+  p1IsGuest: boolean;
 
   p2UserName: string | null;
   p2Score: number | null;
-  p2IsGuest: boolean | null;
+  p2IsGuest: boolean;
 
-/// Match Stats
+  // STATS GLOBALES DU MATCH
   totalPoints: number;        // 3 | 4 | 5
-  winnerName: string;
-  loserName: string;
+  winnerId: string;
+  loserId: string;
 
-  totalRallies: number;       // Nombre total d'echanges sur le match entier
-  maxBounces: number;         // Nombre max d'echanges en une partie      
-  avgRallyBounces: number;    // Moyenne des echanges de tout les matchs par partie
-
-  totalMatchTime: number;     // Temps total du match
-  avgRallyTime: number;       // Temps Moyen par partie
+  totalRallies: number;       // Nombre total d'échanges sur le match entier
+  maxBounces: number;         // Nombre max d'échanges en une partie
+  avgRallyBounces: number;    // Moyenne des échanges de toutes les parties
+  totalMatchTime: number;     // Temps total du match (en secondes)
+  avgRallyTime: number;       // Temps moyen par partie (en secondes)
 
   p1?: ApiMatchUser | null;
   p2?: ApiMatchUser | null;
@@ -75,3 +77,47 @@ export interface ApiTournament {
   } | null;
   matches?: ApiMatch[];
 }
+
+export interface ApiMatchStatsDTO {
+  p1Score: number;
+  p2Score: number;
+  totalPoints: number;
+  totalRallies: number;
+  maxBounces: number;
+  avgRallyBounces: number;
+  totalMatchTime: number;
+  avgRallyTime: number;
+}
+
+
+export interface ApiPlayerStatsDTO {
+  userId?: string;  // Optionnel pour createMatchWithStats (on utilise username)
+  score: number;
+  maxWins: number;
+  totalBallSpins: number;
+  maxBouncesInWonRally: number;
+  maxEffectsInWonRally: number;
+  maxBallSpeedWon: number;
+  maxBallSpeedLost: number;
+  fastestWonRally: number;
+  fastestLostRally: number;
+}
+
+/// payload Fonction async finishMatch()
+export interface ApiFinishMatchDTO {
+  matchStats: ApiMatchStatsDTO;
+  p1Stats: ApiPlayerStatsDTO
+  p2Stats: ApiPlayerStatsDTO
+}
+
+/// payload Fonction async createMatchWithStats()
+export interface ApiPlayedMatchDTO {
+  p1Username: string;
+  p2Username: string;
+  p1IsGuest: boolean;
+  p2IsGuest: boolean;
+  matchStats: ApiMatchStatsDTO;
+  p1Stats: ApiPlayerStatsDTO;
+  p2Stats: ApiPlayerStatsDTO;
+}
+

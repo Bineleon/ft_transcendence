@@ -1,9 +1,10 @@
-import { el }         from "../../home";
+import { el, text }         from "../../home";
 import type { GameState } from "../game/types";
 import { runAuthBox } from "../../utils/alertBox";
 import { getLoggedName, getUserDatas } from "../../utils/todb";
 import type { PlayerId, PlayerInfo } from "../game/types";
 import { getTournamentDatas } from "../../utils/todb";
+import { matchFromApi } from "../../tournament/mapper";
 
 const currentPlayers: Record<PlayerId, PlayerInfo | null> = {
     p1: null,
@@ -53,23 +54,26 @@ function applyPlayerInfoToBox(box: HTMLDivElement, info: PlayerInfo, player: "p1
     img.alt = `${info.userName} avatar`;
     img.className = "w-[8rem] h-[8rem] img-newspaper object-cover grayscale contrast-150 mix-blend-multiply";
 
-    const userName = el("h1", "font-houston-sport text-6xl truncate") as HTMLHeadingElement;
+    const userName = el("h1", "font-houston-sport text-6xl") as HTMLHeadingElement;
     userName.textContent = info.userName;
 
     box.innerHTML = "";
     if (player === "p1") {
-        userName.classList.add("text-left");
+        box.classList.add("items-start")
         box.append(img, userName);
     } else {
         userName.classList.add("text-right");
+        box.classList.add("items-start")
         box.append(userName, img);
     }
     
     setPlayerInfo(player, { userName: info.userName, avatarUrl: info.avatarUrl });
     if (player === "p1") {
+        state.p1.id = info.id;
         state.p1.userName = info.userName;
         state.p1.avatarUrl = info.avatarUrl ?? "";
     } else {
+        state.p2.id = info.id;
         state.p2.userName = info.userName;
         state.p2.avatarUrl = info.avatarUrl ?? "";
     }
@@ -90,26 +94,30 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     PBox.append(syncProfileBtn, guestBtn);
 
     if (state.tournament) {
-        const info: PlayerInfo = { userName: player === "p1" ? state.p1.userName : state.p2.userName,
-                                   avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
-        setPlayerInfo(player, info);
-    } else {
-
-        const existing = getPlayerInfo(player);
-        if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
-
-
-        if (player === "p1" && arePlayersRegistered(state).p1 === false) {
-            getLoggedName().then((name) => {
-                if (!name) return; // personne log → on garde les boutons
-                
-                getUserDatas(name).then((user) => {
-                    if (!user) return;
+		const info: PlayerInfo = { id: player === "p1" ? state.p1.id : state.p2.id,
+			userName: player === "p1" ? state.p1.userName : state.p2.userName,
+			avatarUrl: player === "p1" ? state.p1.avatarUrl : state.p2.avatarUrl };
+			setPlayerInfo(player, info);
+		} else {
+			
+			const existing = getPlayerInfo(player);
+			if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
+			
+			
+			if (player === "p1" && arePlayersRegistered(state).p1 === false) {
+				getLoggedName().then((name) => {
+					if (!name) return; // personne log → on garde les boutons
+					
+					getUserDatas(name).then((user) => {
+						console.log("HELLLLLLLLP");
+						if (!user) return;
                     // Robustly handle either: User OR { data: { user: User } }
                     const resolvedUser: any = (user as any)?.data?.user ?? user;
+                    const id = resolvedUser?.id ?? resolvedUser?.id ?? "";
                     const username = resolvedUser?.username ?? resolvedUser?.userName ?? name;
                     const avatar   = resolvedUser?.avatarUrl ?? resolvedUser?.avatar ?? "";
 
+                    state.p1.id = id;
                     state.p1.userName = username;
                     state.p1.avatarUrl = avatar || "";
                     applyPlayerInfoToBox(PBox, state.p1, player, state);
@@ -124,10 +132,10 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     }
 
     if (player === "p1") {
-        PBox.classList.add("grid-cols-[1fr_1fr]", "items-center");
+        PBox.classList.add("grid-cols-[auto_1fr]");
 
     } else {
-        PBox.classList.add("grid-cols-[1fr_1fr]", "items-center");
+        PBox.classList.add("grid-cols-[1fr_auto]");
     }
 
     syncProfileBtn.onclick = async () => { 
@@ -146,63 +154,102 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     return PBox;
 }
 
-function updateGameStateWithPlayersInfoFromMatch(state: GameState, match: any): void {
+function createMatchTitle(state: GameState): HTMLDivElement {
+    const main = el("div", `w-auto h-[50px] grid grid-cols-[20%_60%_20%] h-[100px] border-2`);
+
+    const tCode = el("div", `flex flex-col items-end justify-center font-arcade-italic`, text(`Code :`), el("br"), text(`${state.stats.tournamentCode}`));
+
+    const middle = el("div", `flex flex-col items-center justify-center font-arcade`, 
+        el("h1", `text-4xl xl:text-6xl xxl:text-8xl`, `${state.stats.tournamentName}`), el("br"), el("h3", "text-sm", `A ${state.stats.tournamentMode} Tournament !`));
+
+    const status = el("div", `flex flex-col items-start text-right justify-center font-arcade-italic`, text(`ROUND : ${state.stats.matchRound}`), el("br"), text(`${state.stats.matchStatus}`));
+
+    main.append(tCode, middle, status);
+    return main;
+    }
+
+function updateGameStateWithPlayersInfoFromMatch(state: GameState, match: Match): void {
     if (match.p1User && match.p1User.user) {
         const p1Info: PlayerInfo = {
+            id: match.p1User.user.id,
             userName: match.p1User.user.userName,
             avatarUrl: match.p1User.user.avatarUrl || "/imgs/avatar.png",
         };
-        state.p1.userName = p1Info.userName;
-        state.p1.avatarUrl = p1Info.avatarUrl;
+        state.stats.p1.name = p1Info.userName;
         setPlayerInfo("p1", p1Info);
     }
     if (match.p2User && match.p2User.user) {
         const p2Info: PlayerInfo = {
+            id: match.p2User.user.id,
             userName: match.p2User.user.userName,
             avatarUrl: match.p2User.user.avatarUrl || "/imgs/avatar.png",
         };
-        state.p2.userName = p2Info.userName;
-        state.p2.avatarUrl = p2Info.avatarUrl;
+        state.stats.p2.name = p2Info.userName;
         setPlayerInfo("p2", p2Info);
     }
 }
 
-function handleTournamentPlayersInfo(box: HTMLDivElement, state: GameState): void {
-    console.log("Handling tournament players info, tournament =", state.tournamentCode);
+function updateTitle(state: GameState, t: Tournament, m: Match): void {
+    state.stats.tournamentCode = t.tCode;
+    state.stats.tournamentId = m.tournamentId;
+    state.stats.tournamentMode = t.tMode;
+    state.stats.tournamentName = t.name;
+    state.stats.matchRound = m.round;
+    state.stats.matchStatus = m.status;
+}
+
+function handleTournamentPlayersInfo(mainBox: HTMLDivElement, playersBox: HTMLDivElement, state: GameState): LiveMatchStats {
     if (!state) return;
 
+    if (state.stats.matchId) return;
     /// Find Next Match (status = "schedueled")
+
     getTournamentDatas(state.tournamentCode).then((t) => {
         const nextMatch = t.matches?.find((m) => m.status === "SCHEDULED");
         if (!nextMatch) return;
-        
+
+        state.stats.matchId = nextMatch.matchId;
+        state.stats.p1.isGuest = false;
+        state.stats.p2.isGuest = false;
+
+        updateTitle(state, t, nextMatch);
         updateGameStateWithPlayersInfoFromMatch(state, nextMatch);
+        console.log("Gamestate :", state);
+        const matchStats: LiveMatchStats = state.stats;
+
+        const title: HTMLDivElement = createMatchTitle(state);
         const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
         const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
-        box.append(P1Box, P2Box);
+        playersBox.append(P1Box, P2Box);
+
+        mainBox.append(title, playersBox);
+        return matchStats;
     }).catch((err) => {
         console.error("Error fetching tournament data for players box:", err);
+        return;
     });
 }
 
 export function createPlayersBox(state: GameState): HTMLDivElement {
-    const playersBox = el("div", `w-full 
-        grid grid-cols-2 
-        px-4 
-        lg:w-[910px] 
-        xl:w-[1404px]
-        xxl:w-[1950px]`) as HTMLDivElement;
+    const playersBox = el("div", `w-full grid grid-cols-2`) as HTMLDivElement;
 
-    console.log("Creating players box, tournament =", state.tournamentCode);
+    console.log("PlayerBox Created");
     if (state.tournamentCode) {
-        handleTournamentPlayersInfo(playersBox, state);
+        const tournamentPlayersBox = el("div", `mt-4 grid grid-rows-2
+            w-full
+            lg:w-[910px] 
+            xl:w-[1404px]
+            xxl:w-[1950px]`);
+        
+        const matchStats = handleTournamentPlayersInfo(tournamentPlayersBox, playersBox, state);
+        return tournamentPlayersBox;
     } else {
         const P1Box: HTMLDivElement = createPlayerInfosBox("p1", state);
         P1Box.classList.add("justify-self-start");
         const P2Box: HTMLDivElement = createPlayerInfosBox("p2", state);
         P2Box.classList.add("justify-self-end");
         playersBox.append(P1Box, P2Box);
+        return playersBox;
     }
         
-    return playersBox;
 }

@@ -3,13 +3,10 @@ import { setupSelfMode, setupOtherMode } from "./utils.ts";
 import { apiFetch } from "../utils/apiFetch.ts";
 import { pongAlert } from "../utils/alertBox.ts";
 import type { ProfileViewWindow } from "./view";
-import { renderDailyMatchesChart } from "./view";
+import { loadDailyMatchesDashboard } from "./dashboard.ts"
 
-type DailyMatchStat = {
-  date: string;        // ex: "2025-12-09"
-  totalMatches: number;
-  wins: number;
-};
+
+
 
 // --- Contrôleur principal de la vue profil ---
 export function updateProfileView(view: ProfileViewWindow, userName: string): void {
@@ -186,32 +183,6 @@ async function loadProfileData(
     // Profile data loaded
 }
 
-async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
-    // 1. Appel à l'API pour récupérer les stats
-    const res = await apiFetch("/api/profile/dashboard/daily-matches", {
-        credentials: "include",
-    });
-
-    // 2. Vérifier si la réponse est OK (code 2xx)
-    if (!res.ok) {
-        console.error("Failed to load daily matches stats", res.status);
-        dashboard.innerHTML = "";
-        const p = document.createElement("p");
-        p.className = "article-base";
-        p.textContent = "Unable to load match statistics.";
-        dashboard.append(p);
-        return;
-    }
-
-    // 3. Lire le JSON de la réponse
-    const body = await res.json();
-
-    // 4. Extraire le tableau de stats depuis body.data.stats
-    const stats = (body.data?.stats ?? []) as DailyMatchStat[];
-
-    // 5. Appeler le renderer pour afficher le graph
-    renderDailyMatchesChart(dashboard, stats);
-}
 
 
 

@@ -34,7 +34,7 @@ export function initBoard(state: GameState) {
         size: { x: 20, y: 250 },
         speed: 1000
     };
-    state.stats.bounces = 0;
+    state.stats.totalBounces = 0;
 }
 
 export function initPlayersInfo(state: GameState) {
@@ -43,6 +43,7 @@ export function initPlayersInfo(state: GameState) {
 }
 
 export function initState(tCode?: string): GameState {
+  console.log("NOOOW");
   return {
     world: { w: 1500, h: 900 },   // logique, pas pixels
     ball: {
@@ -64,6 +65,7 @@ export function initState(tCode?: string): GameState {
     phase: "START",
     PrevPhase: undefined,
     ready: { p1: false, p2: false },
+    matchId: undefined,
     stats: { 
       p1: {
         name: "P1",
@@ -101,6 +103,11 @@ export function initState(tCode?: string): GameState {
       rallyDurationsMs: [],
       pauseStartAt: undefined,
       totalPauseMs: 0,
+      tournamentCode: undefined,
+      tournamentMode: undefined,
+      tournamentName: undefined,
+      matchRound: undefined,
+      matchStatus: undefined,
     },
     p1: { userName: "P1", avatarUrl: "" }, p2: { userName: "P2", avatarUrl: "" },
     tournamentCode: tCode,

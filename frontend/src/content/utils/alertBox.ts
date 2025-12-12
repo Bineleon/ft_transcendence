@@ -103,8 +103,8 @@ export type AuthMode =
 /// Definir les retours possibles
 export type AuthResult =
   | { kind: "logged"; userName: string; }
-  | { kind: "guest"; userName?: string; avatarUrl?: string; }
-  | { kind: "sync"; userName?: string; avatarUrl?: string; }
+  | { kind: "guest"; id?: string; userName?: string; avatarUrl?: string; }
+  | { kind: "sync"; id?: string; userName?: string; avatarUrl?: string; }
   | { kind: "join"; userName: string; }
   | { kind: "cancel" }
   | { kind: "unregister"; userName: string; };

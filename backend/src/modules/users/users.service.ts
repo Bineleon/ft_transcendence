@@ -9,7 +9,7 @@ import type {
   PlayerStatsResponse,
   PlayerMatchHistoryResponse,
   PlayerMatchItem,
-  DailyMatchStat
+  DailyMatchStats
 } from './users.model.js';
 import { hashPassword, comparePassword } from '../../shared/utils/password.js';
 import { formatUser } from '../../shared/utils/formatters.js';
@@ -51,7 +51,7 @@ export class UserService {
   }
 
   // ---- Yoann : Fonction pour renvoyer un tableau de stats de matchs sur les 7 last days ----
-  async getDailyMatchStats(userId: string): Promise<DailyMatchStat[]> {
+  async getDailyMatchStats(userId: string): Promise<DailyMatchStats[]> {
 	const start = new Date();
 	start.setDate(start.getDate() - 6);
 	start.setHours(0, 0, 0, 0);
@@ -83,7 +83,7 @@ export class UserService {
 			statsByDate[key].wins += 1;
 		}
 	}
-	const result: DailyMatchStat[] = [];
+	const result: DailyMatchStats[] = [];
 	for(let i = 0; i < 7; i++)
 	{
 		const day = new Date(start);

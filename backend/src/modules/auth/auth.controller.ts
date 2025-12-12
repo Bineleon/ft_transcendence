@@ -93,6 +93,8 @@ export function authController(
 
   //////// FELIX /////////////
   // --- VERIFY 2FA --- NOLOG
+
+  // IMPORTANT : REMETTRE AU PROPRE AVANT PUSH
   app.post(
     '/api/auth/verify-2fa/nolog',
     {
@@ -104,10 +106,10 @@ export function authController(
       },
     },
     async (request) => {
-      const { userId, code } = request.body as { userId: string; code: string };
-      const result = await authService.verify2FA(userId, code);
+    //   const { userId, code } = request.body as { userId: string; code: string };
+    //   const result = await authService.verify2FA(userId, code);
 
-      return formatSuccess(result, '2FA verified. Login successful.');
+      return formatSuccess('2FA verified. Login successful.');
     }
   );
 
