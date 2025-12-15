@@ -486,6 +486,14 @@ async updateUsername(userId: string, newUsername: string) {
     }
   }
 
+  async existsById(userId: string): Promise<boolean> {
+  const user = await this.prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+  return !!user;
+}
+
   // ==========================================
   // READ - Récupérer les stats globales d'un joueur
   // ==========================================
