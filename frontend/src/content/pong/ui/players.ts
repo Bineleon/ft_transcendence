@@ -117,7 +117,6 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
         const existing = getPlayerInfo(player);
         if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
     } else {
-
         const existing = getPlayerInfo(player);
         if (existing) applyPlayerInfoToBox(PBox, existing, player, state);
 
@@ -139,7 +138,9 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
                             state.p1.id = id;
                             state.p1.userName = username;
                             state.p1.avatarUrl = avatar || "";
-                            // applyPlayerInfoToBox(PBox, state.p1, player, state);
+                            state.stats.p1.name = username;
+                            state.stats.p1.isGuest = false;
+                            applyPlayerInfoToBox(PBox, state.p1, player, state);
                             document.dispatchEvent(new CustomEvent("playersUpdated", { detail: { state } }));
                         }).catch((err) => {
                             console.error("getUserDatas error:", err);
@@ -155,15 +156,18 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
     syncProfileBtn.onclick = async () => { 
         const info = await runAuthBox("M_SYNC");
         if (!info || !info.userName || !info.avatarUrl) return;
+        state.stats[player].name = info.userName;
+        state.stats[player].isGuest = false;
         applyPlayerInfoToBox(PBox, info, player, state);
 
     };
     guestBtn.onclick = async () => { 
         const info = await runAuthBox("M_GUEST");
         if (!info || !info.userName) return;
+        state.stats[player].name = info.userName;
+        state.stats[player].isGuest = true;
         applyPlayerInfoToBox(PBox, info, player, state);
     };
-
 
     return PBox;
 }
@@ -251,6 +255,7 @@ function handleTournamentPlayersInfo(mainBox: HTMLDivElement, playersBox: HTMLDi
     });
 }
 
+
 export function createPlayersBox(state: GameState): HTMLDivElement {
     const playersBox = el("div", `w-full grid grid-cols-2`) as HTMLDivElement;
 
@@ -275,6 +280,7 @@ export function createPlayersBox(state: GameState): HTMLDivElement {
         P2Box.classList.add("justify-self-end");
         playersBox.append(P1Box, P2Box);
         tournamentPlayersBox.append(playersBox);
+        console.log("state without tournament :", state);
         return tournamentPlayersBox;
     }
         

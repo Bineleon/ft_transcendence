@@ -36,7 +36,7 @@ export function logUI() {
             const userName = await getLoggedName();
             const prompt = el("span", "", text("Logged in as "));
             const nameLink = el("a", "article-link cursor-pointer decoration-1 decoration-wavy", text(userName)) as HTMLAnchorElement;
-            logStatus.onclick = () => { window.location.hash = `#/profile/${userName}`; };
+            logStatus.onclick = () => { window.location.hash = `#/profile`; };
             logStatus.replaceChildren(prompt, nameLink);
             logBtn.textContent = "Log Out";
             logBtn.classList.add("hover:text-red-200");

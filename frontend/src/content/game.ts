@@ -1,136 +1,121 @@
 import { el, text } from "./home";
 
-// src/pages/game.ts
 export function Game(): HTMLElement {
-  const main = el(
-    "main", "max-w mx-auto p-auto pointer-events-auto"
-  );
-  const grid = el(
-    "div",
-    "grid gap-4 grid-cols-1 " +
-    "md:grid-cols-[260px_1fr_300px] " + // gauche 260px, centre flexible, droite 300px
-    "md:auto-rows-min" + // lignes auto, la hauteur totale vient de la somme des 2 boîtes du centre
-    "md:grid-rows-[auto_1fr]"
+  const main = el("main", `mx-auto px-4 py-4
+        lg:py-6 xl:py-8 xxl:py-10`);
+
+///// Main Box (2 sections: left + right)        
+  const box1 = el("div",
+  `grid gap-4 grid-cols-1 md:grid-cols-[1fr_4fr] md:items-start`
   );
 
-  /*** ENCART DE GAUCHE ***/
-  const left = el(
-    "aside", "px-8 pt-8 row-span-2 border-movie"
+//// On divise en deux etages celle de gauche
+  const box1a = el("aside", `grid gap-4 md:grid-rows-[auto_auto]`);
+
+  /// TOURNAMENT BOX
+  const tournamentBox = el("a",
+    `img-newspaper p-4 -m-2 box-dark in-dark-box
+    whitespace-pre-line items-center text-2xl hover:contrast-125 focus:outline-none`
+  ) as HTMLAnchorElement;
+  const tournamentInfos = el("h2", `font-origin-athletic text-2xl -p-8 m-6`);
+
+  tournamentBox.href = `#/tournament`;
+  tournamentBox.setAttribute("aria-label", "Go to Tournament page");
+  tournamentInfos.append(text(`click here to know more about\n`));
+  tournamentInfos.append(el("h1", `text-3xl underline`, text(`TOURNAMENTS`)));
+  tournamentBox.append(tournamentInfos);
+
+  /// SNAKE BOX
+  const snakeBox = el("section", `px-6 pb-6`);
+  const snakeTitle = el("a", `font-jmh text-4xl mb-4`, text(`— games`), el("br"), el("p", "text-center", text("&")), el("p", "text-right", text(` puzzles —`))) as HTMLAnchorElement;
+  snakeTitle.href = `#/snake`;
+  snakeTitle.setAttribute("aria-label", "Go to Snake games and puzzles page");
+
+  const snakeLink = el("a",
+    `block border-9 font-superretro uppercase text-xl p-2 text-center mt-6
+     hover:bg-black hover:underline hover:text-white`
+  ) as HTMLAnchorElement;
+  snakeLink.href = `#/snake`;
+  snakeLink.append(text(`GO PLAY SNAKE`));
+
+  const snakeTeaser1 = el("p", `article-base mt-4 dropcap text-justify whitespace-pre-line`,
+    text(`Every respectable newspaper has its puzzles. Crosswords for the patient, riddles for the stubborn. This one has a snake.`));
+  const snakeTeaser2 = el("p", `article-base mt-4 dropcap text-justify whitespace-pre-line`,
+    text(`Inspired by the logic of word grids and the reflexes of arcade screens, this game twists the old formula: movement becomes thinking, speed becomes spelling. There are no clues printed in the margins — only patterns to recognize and mistakes to regret. `));
+
+  const snakeTeaser3 = el("p", `article-base mt-4 dropcap text-justify whitespace-pre-line`,
+    text(`Call it a puzzle. Call it a game.
+Either way, you will start “just one round” too many.`));
+
+  // Assemblage
+  snakeBox.append(snakeTitle, snakeTeaser1, snakeTeaser2, snakeLink, snakeTeaser3);
+  box1a.append(tournamentBox, snakeBox);
+
+//// PONG SECTION Titre + Photo + Article
+  const box1b = el("section", `grid gap-4 md:grid-rows-[auto_1fr]`);
+
+  /// PONG TITLE
+  const pongTitleRow = el("a", `block
+    font-lapresse whitespace-pre-line
+    text-[5rem] text-justify
+    leading-[5rem] tracking-wide`) as HTMLAnchorElement;
+  pongTitleRow.href = `#/playpong`;
+  pongTitleRow.setAttribute("aria-label", "Go to Play Pong page");
+  pongTitleRow.append(text(`PLAY PONG with the best, Be Fearless. Be Limitless.`));
+//// PONG CONTENT (photo + article)
+  const box1b2 = el("div", `grid gap-4 md:grid-cols-[3fr_1fr]`);
+
+  /// PONG PHOTO
+  const photoWrap = el("a", `block img-newspaper p-4
+    hover:contrast-125 focus:outline-none`) as HTMLAnchorElement;
+  photoWrap.href = `#/playpong`;
+  photoWrap.setAttribute("aria-label", "Go to Play Pong (photo)");
+
+  const photoTitle = el("h2", `font-modern-type italic text-justify text-sm mb-1`);
+  photoTitle.append(text(`Ted Dabney, left, was a Marine and co-creator of the prototypical arcade game,
+     Pong. Dabney died on May 26 and is considered a father of modern video gaming. (Al Alcorn/Computer History Museum)`));
+
+  const pongImg = el("img", `img-newspaper contrast-150 hover:contrast-120 w-full`) as HTMLImageElement;
+  pongImg.src = `/imgs/AtariCrew.png`;
+  pongImg.alt = `Pong illustration`;
+  pongImg.loading = `lazy`;
+
+  photoWrap.append(pongImg, photoTitle);
+
+  // box 1b2b = Pong Article (20%)
+  const pongArticle = el("article", `p-4 border-4`);
+  const pongArticleH2 = el("h2", `font-minecraft text-3xl mb-3 text-justify whitespace-pre-line`);
+
+  const pongArticleLink = el("a", `hover:bg-black hover:text-white`) as HTMLAnchorElement;
+  pongArticleLink.href = `#/playpong`;
+  pongArticleLink.append(text(`PONG — \nTHE GAME THAT STARTED IT ALL`));
+
+  pongArticleH2.append(pongArticleLink);
+
+  const pongBody = el("p", `article-base dropcap text-justify whitespace-pre-line`);
+  pongBody.append(
+    text(`Released by Atari in 1972, Pong was built as a technical exercise. Two paddles, one ball, a score. Nothing more.
+      Designed under Nolan Bushnell and Allan Alcorn, the game was tested in a bar. The machine failed within days — its coin box was full.
+      Pong required no explanation. Anyone could play. Anyone could lose. It turned interaction into spectacle and electronics into sport.
+      There was no story. Only response time.
+      And that was enough.`)
   );
 
-  const category = el(
-    "h2", "font-jmh text-4xl mb-4"
-  );
-  category.append(
-    text("---- movies & more ----")
-  );
-  left.append(category);
-  const leftTitle = el(
-    "h3", "items-center border-4 font-jmh uppercase text-xl mb-4"
-  );
-  const snakeLink = el("a", "text-black underline decoration-4 hover:bg-black hover:text-white");
-  snakeLink.href = "#/snake";
-  snakeLink.append(text("YOU SHOULD CLICK"));
-  leftTitle.append(snakeLink);
+  pongArticle.append(pongArticleH2, pongBody);
 
+  box1b2.append(photoWrap, pongArticle);
 
-  const leftContent = el(
-    "p", "font-modern-type text-justify text-xl"
-  );
-  leftContent.append(
-    text("After the incredible success of the story behind the Tetris game, a new movie is in the works, exploring the origins of the legendary game developer Alexey Pajitnov..."),
-    el("br"),
-    text("Soon in theaters near you!")
-  );
+  box1b.append(pongTitleRow, box1b2);
 
-  left.append(leftTitle, leftContent);
-  ////////////////////////////////////////////////////
-
-  /*** ENCART DU CENTRE ***/
-  /// Partie haute
-  const centerTop = el(
-    "section", "p-4 border-5 border-double border-gray-400 mb-4"
-  );
-
-  const centerTopTitle = el(
-    "h2", "font-jmh text-4xl mb-4"
-  );
-  centerTopTitle.append(
-    text("THE FIRST GAME, THE LAST NERVE — INSIDE THE PONG PHENOMENON")
-  );
-
-  const centerTopContent = el(
-    "p", "article-base"
-  );
-  centerTopContent.append(
-    text("In 1972, Atari revolutionized the gaming world with the release of Pong, the first commercially successful video game. Created by Nolan Bushnell and Al Alcorn, Pong was a simple yet addictive table tennis simulation that captivated players worldwide. Its success laid the foundation for the video game industry, leading to the development of countless games and consoles that followed. Pong's legacy continues to influence modern gaming, reminding us of the humble beginnings of an industry that has become a global phenomenon.")
-  );
-  centerTop.append(centerTopTitle, centerTopContent);
-
-  /// Partie basse
-  const bottomDivider = el(
-    "div", "grid grid-cols-1 md:grid-cols-2 gap-4 flex items-center");
-  const centerBottom = el(
-    "section",  "p-4 border-4 border-dashed border-black");
-  const centerBottomTitle = el(
-    "h2", "font-royalvogue text-2xl mb-4");
-  centerBottomTitle.append(
-    text("Last Tournament"), el("br"), text("Top 3 Players"));
-  
-  const centerBottomContent = el(
-    "ul", "font-modern-type text-md");
-  const players = [
-    "1. Player One - 1000 points",
-    "2. Player Two - 900 points",
-    "3. Player Three - 800 points"];
-  players.forEach(player => {
-    const listItem = el("li", "border-b border-gray-300 py-2");
-    listItem.append(text(player));
-    centerBottomContent.append(listItem);
-  });
-
-  centerBottom.append(centerBottomTitle, centerBottomContent);
-
-  const tournament = el(
-    "a", `img-newspaper p-4 -m-4 my-9 box-dark in-dark-box whitespace-pre-line
-          items-center text-2xl`) as HTMLAnchorElement;
-  tournament.href = "#/tournament";
-  tournament.setAttribute("aria-label", "Tournament Details");
-  tournament.append(text(`
-    click here to
-    know more about
-    `));
-  tournament.append(el("h1", "font-im-double text-3xl underline", text(`TOURNAMENTS\n\n\n`)));
-  bottomDivider.append(centerBottom, tournament);
-  //////////////////////////////////////////////////////
-
-  /*** ENCART DE DROITE ***/
-  const right = el(
-    "div", "p-4 row-span-2 flex flex-col items-center border-8 border border-black"
-  );
-  const photoTitle = el(
-    "h3", "font-jmh text-2xl text-center mb-4"
-  );
-  photoTitle.append(text("Vertical -Pong- Limit"));
-  const photoFrame = el("div", "") as HTMLDivElement;
-  const photo = el("img", "img-newspaper contrast-150 hover:contrast-120") as HTMLImageElement;
-  photo.src = "/imgs/pong_ia.png";
-  photoFrame.append(photo);
-
-  const playButton = el("a", "btn-click mt-6") as HTMLAnchorElement;
-  playButton.href = "#/playpong";
-  playButton.append(text("Play Pong"));
-  right.append(photoTitle, photoFrame, playButton);
-  ////////////////////////////////////////////////
-
-  /*** ASSEMBLAGE ***/
-  grid.append(left, centerTop, right, bottomDivider);
-  main.append(grid);
+  // Assemble
+  box1.append(box1a, box1b);
+  main.append(box1);
   return main;
 }
 
-
-/** MEMO **
--webkit : préfixe pour compatibilité avec les navigateurs basés sur WebKit (Safari, anciennes versions de Chrome)
-
-*/
+function keywordLink(label: string, href: string): HTMLAnchorElement {
+  const a = el("a", `underline decoration-4 hover:bg-black hover:text-white`) as HTMLAnchorElement;
+  a.href = href;
+  a.append(text(label));
+  return a;
+}

@@ -1,41 +1,66 @@
-import { el }         from "../../home";
+import { el } from "../../home";
 import { createSnakeCanvas } from "../core/canvas";
+import { LAYOUT } from "./layoutMap";
 
 export interface SnakeViewWindow {
-    main: HTMLElement;          // grid 1 col 1 row (pour le moment)
-    snakeContainer: HTMLElement; // conteneur relatif (canvas + overlay)
-    canvas: HTMLCanvasElement;  // canvas de jeu (zone de dessin)
-    overlay: HTMLElement;       // gestion de l'overlay
+  main: HTMLElement;
+  frameP1: HTMLDivElement;
+  frameP2: HTMLDivElement;
+  canvasP1: HTMLCanvasElement;
+  canvasP2: HTMLCanvasElement;
+  overlay: HTMLElement;
 }
 
 export function createSnakeView(): SnakeViewWindow {
-    // 1) main layout: 1 colonne
-    const main = el("div", `flex flex-col-1 aspect-square w-full max-w-[400px] m-auto p-2
-        h-full
-        place-items-center
-        h-[300px]
-        lg:h-[420px]
-        xl:h-[648px]
-        xxl:h-[900px]`); 
-    // 2) Stage = conteneur relatif
-    const snakeContainer = el("div", `relative flex justify-center items-center
-        h-full max-h-full`);
-    // Le canvas de jeu
-    const canvas = createSnakeCanvas();
-    // 3) Overlay = par-dessus le canvas
-    const overlayRoot = el("div", "absolute inset-0 grid place-items-center pointer-events-none z-50");
-    const overlayContainer = el("div", "pointer-events-auto");
+const main = el("div", "relative w-full max-w-[1100px] mx-auto overflow-hidden mix-blend-multiply");
+(main as HTMLDivElement).style.aspectRatio = "1536 / 1024";
 
-    overlayRoot.append(overlayContainer);
-    snakeContainer.append(canvas, overlayRoot);
+  // ✅ Background image (ton background.png)
+  // Mets le fichier dans /public/imgs/background.png par ex.
+  main.classList.add(
+    "bg-[url('/imgs/snake/layout.png')]",
+    "bg-cover",          // ou bg-contain si tu veux absolument zéro crop
+    "bg-center",
+    "bg-no-repeat"
+  );
 
-    // 4) Assemble
-    main.append(snakeContainer);
+  // slots (cadres)
+  const frameP1 = slotDiv(LAYOUT.topLeft);
+  const frameP2 = slotDiv(LAYOUT.botRight);
 
-    return {
-        main,
-        snakeContainer,
-        canvas,
-        overlay: overlayContainer,
-    };
+  // canvases
+  const canvasP1 = createSnakeCanvas();
+  canvasP1.className = "absolute inset-0 w-full h-full";
+  frameP1.appendChild(canvasP1);
+
+  const canvasP2 = createSnakeCanvas();
+  canvasP2.className = "absolute inset-0 w-full h-full";
+  frameP2.appendChild(canvasP2);
+
+  // overlay global
+  const overlayRoot = el("div", "absolute inset-0 grid place-items-center pointer-events-none");
+  const overlayBox = el("div", "pointer-events-auto");
+  overlayRoot.appendChild(overlayBox);
+
+  // assemble
+  main.append(frameP1, frameP2, overlayRoot);
+
+  return { main, frameP1, frameP2, canvasP1, canvasP2, overlay: overlayBox };
+}
+
+function slotDiv(b: { x:number; y:number; w:number; h:number }): HTMLDivElement {
+  const d = document.createElement("div");
+  d.className = "absolute";
+  d.style.left = `${b.x * 100}%`;
+  d.style.top  = `${b.y * 100}%`;
+  d.style.width  = `${b.w * 100}%`;
+  d.style.height = `${b.h * 100}%`;
+
+  // Optionnel: si tu veux “bloquer” le slot en carré exact
+  // d.classList.add("aspect-square");
+
+  // Optionnel: debug (à enlever ensuite)
+  // d.classList.add("ouP1ine", "ouP1ine-1", "ouP1ine-red-500/50");
+
+  return d;
 }

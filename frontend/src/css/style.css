@@ -655,27 +655,24 @@
 }
 
 @layer components {
-/**************** TEXT STYLES ****************/
+  /* Base commune */
+  .article-xs,
+  .article-sm,
   .article-base {
-    @apply font-modern-type text-justify leading-relaxed
-           text-article-md text-article-md--line-height
-           lg:text-article-lg lg:text-article-lg--line-height
-           xl:text-article-xl xl:text-article-xl--line-height
-           xxl:text-article-xxl xxl:text-article-xxl--line-height;
+    @apply font-modern-type text-justify;
+    @apply leading-[1.35] lg:leading-[1.4] xl:leading-[1.5] xxl:leading-[1.6];
   }
-  .article-sm {
-    @apply font-modern-type text-justify leading-relaxed
-           text-article-sm text-article-sm--line-height
-           lg:text-article-md lg:text-article-md--line-height
-           xl:text-article-lg xl:text-article-lg--line-height
-           xxl:text-article-xl xxl:text-article-xl--line-height;
-  }
+
   .article-xs {
-    @apply font-modern-type text-justify leading-relaxed
-           text-article-xs text-article-xs--line-height 
-           lg:text-article-sm lg:text-article-sm--line-height
-           xl:text-article-md xl:text-article-md--line-height
-           xxl:text-article-lg xxl:text-article-lg--line-height;
+    @apply text-[0.75rem] lg:text-[0.85rem] xl:text-[0.95rem] xxl:text-[1.05rem];
+  }
+
+  .article-sm {
+    @apply text-[0.85rem] lg:text-[0.95rem] xl:text-[1.05rem] xxl:text-[1.15rem];
+  }
+
+  .article-base {
+    @apply text-[0.95rem] lg:text-[0.75rem] xl:text-[0.95rem] xxl:text-[1.45rem];
   }
   .article2-base {
     @apply font-ocean-type text-justify leading-relaxed
@@ -784,11 +781,12 @@
            mix-blend-multiply;
   }
   .dropcap {
-    @apply first-line:tracking-widest 
-           first-letter:text-5xl first-letter:font-bold 
-           first-letter:text-stone-900 
-           first-letter:me-2 first-letter:float-left
-           first-letter:translate-y-[5px];
+    @apply first-line:tracking-widest
+          first-letter:text-5xl
+          first-letter:text-stone-900
+          first-letter:me-2
+          first-letter:mt-2
+          first-letter:float-left
   }
   .article-link {
     @apply text-black underline decoration-4 hover:bg-black hover:text-white;
@@ -831,6 +829,29 @@
            [-webkit-mask-image:url('/imgs/trames/trame5.png')] [-webkit-mask-size:100%_100%]
            [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center];
   }
+
+  /* le cadre a une taille stable */
+  .img-hover-wrapper {
+    @apply relative mx-auto block w-full max-w-[260px];
+    aspect-ratio: 3 / 4; /* choisis ton ratio (3/4 = portrait) */
+  }
+
+  /* les deux images remplissent le cadre */
+  .img-hover-wrapper img {
+    @apply w-full h-full block;
+    object-fit: cover;
+  }
+
+  .img-hover-wrapper .img-base {
+    @apply relative opacity-100 transition-opacity duration-300 ease-in-out;
+  }
+
+  .img-hover-wrapper .img-hover {
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300 ease-in-out;
+  }
+
+  .img-hover-wrapper:hover .img-base  { @apply opacity-0; }
+  .img-hover-wrapper:hover .img-hover { @apply opacity-100; }
 
 /**************** BUTTON STYLES ****************/
   .btn-input {
