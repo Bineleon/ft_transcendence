@@ -64,8 +64,6 @@ export async function finishMatch(
   tCode: string,
   payload: ApiFinishMatchDTO): Promise<void> {
   try {
-    console.log("FinishMatch Payload :", payload);
-    console.log("matchId -> ", matchId);
     const resp = await apiFetch(`/api/matches/${matchId}/finish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -107,7 +105,7 @@ export async function finishMatch(
 
 export async function createMatchWithStats(payload: ApiPlayedMatchDTO) {
     try {
-        const resp = apiFetch(`/api/matches/played`, {
+        const resp = await apiFetch(`/api/matches/played`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -117,13 +115,16 @@ export async function createMatchWithStats(payload: ApiPlayedMatchDTO) {
 
         const data = await resp.json();
         if (resp.ok) {
-            pongAlert("success", "Stats updated with synchronized accounts");
-        } else {
-            pongAlert("error", "Failed to update Regular Match Sats");
+            console.log("are guest :", payload.p1IsGuest, payload.p2IsGuest);
+            if (payload.p1IsGuest === false || payload.p2IsGuest === false) {
+                pongAlert("Stats updated with synchronized accounts", "success");
+            }
+        } else if (!resp.ok) {
+            pongAlert(`Failed to create Regular Match Stats: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Regular Match Stats Creation Error" });
         }
     } catch (error) {
         console.error("Failed to create and update Regular Match Stats");
-        pongAlert("error", `An error occurred: ${error instanceof Error ? error.message : `Regular Match Stats creation`}`)
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : `Regular Match Stats creation`, "error"}`)
     }
 }
 
@@ -213,15 +214,15 @@ export async function getLoggedName(): Promise<string> {
 }
 
 
-export async function getUserIdByName(userName: string): Promise<string | null> {
-    try {
-        const user = await getUserDatas(userName);
-        console.log("USERRRR : ", user);
-        return user.data.user.id;
-    } catch {
-        return null;
-    }
-}
+// export async function getUserIdByName(userName: string): Promise<string | null> {
+//     try {
+//         const user = await getUserDatas(userName);
+//         console.log("USERRRR : ", user);
+//         return user.data.user.id;
+//     } catch {
+//         return null;
+//     }
+// }
 export async function getUserDatas(userName: string): Promise<User> {
     try {
         const resp = await apiFetch(`/api/profile/${userName}`, {

@@ -45,7 +45,6 @@ export function initPlayersInfo(state: GameState) {
 }
 
 export function initState(tCode?: string): GameState {
-  console.log("NOOOW");
   return {
     world: { w: 1500, h: 900 },   // logique, pas pixels
     ball: {

@@ -88,6 +88,8 @@ export class MatchService {
     if (!data.p1IsGuest) usernamesToLookup.push(data.p1Username);
     if (!data.p2IsGuest) usernamesToLookup.push(data.p2Username);
 
+    console.log("Usernames to lookup :", usernamesToLookup);
+
     const users = usernamesToLookup.length > 0
       ? await prisma.user.findMany({
           where: { username: { in: usernamesToLookup } },

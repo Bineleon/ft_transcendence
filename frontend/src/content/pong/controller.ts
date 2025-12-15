@@ -19,7 +19,7 @@ import { createPongStatsPanel }          from "./ui/terminal";
 import { createPlayersBox, resetPlayersCache } from "./ui/players";
 import type { Tournament }               from "../tournament/uiTypes";
 import type { ApiMatch } from "../tournament/apiTypes";
-import { finishMatch, createMatchWithStats, getUserIdByName }                    from "../utils/todb"
+import { finishMatch, createMatchWithStats }                    from "../utils/todb"
 import { liveStatsToMatchStats, playedMatchStatsToApi, fromMatchStatsToApiMatchStatsDTO, fromPlayerMatchStatsToApiPlayerStatsBase } from "../tournament/mapper";
 
 // On implement carrement une classe en Typescript
@@ -138,7 +138,6 @@ export class GameController {
     }
 
     private onPlayersUpdated = (_e: Event) => {
-        console.log("Players Updated");
         this.refreshTerminal();
     };
 
@@ -405,32 +404,18 @@ export class GameController {
         const p1Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p1);
         const p2Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p2);
 
-        // On enrichit avec les userId s'ils existent en DB
-        const [p1UserId, p2UserId] = await Promise.all([
-            getUserIdByName(stats.p1.userName),
-            getUserIdByName(stats.p2.userName),
-        ]);
-        console.log("p1UserId:", p1UserId);
-        console.log("p2UserId:", p2UserId);
-
-        const p1PlStats: ApiPlayerStatsDTO = {
-            ...(p1UserId ? { userId: p1UserId } : {}),
-            ...p1Base,
-        };
-
-        const p2PlStats: ApiPlayerStatsDTO = {
-            ...(p2UserId ? { userId: p2UserId } : {}),
-            ...p2Base,
-        };
-
-        console.log("p1Stats :", p1PlStats);
-        console.log("p2Stats :", p2PlStats);
+        if (this.state.p1.id) {
+            p1Base.userId = this.state.p1.id;
+        }
+        if (this.state.p2.id) {
+            p2Base.userId = this.state.p2.id;
+        }
         if (tCode) {
             const matchId = this.state.stats.matchId;
             const payload: ApiFinishMatchDTO = {
                 matchStats: apiMatchStats,
-                p1Stats: p1PlStats,
-                p2Stats: p2PlStats,
+                p1Stats: p1Base,
+                p2Stats: p2Base,
             }
             console.log("Payload FinishMatch :", payload);
             try {
@@ -446,8 +431,8 @@ export class GameController {
                 p1IsGuest: this.state.stats.p1.isGuest,
                 p2IsGuest: this.state.stats.p2.isGuest,
                 matchStats: apiMatchStats,
-                p1Stats: p1Stats,
-                p2Stats: p2stats,
+                p1Stats: p1Base as ApiPlayerStatsDTO,
+                p2Stats: p2Base as ApiPlayerStatsDTO,
             }
             console.log("Payload CreateMatchWithStats :", payload);
             const resp = await createMatchWithStats(payload);
