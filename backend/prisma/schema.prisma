@@ -51,6 +51,9 @@ model User {
   matchesWon         Match[]            @relation("Winner")
   matchesAsP2        Match[]            @relation("P2")
   matchesAsP1        Match[]            @relation("P1")
+  snakeMatchesWon    SnakeMatch[]       @relation("SnakeWinner")
+  snakeMatchesAsP2   SnakeMatch[]       @relation("SnakeP2")
+  snakeMatchesAsP1   SnakeMatch[]       @relation("SnakeP1")
   sessions           Session[]
   createdTournaments Tournament[]       @relation("UserCreatedTournaments")
   tournaments        Tournament[]       @relation("TournamentParticipants")
@@ -176,4 +179,25 @@ model RefreshToken {
   userId    String
   createdAt DateTime @default(now())
   expiresAt DateTime
+}
+
+model SnakeMatch {
+  id             String    @id @default(cuid())
+  gameCode       String    @default("snake") @map("game_code")
+  p1UserId       String?   @map("p1_user_id")
+  p1Score        Int       @map("p1_score")
+  p1Collectibles Int       @map("p1_collectibles")
+  p2UserId       String?   @map("p2_user_id")
+  p2Score        Int       @map("p2_score")
+  p2Collectibles Int       @map("p2_collectibles")
+  winnerUserId   String?   @map("winner_user_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+  winner         User?     @relation("SnakeWinner", fields: [winnerUserId], references: [id])
+  p2             User?     @relation("SnakeP2", fields: [p2UserId], references: [id])
+  p1             User?     @relation("SnakeP1", fields: [p1UserId], references: [id])
+
+  @@index([p1UserId])
+  @@index([p2UserId])
+  @@index([winnerUserId])
 }
