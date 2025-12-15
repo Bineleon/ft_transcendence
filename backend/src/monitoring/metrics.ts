@@ -1,8 +1,13 @@
+// @ts-nocheck
 import fp from "fastify-plugin";
 import client from "prom-client";
+import { getPrismaClient } from "../shared/database/prisma";
+import { registerPrismaMetrics } from "./prisma.metrics";
 
 async function metricsPlugin(fastify) {
     const register = new client.Registry();
+    const prisma = getPrismaClient();
+    registerPrismaMetrics(prisma, register);
 
     // Collect default Node.js + V8 metrics
     client.collectDefaultMetrics({ register });

@@ -60,6 +60,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus.rules.yml:/etc/prometheus/prometheus.rules.yml:ro
       - prometheus_data:/prometheus
     ports:
       - "9090:9090"
