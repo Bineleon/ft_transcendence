@@ -58,7 +58,8 @@ Either way, you will start “just one round” too many.`));
   const pongTitleRow = el("a", `block
     font-lapresse whitespace-pre-line
     text-[5rem] text-justify
-    leading-[5rem] tracking-wide`) as HTMLAnchorElement;
+    leading-[5rem] tracking-wide
+    hover:bg-black hover:underline hover:text-white`) as HTMLAnchorElement;
   pongTitleRow.href = `#/playpong`;
   pongTitleRow.setAttribute("aria-label", "Go to Play Pong page");
   pongTitleRow.append(text(`PLAY PONG with the best, Be Fearless. Be Limitless.`));

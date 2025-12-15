@@ -74,6 +74,121 @@ export async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
   renderDailyMatchesChart(dashboard, stats, rallies, recentMatches);
 }
 
+// Nouveau mode (layout en 4 colonnes) : on remplit chaque box séparément.
+export async function loadProfileDashboardSections(
+  last7days: HTMLElement,
+  lastScores: HTMLElement,
+  last3Matches: HTMLElement,
+  snakeStats: HTMLElement
+) {
+  // 1) Graph 1 : daily matches
+  const res = await apiFetch("/api/profile/dashboard/daily-matches", {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    console.error("Failed to load daily matches stats", res.status);
+    last7days.innerHTML = "";
+    const p = document.createElement("p");
+    p.className = "article-base";
+    p.textContent = "Unable to load match statistics.";
+    last7days.append(p);
+    // On laisse les autres sections tranquilles.
+    return;
+  }
+
+  const body = await res.json();
+  const stats = (body.data?.stats ?? []) as DailyMatchStat[];
+
+  // 2) Graph 2 : recent rallies
+  const resRallies = await apiFetch("/api/profile/dashboard/recent-rallies", {
+    credentials: "include",
+  });
+
+  let rallies: RecentMatchAvgStats[] = [];
+  if (resRallies.ok) {
+    const bodyRallies = await resRallies.json();
+    rallies = (bodyRallies.data?.stats ?? []) as RecentMatchAvgStats[];
+  } else {
+    console.error("Failed to load recent rallies", resRallies.status);
+  }
+
+  // 3) Graph 3 : recent matches history
+  const resRecentMatches = await apiFetch(
+    "/api/profile/dashboard/recent-matches",
+    {
+      credentials: "include",
+    }
+  );
+
+  let recentMatches: RecentMatchSummary[] = [];
+  if (resRecentMatches.ok) {
+    const bodyRecentMatches = await resRecentMatches.json();
+    recentMatches = (bodyRecentMatches.data?.matches ?? []) as RecentMatchSummary[];
+  } else {
+    console.error("Failed to load recent matches", resRecentMatches.status);
+  }
+
+  // Render par section
+  renderLast7DaysChart(last7days, stats);
+  renderRecentRalliesChart(lastScores, rallies);
+  renderRecentMatchesHistory(last3Matches, recentMatches);
+
+  // SnakeStats : placeholder léger (tu pourras remplacer quand l'API existe)
+  snakeStats.innerHTML = "";
+  const t = el("h3", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
+  t.textContent = "Snake stats";
+  const p = el("p", "article-base");
+  p.textContent = "No snake stats yet.";
+  snakeStats.append(t, p);
+}
+
+export function renderLast7DaysChart(container: HTMLElement, stats: DailyMatchStat[]) {
+  container.innerHTML = "";
+
+  const title = el("h2", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
+  title.textContent = "Matches (Last 7 days)";
+
+  const MAX_HEIGHT = 120;
+  const bars = el("div", "flex items-end gap-2 w-full mt-4") as HTMLDivElement;
+  bars.style.height = "170px";
+
+  container.append(title, bars);
+
+  const maxMatches = stats.reduce(
+    (max, day) => (day.totalMatches > max ? day.totalMatches : max),
+    0
+  );
+
+  if (maxMatches === 0) {
+    const msg = el("p", "article-base mt-2");
+    msg.textContent = "No matches played in the last 7 days.";
+    container.append(msg);
+    return;
+  }
+
+  for (const day of stats) {
+    const heightPx = (day.totalMatches / maxMatches) * MAX_HEIGHT;
+
+    const col = el("div", "flex flex-col items-center gap-1 flex-1");
+    const bar = el(
+      "div",
+      "w-full bg-black/60 rounded-t-md transition-all duration-300"
+    ) as HTMLDivElement;
+    bar.style.height = `${heightPx}px`;
+    bar.title = `Matches: ${day.totalMatches} | Wins: ${day.wins}`;
+
+    const dateLabel = el("span", "text-xs font-modern-type");
+    dateLabel.textContent = day.date.slice(5);
+
+    const statsLabel = el("span", "text-[10px] font-modern-type text-stone-600");
+    statsLabel.textContent = `${day.totalMatches} M / ${day.wins} W`;
+
+    col.append(bar, dateLabel, statsLabel);
+    bars.append(col);
+  }
+}
+
 export function renderDailyMatchesChart(
   dashboard: HTMLElement,
   stats: DailyMatchStat[],
@@ -83,7 +198,7 @@ export function renderDailyMatchesChart(
   dashboard.innerHTML = "";
 
   // --- Title graph 1 ---
-  const title = el("h2", "font-royalvogue text-3xl mb-4");
+  const title = el("h2", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
   title.textContent = "Matches (Last 7 days)";
 
   const MAX_HEIGHT = 120;
@@ -144,7 +259,7 @@ export function renderRecentRalliesChart(
 ) {
   container.innerHTML = "";
 
-  const title = el("h3", "font-royalvogue text-2xl mt-6 mb-3");
+  const title = el("h3", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
   title.textContent = "Last 3 matches";
 
   const MAX_HEIGHT = 100;
@@ -211,7 +326,7 @@ export function renderRecentMatchesHistory(
 ) {
   container.innerHTML = "";
 
-  const title = el("h3", "font-royalvogue text-2xl mt-6 mb-3");
+  const title = el("h3", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
   title.textContent = "Last matches";
 
   const list = el("ul", "w-full space-y-2 font-modern-type text-sm") as HTMLUListElement;
