@@ -12,6 +12,7 @@ services:
       - ./backend:/app           # code backend
       - db-data:/app/database    # volume pour SQLite
       - /app/node_modules        # Protège node_modules
+      - /app/artifacts           # Protège artifacts (Hardhat compiled contracts)
       - avatars-data:/app/avatars   # <-- pour stocker les avatars
     environment:
       NODE_ENV: development
