@@ -2,18 +2,16 @@ import type { SnakeViewWindow } from "./ui/view";
 import type { SnakeState, Controls, SnakePhase } from "./game/types";
 import { domOverlayManager } from "./ui/overlay";
 import { GameLoop } from "../pong/core/loop";
-import { createGameGuards, type GameGuards } from "./ui/guards"; 
 import { resizeSnake, COLS, ROWS, TILE } from "./core/canvas";
 import { randomLetter } from "./game/utils";
 import { stepSnake } from "./core/logic";
 
 export class SnakeController {
     public view: SnakeViewWindow;
-    public context: CanvasRenderingContext2D;
+    public contexts: CanvasRenderingContext2D[]; // ✅ 2 contexts
     public state: SnakeState;
     public overlay: domOverlayManager;
     private loopCtrl: { stop: () => void } | null = null;
-    private gameGuards: GameGuards;
     public snakeControls: Controls = {
         up:    { code: "ArrowUp",    down: false },
         down:  { code: "ArrowDown",  down: false },
@@ -24,8 +22,12 @@ export class SnakeController {
     };
 
     constructor(opts: { view: SnakeViewWindow }) {
-        this.context = opts.view.canvas.getContext("2d")!;
         this.view = opts.view;
+
+        this.contexts = [
+            opts.view.canvasP1.getContext("2d")!,
+            opts.view.canvasP2.getContext("2d")!,
+        ];
 
         const startX = Math.floor(COLS / 2);
         const startY = Math.floor(ROWS / 2);
@@ -41,12 +43,17 @@ export class SnakeController {
             phase: "START"
         };
         this.overlay = new domOverlayManager(this);
-        this.gameGuards = createGameGuards(this.view.canvas);
         
         window.addEventListener("resize", () => {
             resizeSnake(this.view.canvas, this.view.main, this.state);
             this.draw();
         });
+    }
+
+    private resizeAll() {
+        // On resize chaque canvas par rapport à son frame carré
+        resizeSnake(this.view.canvasP1, this.view.frameTL as any, this.state);
+        resizeSnake(this.view.canvasP2, this.view.frameBR as any, this.state);
     }
 
     private onKeyDown = (e: KeyboardEvent) => {
@@ -108,19 +115,13 @@ export class SnakeController {
     public setPhase(phase: SnakePhase) {
         this.state.phase = phase;
         
-        if (phase === "PLAYING") {
-            this.gameGuards.enable();
-        } else {
-            this.gameGuards.disable();
-        }
-
         switch (phase) {
             case "START":
                 this.view.overlay.replaceChildren(this.overlay.bindHTMLElement(phase));
                 this.unwireControls();
                 break;
             case "PLAYING":
-                resizeSnake(this.view.canvas, this.view.main, this.state);
+                this.resizeAll();
                 this.wireControls();
                 this.startGame();
                 this.view.overlay.replaceChildren(this.overlay.bindHTMLElement(phase));
@@ -138,31 +139,33 @@ export class SnakeController {
     }
 
     private draw() {
-        const ctx = this.context;
         const { snake, eatable, world } = this.state;
 
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, world.w * TILE, world.h * TILE);
+        for (const ctx of this.contexts) {
+            ctx.fillStyle = "transparent";
+            ctx.clearRect(0, 0, world.w * TILE, world.h * TILE);
 
-        // draw eatable
-        ctx.fillStyle = "gray";
-        ctx.font = `${TILE}px monospace`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(
-            eatable.letter,
-            (eatable.x + 0.5) * TILE,
-            (eatable.y + 0.5) * TILE
-        );
+            // (optionnel) fond du canvas: transparent pour voir le papier
+            // si tu veux un fond blanc dans les frames, garde fillRect en blanc.
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, world.w * TILE, world.h * TILE);
 
-        // serpent
-        ctx.fillStyle = "black";
-        for (const seg of snake) {
+            // draw eatable
+            ctx.fillStyle = "gray";
+            ctx.font = `${TILE}px monospace`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
             ctx.fillText(
-            seg.letter,
-            (seg.x + 0.5) * TILE,
-            (seg.y + 0.5) * TILE
+                eatable.letter,
+                (eatable.x + 0.5) * TILE,
+                (eatable.y + 0.5) * TILE
             );
+
+            // snake
+            ctx.fillStyle = "black";
+            for (const seg of snake) {
+                ctx.fillText(seg.letter, (seg.x + 0.5) * TILE, (seg.y + 0.5) * TILE);
+            }
         }
     }
 

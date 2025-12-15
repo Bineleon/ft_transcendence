@@ -1,34 +1,29 @@
 // src/content/utils/apiFetch.ts
-
 import { pongAlert } from "./alertBox";
 
-/**
- * Wrapper autour de fetch qui :
- * - inclut toujours les cookies
- * - si 401 → tente un /api/auth/refresh puis rejoue la requête 1 fois
- */
-export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+type ApiFetchInit = RequestInit & {
+  requireAuth?: boolean;   // ✅ si true: 401 => refresh + redirect si échec
+};
+
+export async function apiFetch(input: RequestInfo | URL, init: ApiFetchInit = {}): Promise<Response> {
+  const { requireAuth = false, ...rest } = init;
+
   const finalInit: RequestInit = {
-    // on garde tout ce que l'appelant a mis
-    ...init,
+    ...rest,
     credentials: "include",
   };
 
   // 1ère tentative
   let res = await fetch(input, finalInit);
 
-  if (res.status !== 401) {
-    return res;
-  }
+  // ✅ Pas 401 => OK
+  if (res.status !== 401) return res;
 
-  // Si on est déjà en train d'appeler /refresh → on ne boucle pas
+  // ✅ Si l’appel n’exige pas d’auth : on renvoie juste la 401, sans refresh, sans redirect
+  if (!requireAuth) return res;
+
+  // Anti-boucle refresh
   if (typeof input === "string" && input.includes("/api/auth/refresh")) {
-    return res;
-  }
-
-  // si sur la page de jeu ou de tournoi ou de profile → on ne fait rien
-  if (window.location.hash.startsWith("#/playpong/") || window.location.hash.startsWith("#/tournament/")
-  || window.location.hash.includes("/profile/")) {
     return res;
   }
 
@@ -38,27 +33,27 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
       method: "POST",
       credentials: "include",
     });
+
     if (!refreshRes.ok) {
-      // Refresh impossible → on considère la session expirée
       pongAlert("Please log in again.");
-      window.location.href = "/#/login";
+      window.location.hash = "#/login";
       return res;
     }
 
     const refreshData = await refreshRes.json();
     if (!refreshData.success) {
-      pongAlert("! Please log in again.");
-      window.location.href = "/#/login";
+      pongAlert("Please log in again.");
+      window.location.hash = "#/login";
       return res;
     }
 
-    // Refresh OK → on rejoue la requête une seule fois
+    // Refresh OK → rejouer 1 fois
     res = await fetch(input, finalInit);
     return res;
   } catch (err) {
     console.error("Refresh token error:", err);
     pongAlert("Authentication error. Please log in again.");
-    window.location.href = "/#/login";
+    window.location.hash = "#/login";
     return res;
   }
 }

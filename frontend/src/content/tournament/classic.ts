@@ -179,6 +179,7 @@ function renderTournamentState(t: Tournament): HTMLElement {
     const infos = el("div", "item-start");
     
     let nbPlayers = getNbRegisteredPlayers(getAllPlayerNames(t));
+    if (nbPlayers > t.maxParticipants) nbPlayers = t.maxParticipants;
     infos.append(el("p", "", text(`Type: ${t.tMode}`)));
     infos.append(el("p", "", text(`Participants: ${nbPlayers} / ${t.maxParticipants}`)));
     // infos.append(el("p", "", text(`Matches: ${t.matches.length}`)));

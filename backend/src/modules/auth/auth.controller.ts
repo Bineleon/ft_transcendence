@@ -110,7 +110,7 @@ export function authController(
       const result = await authService.verify2FA(userId, code);
 
       return formatSuccess(result, '2FA verified. Login successful.');
-      // return formatSuccess('2FA verified. Login successful.');
+    //   return formatSuccess('2FA verified. Login successful.');
     }
   );
 

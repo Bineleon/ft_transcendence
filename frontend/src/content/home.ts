@@ -47,6 +47,44 @@ export function text(t: string): Text {
     return document.createTextNode(t);
 }
 
+function makeSidebarItem(href: string, titleText: string, bodyText: string): HTMLAnchorElement {
+
+    const link = el("a", "block no-underline group cursor-pointer") as HTMLAnchorElement;
+    link.href = href;
+
+    const wrapper = el("article", "space-y-1");
+
+    const title = el("h3", `font-oldprint -tracking-[0.02em] text-center
+        uppercase
+        text-lg lg:text-lg
+        xxl:text-2xl
+        group-hover:underline font-oldprint-extravagant`);
+    title.append(text(titleText));
+
+    const body = el("p", `font-hello-print text-sm xxl:text-xl text-justify
+        group-hover:bg-stone-900 group-hover:text-white`);
+    body.append(text(bodyText));
+
+    wrapper.append(title, body);
+    link.append(wrapper);
+    return link as HTMLAnchorElement;
+}
+
+
+function spacer(char: string): HTMLElement {
+    const span = el("h1", `font-screenprint-regular text-black text-[100px] text-center -mb-[45px] -mt-[80px]`);
+    span.append(text(char));
+    return span;
+}
+
+function techList(title: string, contents: string): HTMLElement {
+    const section = el("section", "space-y-2");
+    const secTitle = el("h3", `font-arcade-narrow text-sm xxl:text-lg uppercase -ml-1`, text(title));
+    const secContent = el("p", "font-ocean-type text-sm xxl:text-lg", text(contents));
+    section.append(secTitle, secContent);
+    return section;
+}
+
 export function Home(): HTMLElement {
     const main = el(
         "main",
@@ -72,55 +110,40 @@ export function Home(): HTMLElement {
 
     const col1Kicker = el("p", "subtitle-cat", text(" · Campus · 42 Paris · "));
 
-    const col1Title = el("h2", `article-hed font-lapresse`,
-        text(`4 Students, 1 Last Boss`));
+    const col1Title = el("h2", `article-hed font-lapresse text-4xl lg:text-3xl xl:text-4xl xxl:text-5xl leading-[3rem]`,
+        text(`FOUR CAREER CHANGES, ONE ARCADE MACHINE`));
 
-    const col1Chapo = el("p", "article-sm italic");
-    col1Chapo.append(
-        text(
-            "In the basement glow of 42 Paris, four exhausted students are trying to ship one last project "
-        ),
-        text(
-            "before the school spits them back into the real world: a full-stack Pong universe called Transcendence."
-        )
-    );
+    const col1Chapo = el("p", "article-sm italic -tracking-[0.07em] leading-[1.4rem]", text(`In the basement glow of 42 Paris,
+        four exhausted students are trying to ship one last project before the school spits them back into the real world:
+        a full-stack Pong universe called Transcendence.`));
 
-    const col1P1 = el("p", "article-base dropcap", text(`It is 03:17 a.m. The coffee machine is making
-        a noise that definitely violates some European regulation, and the open-space smells like cold pizza,
-        burnt brain cells, and overheated laptops. In the middle of it all: 
-        four students, four terminals, and one shared Git repository that could either make or break their sanity.`));
+    const article1 = el("p", "article-base dropcap", text(`They are four. Between 31 and 37 years old.
+        All from the November 2023 intake. All in the middle of a professional reinvention.
+        For two months, Nelbi, Yoann, Jérôme and Félix have been building this project the same way Pong was born:
+        face to face, hands on the same keyboard, no shortcuts.`));
 
-    const col1P2 = el("p", "article-base dropcap");
-    col1P2.append(
-        text(
-            "Transcendence is not just another school exercise. It is the unofficial final boss of the core curriculum: "
-        ),
-        text(
-            "a real-time Pong platform, online matchmaking, tournaments, authentication, profile pages, and a front-end "
-        ),
-        text(
-            "that has to look more like a vintage newspaper from an alternate universe than a tutorial template. "
-        ),
-        text(
-            "You do not simply “finish” Transcendence. You survive it."
-        )
-    );
+    const article2 = el("p", "article-base dropcap", text(`From the start, the team made a clear choice: no remote modules.
+        Everything was designed around local play, shared space, and immediate interaction. Two players, one machine.
+        Less latency, more responsibility.`));
 
-    const col1P3 = el("p", "article-base");
-    col1P3.append(
-        text(
-            "“We started with a clean architecture and a beautiful Notion board,” one of them laughs, "
-        ),
-        text(
-            "“and now we just negotiate with the linter like it’s a hostage situation.” "
-        ),
-        text(
-            "Still, between two failed builds, they keep pushing features: rematches, spectators, retro typography, "
-        ),
-        text("and small details no evaluator will ever notice—except them.")
-    );
+    const article3 = el("p", "article-base dropcap", text(`Nelbi took charge of the foundations. Database design, data consistency,
+        and the blockchain layer that secures tournament results. She also shared backend development with Yoann,
+        who focused on security tools, authentication flows, and defensive architecture. Nothing flashy,
+         just systems meant to survive real use.`));
 
-    col1.append(col1Kicker, col1Title, col1Chapo, col1P1, col1P2, col1P3);
+    const article4 = el("p", "article-base dropcap", text(`Jérôme handled observability. Logs, metrics, dashboards.
+        If something breaks, it should be visible, measurable, explainable. Grafana is not decoration here;
+        it is a window into the system’s behavior.`));
+
+    const article5 = el("p", "article-base dropcap", text(`Félix did what he always does: build, refine, rethink.
+        The visual identity, the frontend architecture, and the games themselves. From the newspaper-style interface
+        to the second game, everything on screen was designed to feel intentional — playful, but structured.`));
+
+    const article6 = el("p", "article-base dropcap", text(`Two months in, the project stands as a complete ecosystem
+        rather than a checklist. Built for the three evaluators it is now presented to, with one simple hope:
+        that it feels as coherent to play as it was to build.`));
+
+        col1.append(col1Kicker, col1Title, col1Chapo, article1, article2, article3);
 
     /************************************************************
      * COLONNE 2 – PHOTO + SOUS-GRILLE (2 ROWS, 2 COLS)
@@ -129,21 +152,12 @@ export function Home(): HTMLElement {
 
     // Row 1 : photo mise en page "journal"
     const figure = el("figure", "");
-    const img = el("img", "frame-photo-img img-newspaper contrast-80") as HTMLImageElement;
-    img.src = "/imgs/pong.png";
-    img.alt =
-        "Real photo of two players of Pong, back in the 1970s.";
+    const img = el("img", "frame-photo-img img-newspaper contrast-150") as HTMLImageElement;
+    img.src = "/imgs/OldPongAdd.png";
+    img.alt ="Real photo of two players of Pong, back in the 1970s.";
 
-    const figcap = el(
-        "figcaption",
-        "article-xs text-center mt-2 italic"
-    );
-    figcap.append(
-        text(
-            "Night shift at 42: monitors glowing, terminals buzzing, and a Pong ball bouncing somewhere in the code."
-        )
-    );
-
+    const figcap = el("figcaption", "article-sm italic -tracking-[0.07em] leading-[1.4rem]", text(`Night shift at 42: monitors glowing,
+        terminals buzzing, and a Pong ball bouncing somewhere in the code.`));
     figure.append(img, figcap);
 
     // Row 2 : une sous-grille 2 colonnes (pour tricher la maquette)
@@ -153,155 +167,74 @@ export function Home(): HTMLElement {
         md:grid-cols-[45%_45%] md:gap-6`
     );
 
-    // Sous-colonne A : mini portrait / focus
-    const subA = el("article", "space-y-2");
-    const subATitle = el(
-        "h3",
-        "subtitle-hed text-left mb-4"
-    );
-    subATitle.append(text("A Team of Four, Not a Committee"));
-
-    const subAP = el("p", "article-xs text-lg leading-snug");
-    subAP.append(
-        text(
-            "There is Lina, who talks to the database as if it were a moody roommate. "
-        ),
-        text(
-            "Malik, who rewrites TypeScript types until the compiler becomes emotional. "
-        ),
-        text(
-            "Zoé, who refuses to ship a button unless it feels perfect at three different screen sizes. "
-        ),
-        text(
-            "And Jules, who pretends to only care about the backend, but secretly tunes easing curves on hover states at 04:00 a.m."
-        )
-    );
-
-    subA.append(subATitle, subAP);
-
-    // Sous-colonne B : encart “tech” / humour
-    const subB = el("article", "space-y-2 funfact m-1");
-    const subBTitle = el(
-        "h3",
-        "subtitle-hed mb-4"
-    );
-    subBTitle.append(text("Did You Know?"));
-
-    const subBList = el("ul", "space-y-1 article2-base");
-    const sb1 = el("li");
-    sb1.append(
-        text(
-            "Vite + TypeScript: compiles in a blink, unless someone imports three unused libraries “just in case”."
-        )
-    );
-    const sb2 = el("li");
-    sb2.append(
-        text(
-            "Tailwind 4 + custom fonts: every breakpoint is a design decision, every class name a small existential crisis."
-        )
-    );
-    const sb3 = el("li");
-    sb3.append(
-        text(
-            "WebSockets & tournaments: when it works, it feels like magic; when it doesn’t, it feels like group therapy."
-        )
-    );
-    const sb4 = el("li");
-    sb4.append(
-        text(
-            "Git: one branch named “final-final-last-clean” that no one dares to touch anymore."
-        )
-    );
-
-    // Row 3
-    const championTournament = el("div", "items-center space-y-2");
-    const champImg = el("img", "w-[90%] img-newspaper contrast-100 items-center rounded-md shadow-lg -translate-y-[200px]") as HTMLImageElement;
-    champImg.src = "/imgs/champ.png";
-    champImg.alt = "Champion tournament screenshot";
-    
-    const champHeader = el(
-        "h3",
-        "uppercase text-[0.8rem] lg:text-xs tracking-[0.25em] mt-2"
-    );
-    champHeader.append(text("And the last Tournament Winner Is..."));
-
-    const champProfile = el("div", "grid grid-cols-2 gap-2 items-center");
-    const champProfileImg = el("img", "w-full rounded-md shadow-lg") as HTMLImageElement;
-    champProfileImg.src = "/imgs/champion-profile.png";
-    champProfileImg.alt = "Champion profile screenshot";
-
-    const champProfileHeader = el(
-        "h3",
-        "font-im-great uppercase text-[0.8rem] lg:text-xs tracking-[0.25em]"
-    );
-    champProfileHeader.append(text("Champion Profile Page"));
-    champProfile.append(champProfileImg, champProfileHeader);
+    const articleWrapper = el("div", "space-y-2");
 
 
-    championTournament.append(champImg, champHeader, champProfile);
-    subBList.append(sb1, sb2, sb3, sb4);
-    subB.append(subBTitle, subBList);
-    col2SubGrid.append(subB, subA);
-    col2.append(figure, col2SubGrid, championTournament);
+    ////// FUN FACT //////
+    const subB = el("article", "flex flex-col");
+    const funFactBox = el("div", "funfact space-y-2 m-1");
+    const funFactTitle = el("h3", "subtitle-hed mb-4");
+    funFactTitle.append(text("Fun Fact"));
+
+    const funFact = el("p", "article-base", text(`Did you know? The original Pong arcade machines were so popular
+        that they often ran out of quarters! Players would sometimes resort to using slugs or washers
+        to keep the game going.`));
+
+    const add = el("img", "img-newspaper w-full my-4") as HTMLImageElement;
+    add.src = "/imgs/PongAdd.png";
+
+    funFactBox.append(funFactTitle, funFact);
+    subB.append(funFactBox, add);
+    articleWrapper.append(article4, article5, article6);
+    col2SubGrid.append(articleWrapper, subB);
+    col2.append(figure, col2SubGrid);
 
     /************************************************************
      * COLONNE 3 – SUITE D’ARTICLE / CITATIONS / RYTHME
      ************************************************************/
     const col3 = el("section", "space-y-3");
 
-    const col3Kicker = el(
-        "p",
-        "text-[0.6rem] tracking-[0.25em] uppercase font-modern-type"
-    );
-    col3Kicker.append(text("Voices from the terminal"));
+    const col3Kicker = el("p", "subtitle-cat");
+    col3Kicker.append(text(" · TECH' NOTES · SELECTED MODULES · "));
 
-    const col3P1 = el("p", "article-base");
-    col3P1.append(
-        text(
-            "“The weird thing,” Lina says, “is that Transcendence is supposed to be a Pong project, but we spend half of our time "
-        ),
-        text(
-            "designing how people will talk to each other around the game. Chats, invites, friend lists… It is basically social awkwardness as a service.”"
-        )
-    );
+    const techList1 = techList("SQLite Model",
+        `A lightweight, reliable database choice ensuring consistency across services and ease of deployment.`);
 
-    const col3P2 = el("p", "article-base");
-    col3P2.append(
-        text(
-            "They have built ranking systems that no one will fully understand, animated scoreboards, and a lobby that looks like a "
-        ),
-        text(
-            "front page of an old newspaper trapped inside a modern SPA. Somewhere between the CSS and the SQL, the line between work and play is gone."
-        )
-    );
+    const techList2 = techList("Fastify / Node Backend",
+        `A clean, fast backend framework used to structure APIs and handle real-time interactions without unnecessary abstraction.`);
 
-    const col3Quote = el(
-        "p",
-        "article-sm italic border-l border-stone-400 ps-3"
-    );
-    col3Quote.append(
-        text(
-            "“If Transcendence works on demo day,” Malik says, “we are not sure if we will be proud… or simply relieved that it did not explode on stage.”"
-        )
-    );
+    const techList3 = techList("User Management",
+        `Account creation, profiles, stats, avatars, and persistent identities across games and tournaments.`);
 
-    const col3P3 = el("p", "article-base");
-    col3P3.append(
-        text(
-            "When the sun finally hits the windows of 42, the four of them will push one last commit, merge with shaking hands, "
-        ),
-        text(
-            "and pretend they slept at least a little. The evaluators will see routes, tests, UI polish and documentation. "
-        ),
-        text(
-            "What they will not see is the quiet promise under all of it: that, whatever happens next, these four will never "
-        ),
-        text(
-            "look at a bouncing Pong ball the same way again."
-        )
-    );
+    const techList4 = techList("Two-Factor Authentication (2FA)",
+        `An extra security layer to protect user accounts and sensitive actions.`);
 
-    col3.append(col3Kicker, col3P1, col3P2, col3Quote, col3P3);
+    const techList5 = techList("Google OAuth 2.0",
+        `External authentication for fast, secure login without reinventing identity verification.`);
+
+    const techList6 = techList("GDPR Compliance",
+        `User data control, anonymization, and account deletion — implemented as features, not afterthoughts.`);
+
+    const techList7 = techList("Prometheus & Grafana",
+        `Monitoring, metrics collection, and dashboards to observe system health and performance in real time.`);
+
+    const techList8 = techList("Dashboards",
+        `Readable visual summaries for game stats, system metrics, and activity tracking.`);
+
+    const techList9 = techList("Blockchain (Tournament Scores)",
+        `Immutable storage of tournament results, ensuring transparency and tamper resistance.`);
+
+    const techList10 = techList("Another Game",
+        `A second playable experience built alongside Pong, extending the platform beyond a single title.`);
+
+    const techList11 = techList("Firefox QA (No Warnings)",
+        `Strict compatibility with Firefox, without console warnings or runtime errors.`);
+
+    const techList12 = techList("Tailwind CSS",
+        `A utility-first styling approach used to keep layout, typography, and responsiveness consistent.`);
+
+    col3.append(col3Kicker, techList1, techList2, techList3, techList4, techList5, techList6,
+        techList7, techList8, techList9, techList10, techList11, techList12);
 
     /************************************************************
      * COLONNE 4 – SIDEBAR “FAITS DIVERS” / NAV
@@ -314,78 +247,39 @@ export function Home(): HTMLElement {
     );
 
     // Helper pour fabriquer une “carte” cliquable
-    function makeSidebarItem(
-        href: string,
-        titleText: string,
-        kickerText: string,
-        bodyText: string
-    ): HTMLAnchorElement {
+    const linksLabel = el("h1", "text-[70px] xxl:text-[110px] font-lapresse text-center -m-6", text(`Links`));
+    const s1 = spacer("-");
+    const s2 = spacer("-");
+    const s3 = spacer("-");
+    const arrow = el("img", "img-newspaper w-full h-12 mx-auto my-4") as HTMLImageElement;
+    arrow.src = "imgs/arrow.png";
 
-        const link = el(
-            "a",
-            "block no-underline group cursor-pointer"
-        ) as HTMLAnchorElement;
-        link.href = href;
-
-        const wrapper = el(
-            "article",
-            "space-y-1"
-        );
-
-        const kicker = el(
-            "p",
-            "text-[0.55rem] tracking-[0.25em] uppercase font-modern-type text-stone-700"
-        );
-        kicker.append(text(kickerText));
-
-        const title = el(
-            "h3",
-            "font-im-great uppercase text-[0.75rem] lg:text-xs group-hover:underline tracking-[0.25em] font-oldprint-extravagant"
-        );
-        title.append(text(titleText));
-
-        const body = el(
-            "p",
-            "article-xs group-hover:bg-stone-900 group-hover:text-white transition-colors duration-200"
-        );
-        body.append(text(bodyText));
-
-        wrapper.append(kicker, title, body);
-        link.append(wrapper);
-        return link as HTMLAnchorElement;
-    }
-
-    const linksLabel = el("h1", "text-[70px] font-lapresse text-center -m-6", text(`Links`));
 
     const navPlay = makeSidebarItem(
         "#/game",
-        "BREAKING GAME · PLAY PONG",
-        "Late-night arcade",
+        "- GAME ON -",
         "Anonymous sources confirm that a fully functional Pong arena is hidden behind this link. Side effects may include shouting at pixels."
     );
 
     const navLogin = makeSidebarItem(
         "#/login",
         "LOG IN BEFORE THE BALL DROPS",
-        "Administrative drama",
         "Rumor says your stats, match history, and unfinished glory are waiting here. Identification is optional, but bragging rights are not."
     );
 
     const navCredits = makeSidebarItem(
         "#/credits",
         "WHO BUILT THIS THING?",
-        "Behind the scenes",
         "A suspiciously dedicated group of students claims responsibility. This page lists them before they disappear into internships."
     );
 
     const navProfile = makeSidebarItem(
         "#/profile",
         "YOUR PONG DOSSIER",
-        "Classified file",
         "Win rate, unexpected defeats, and that one unbelievable comeback: everything is neatly archived, as if you were important."
     );
 
-    sidebar.append(linksLabel, navPlay, navLogin, navCredits, navProfile);
+    sidebar.append(linksLabel, arrow, navPlay, s1, navLogin, s2, navCredits, s3, navProfile);
 
     /************************************************************
      * ASSEMBLAGE

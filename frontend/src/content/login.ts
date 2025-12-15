@@ -62,10 +62,7 @@ function login(): HTMLElement {
                         window.dispatchEvent(new Event("auth-changed"));
                     } catch (_e) {}
 
-                    const ID = inputLogin.value;
-                    // Pour l’instant on garde ton comportement existant :
-                    // redirection vers le profil de l’utilisateur
-                    window.location.hash = `#/profile/${ID}`;
+                    window.location.hash = `#/profile`;
                 } else {
                     const errorMessage = data.error?.message || data.message || "Invalid 2FA code";
                     pongAlert(`2FA verification failed: ${errorMessage}`);
