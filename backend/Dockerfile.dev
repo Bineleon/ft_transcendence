@@ -19,6 +19,9 @@ RUN apk add curl
 # Étape 5 : 
 RUN npx prisma generate
 
+# Étape 5.5 : Compiler les smart contracts Hardhat
+RUN npx hardhat compile
+
 # RUN npx hardhat compile
 
 # Étape 6 : exposer le port du serveur (3000)
