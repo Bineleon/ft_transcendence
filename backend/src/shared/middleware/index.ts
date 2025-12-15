@@ -7,4 +7,4 @@
 export { setupErrorHandler } from './errorHandler.js';
 
 // Authentication middlewares
-export { authenticate, requireOwner } from './authentication.js';
+export { authenticate } from './authentication.js';

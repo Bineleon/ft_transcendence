@@ -10,25 +10,23 @@ import { areAllMatchesClosed } from "../pong/ui/players.ts";
 
 /// ------      CHECK CHECK CHECK       ------ ///
 export async function notLoggedIn(): Promise<boolean> {
-    try {
-        const resp = await fetch(`/api/auth/loggedIn`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include"
-        });
-        const data = await resp.json();
+  try {
+    const resp = await fetch(`/api/auth/loggedIn`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
 
-        if (resp.ok) {
-            return data as boolean;
-        } else {
-            return true;
-        }
-    } catch (error) {
-        console.error("Profile fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
-        throw error;
-    }
+    if (!resp.ok) return true;
+
+    const data = await resp.json();
+    return data as boolean;
+  } catch (error) {
+    console.warn("notLoggedIn: network error (treated as not logged)", error);
+    return true;
+  }
 }
+
 
 /// ------        ADD ADD ADD        ------ //
 export async function addUserAsPlayerToTournament(tCode: string, userName: string, t: Tournament): Promise<void> {
@@ -190,28 +188,32 @@ export function getUserNameByIdTEMP(id: string, users: User[]): string {
 }
 
 export async function getLoggedID(): Promise<string> {
-    const userDatas = await apiFetch ("/api/auth/me", {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" }
-    });
-    if (!userDatas.ok) {
-        return "";
-    }
-    return (await userDatas.json()).id;
+  const res = await apiFetch("/api/auth/me", {
+    method: "GET",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) return "";
+
+  const body = await res.json();
+  return body?.data?.user?.id ?? "";
 }
 
+
 export async function getLoggedName(): Promise<string> {
-    const userDatas = await apiFetch ("/api/auth/publicme", {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" }
-    });
-    if (!userDatas.ok) {
-        return "";
-    }
-    return (await userDatas.json()).username;
+  const res = await apiFetch("/api/auth/me", {
+    method: "GET",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) return "";
+
+  const body = await res.json();
+  return body?.data?.user?.username ?? "";
 }
+
 
 
 // export async function getUserIdByName(userName: string): Promise<string | null> {

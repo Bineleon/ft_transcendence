@@ -2,16 +2,10 @@
 
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { verifyToken } from '../utils/jwt.js';
-import { AuthError, ForbiddenError } from '../errors/index.js';
 import { UserService } from '../../modules/users/users.service.js';
 
-// On instancie le service utilisateur une seule fois
 const userService = new UserService();
 
-/**
- * Middleware : Vérifie que l'utilisateur est authentifié via JWT
- * + met à jour lastSeen
- */
 export async function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const token =
     request.cookies.token ||
@@ -33,11 +27,25 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
   try {
     const decoded = verifyToken(token);
-    // typé grâce à fastify.d.ts
     request.user = decoded;
 
-    // 🔥 Mise à jour lastSeen en "fire and forget"
+    // ✅ NOUVEAU : vérifier que l'utilisateur existe encore en DB
+    // (après make clean, cookie reste mais user n'existe plus)
     if (decoded.userId) {
+      const exists = await userService.existsById(decoded.userId); // <-- on ajoute ça
+      if (!exists) {
+        return reply.status(401).send({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Session invalid (user not found)',
+            statusCode: 401,
+            timestamp: new Date().toISOString(),
+            path: request.url,
+          },
+        });
+      }
+
+      // Mise à jour lastSeen en "fire and forget"
       userService.updateLastSeen(decoded.userId).catch((err) => {
         request.log?.error({ err }, 'Failed to update lastSeen');
       });
@@ -55,17 +63,3 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   }
 }
 
-/**
- * Middleware : Vérifie que l'utilisateur accède à sa propre ressource
- */
-export async function requireOwner(
-  request: FastifyRequest<{ Params: { id: string } }>
-): Promise<void> {
-  if (!request.user) {
-    throw new AuthError('Authentication required');
-  }
-
-  if (request.params.id !== request.user.userId) {
-    throw new ForbiddenError('Access denied');
-  }
-}
