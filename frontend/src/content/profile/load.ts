@@ -3,24 +3,28 @@ import { setupSelfMode, setupOtherMode } from "./utils.ts";
 import { apiFetch } from "../utils/apiFetch.ts";
 import { pongAlert } from "../utils/alertBox.ts";
 import type { ProfileViewWindow } from "./view";
-import { loadDailyMatchesDashboard } from "./dashboard.ts"
+import { loadProfileDashboardSections } from "./dashboard.ts";
+import { el, text } from "../home";
 
 
 
 
 // --- Contrôleur principal de la vue profil ---
 export function updateProfileView(view: ProfileViewWindow, userName: string): void {
+    // Crée les sous-noeuds internes nécessaires (sans les exposer dans l'interface).
+    const ui = ensureProfileUI(view);
+
     // 1) Load the basic profile information (avatar, title, labels, stats)
     loadProfileData(
-        view.picture,
-        view.title,
-        view.subtitle,
-        view.loginLabel,
-        view.emailLabel,
-        view.stats,
-		view.dashboard,
-        view.friendsList,
-        view.requestsBox,
+        ui.picture,
+        ui.title,
+        ui.stats,
+        view.last7days,
+        view.lastScores,
+        view.last3Matches,
+        view.snakeStats,
+        ui.friendsList,
+        ui.requestsBox,
         userName
     );
 
@@ -44,23 +48,23 @@ export function updateProfileView(view: ProfileViewWindow, userName: string): vo
                 // Configure the view for the logged-in user
                 setupSelfMode(
                     loggedName,
-                    view.picture,
-                    view.avatarInput,
-                    view.hoverOverlay,
-                    view.picframe,
-                    view.friendsList,
-                    view.requestsBox,
-                    view.friendsColumn,
-                    view.editBox
+                    ui.picture,
+                    ui.avatarInput,
+                    ui.hoverOverlay,
+                    ui.picframe,
+                    ui.friendsList,
+                    ui.requestsBox,
+                    view.friendsBox,
+                    ui.editBox
                 );
             } else {
                 // Configure the view for another user's profile
                 setupOtherMode(
                     userName,
-                    view.picture,
-                    view.hoverOverlay,
-                    view.friendsColumn,
-                    view.editBox
+                    ui.picture,
+                    ui.hoverOverlay,
+                    view.friendsBox,
+                    ui.editBox
                 );
             }
         })
@@ -69,22 +73,107 @@ export function updateProfileView(view: ProfileViewWindow, userName: string): vo
             // Fallback to other mode on error
             setupOtherMode(
                 userName,
-                view.picture,
-                view.hoverOverlay,
-                view.friendsColumn,
-                view.editBox
+                ui.picture,
+                ui.hoverOverlay,
+                view.friendsBox,
+                ui.editBox
             );
         });
+}
+
+type ProfileInternalUI = {
+    title: HTMLElement;
+    picframe: HTMLElement;
+    picture: HTMLImageElement;
+    avatarInput: HTMLInputElement;
+    hoverOverlay: HTMLElement;
+    loginLabel: HTMLElement;
+    emailLabel: HTMLElement;
+    stats: HTMLElement;
+    friendsList: HTMLUListElement;
+    requestsBox: HTMLElement;
+    editBox: HTMLElement;
+};
+
+function ensureProfileUI(view: ProfileViewWindow): ProfileInternalUI {
+    // --- userTitle (title + subtitle) ---
+    view.userTitle.innerHTML = "";
+    const title = el("h2", "title-profile font-barcade text-center -tracking-[.015em] text-[60px] lg:text-[100px] xl:text-[140px]", text(""));
+    view.userTitle.append(title);
+
+    // --- avatarBox (frame + img + input + overlay) ---
+    view.avatarBox.innerHTML = "";
+    const picframe = el("div", "relative flex items-center justify-center group") as HTMLDivElement;
+    const picture = el("img", "img-newspaper cursor-pointer max-w-full") as HTMLImageElement;
+    picture.src = "/imgs/avatar.png";
+    picture.alt = "Avatar utilisateur";
+    picture.loading = "lazy";
+    picture.tabIndex = 0;
+    picture.setAttribute("role", "img");
+    picture.dataset.fallback = "false";
+    picture.addEventListener("error", () => {
+        if (picture.dataset.fallback === "false") {
+            picture.src = "/imgs/avatar.png";
+            picture.dataset.fallback = "true";
+        }
+    });
+
+    const avatarInput = document.createElement("input") as HTMLInputElement;
+    avatarInput.type = "file";
+    avatarInput.accept = "image/*";
+    avatarInput.className = "hidden";
+
+    const hoverOverlay = el(
+        "div",
+        "absolute inset-0 flex items-center justify-center font-jmh text-2xl text-stone-100 bg-black/50 opacity-0 transition-opacity duration-200 pointer-events-none group-hover:opacity-100",
+        text("Click to change avatar")
+    );
+
+    picframe.append(picture, avatarInput, hoverOverlay);
+    view.avatarBox.append(picframe);
+
+    // --- infoBox (login, email, stats) ---
+    view.infoBox.innerHTML = "";
+    const loginLabel = el("h3", "font-im-great text-3xl tracking-widest", text(""));
+    const emailLabel = el("p", "font-modern-type text-md italic", text(""));
+    const stats = el("div", "space-y-2 font-ocean-type text-md whitespace-pre-line");
+    view.infoBox.append(loginLabel, emailLabel, stats);
+
+    // --- friendsBox (list + requests) ---
+    view.friendsBox.innerHTML = "";
+    const friendsTitle = el("h2", "font-oldprint text-3xl mb-2", text("Friends"));
+    const friendsList = el("ul", "list-disc list-inside font-modern-type text-lg space-y-1") as HTMLUListElement;
+    const requestsBox = el("div", "space-y-2");
+    view.friendsBox.append(friendsTitle, friendsList, requestsBox);
+
+    // --- isSelf (editBox placeholder) ---
+    view.isSelf.innerHTML = "";
+    const editBox = el("div", "pt-6 border-t border-stone-400 space-y-2 hidden");
+    view.isSelf.append(editBox);
+
+    return {
+        title,
+        picframe,
+        picture,
+        avatarInput,
+        hoverOverlay,
+        loginLabel,
+        emailLabel,
+        stats,
+        friendsList,
+        requestsBox,
+        editBox,
+    };
 }
 
 async function loadProfileData(
     picture: HTMLImageElement,
     titleEl: HTMLElement,
-    subtitleEl: HTMLElement,
-    loginLabel: HTMLElement,
-    emailLabel: HTMLElement,
     stats: HTMLElement,
-    dashboard: HTMLElement,
+    last7days: HTMLElement,
+    lastScores: HTMLElement,
+    last3Matches: HTMLElement,
+    snakeStats: HTMLElement,
     friendsList: HTMLElement | null,
     requestsBox: HTMLElement | null,
     viewedUsername: string
@@ -110,61 +199,50 @@ async function loadProfileData(
         picture.src = user.avatarUrl || "/imgs/avatar.png";
 
         // Populate header title with the player's username
-        titleEl.textContent = user.username ? `Profile of ${user.username}` : "Profile";
-
-        // A fun tagline for the subtitle
-        subtitleEl.textContent = user.username
-            ? `Get to know ${user.username} better…`
-            : "Player dossier";
-
-        // Also update labels inside the article
-        loginLabel.textContent = user.username || "(nom inconnu)";
-        emailLabel.textContent = user.email || "(email privé)";
+        titleEl.textContent = user.username ? `(${user.username})` : "Profile";
 
         // Build stats as a series of paragraphs for a more article-like feel
         const lines: string[] = [];
-        lines.push("\u2022 ID: " + (user.id || "(inconnu)"));
-        lines.push("\u2022 Username: " + (user.username || "(inconnu)"));
-        lines.push("\u2022 Email: " + (user.email || "(privé)"));
+        lines.push("Username: " + (user.username || "(inconnu)"));
+        lines.push("Email: " + (user.email || "(privé)"));
         lines.push(
-            "\u2022 Créé le: " +
+            "Créé le: " +
                 (user.createdAt
                     ? new Date(user.createdAt).toLocaleString()
                     : "(inconnu)")
         );
         lines.push(
-            "\u2022 King Max Time: " +
+            "King Max Time: " +
                 (user.kingMaxTime != null ? `${user.kingMaxTime} secondes` : "(aucun)")
         );
         lines.push(
-            "\u2022 King Max Rounds: " +
+            "King Max Rounds: " +
                 (user.kingMaxRounds != null ? user.kingMaxRounds : "(aucun)")
         );
         lines.push(
-            "\u2022 Friends Count: " + (user.friendsCount ?? 0)
+            "Friends Count: " + (user.friendsCount ?? 0)
         );
         lines.push(
-            "\u2022 Matches Won: " + (user.matchesWonCount ?? 0)
+            "Matches Won: " + (user.matchesWonCount ?? 0)
         );
 
         // Clear previous content and append each line as a <p>
         stats.innerHTML = "";
         lines.forEach((line) => {
             const p = document.createElement("p");
-            p.className = "article-base";
+            p.className = "font-origin-athletic text-xl";
             p.textContent = line;
             stats.append(p);
         });
 
         // 👉 Charger le dashboard SEULEMENT si c'est *ton* propre profil
         if (!viewedUsername) {
-            await loadDailyMatchesDashboard(dashboard);
+            await loadProfileDashboardSections(last7days, lastScores, last3Matches, snakeStats);
         }
 
     } catch (err) {
         console.error("loadProfileData error:", err);
         titleEl.textContent = "Erreur";
-        subtitleEl.textContent = "Profil inaccessible";
         loginLabel.textContent = "Erreur";
         emailLabel.textContent = "Profil inaccessible";
         stats.innerHTML = "";
@@ -173,12 +251,16 @@ async function loadProfileData(
         p.textContent = "Une erreur est survenue lors du chargement du profil.";
         stats.append(p);
 
-        // En cas d'erreur, on peut aussi vider / indiquer quelque chose dans le dashboard
-        dashboard.innerHTML = "";
+        // En cas d'erreur, on peut aussi vider / indiquer quelque chose dans les sections dashboard
+        last7days.innerHTML = "";
+        lastScores.innerHTML = "";
+        last3Matches.innerHTML = "";
+        snakeStats.innerHTML = "";
+
         const d = document.createElement("p");
         d.className = "article-base";
         d.textContent = "Dashboard indisponible.";
-        dashboard.append(d);
+        last7days.append(d);
     }
     // Profile data loaded
 }

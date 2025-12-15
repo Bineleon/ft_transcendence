@@ -65,8 +65,8 @@ export async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLEle
 
     // Title for friend requests
     const requestsTitle = document.createElement("h3");
-    requestsTitle.className = "font-royalvogue text-4xl mb-4 text-right";
-    requestsTitle.append("Friend Requests");
+    requestsTitle.className = "font-oldprint text-3xl mb-4 text-right";
+    requestsTitle.append("Requests");
     requestsBox.append(requestsTitle);
 
     try {
