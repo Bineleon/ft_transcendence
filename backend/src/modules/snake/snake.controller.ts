@@ -75,7 +75,7 @@ export function snakeController(
   // ==========================================
   app.get(
     '/api/snake/matches',
-    async (request, reply) => {
+    async (_request, reply) => {
       try {
         const matches = await snakeService.findAll();
         return formatSuccess(matches, 'Snake matches retrieved successfully');
