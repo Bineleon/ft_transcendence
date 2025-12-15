@@ -1,0 +1,86 @@
+groups:
+  - name: backend-alerts
+    rules:
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend is down"
+          description: "Fastify backend is not responding on /metrics"
+
+      - alert: BackendHighLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(http_request_duration_seconds_bucket[1m])
+            )
+          ) > 0.005
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High backend latency"
+          description: "p95 HTTP latency is above 1s"
+
+  - name: database-alerts
+    rules:
+      - alert: PrismaSlowQueries
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(prisma_query_duration_seconds_bucket[1m])
+            )
+          ) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow Prisma queries"
+          description: "p95 Prisma query latency > 500ms"
+
+      - alert: PrismaErrors
+        expr: increase(prisma_errors_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prisma errors detected"
+          description: "Database errors occurred in last 5 minutes"
+
+  - name: infrastructure-alerts
+    rules:
+      - alert: NodeHighCPU
+        expr: |
+          100 - avg by (instance)(
+            rate(node_cpu_seconds_total{mode="idle"}[1m])
+          ) * 100 > 85
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage > 85%"
+
+      - alert: NodeLowMemory
+        expr: |
+          (node_memory_MemAvailable_bytes /
+           node_memory_MemTotal_bytes) < 0.1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low memory"
+          description: "Less than 10% memory available"
+
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx is down"
+          description: "Nginx exporter not responding"
