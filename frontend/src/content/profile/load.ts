@@ -149,8 +149,8 @@ function ensureProfileUI(view: ProfileViewWindow): ProfileInternalUI {
 
     // --- friendsBox (list + requests) ---
     view.friendsBox.innerHTML = "";
-    const friendsTitle = el("h2", "font-oldprint text-3xl mb-2", text("Friends"));
-    const friendsList = el("ul", "list-disc list-inside font-modern-type text-lg space-y-1") as HTMLUListElement;
+    const friendsTitle = el("h2", "font-oldprint text-3xl lg:text-xl mb-2", text("Friends"));
+    const friendsList = el("ul", "list-disc list-inside font-modern-type text-lg lg:text-sm space-y-1") as HTMLUListElement;
     const requestsBox = el("div", "space-y-2");
     view.friendsBox.append(friendsTitle, friendsList, requestsBox);
 
@@ -182,8 +182,8 @@ async function loadProfileData(
     lastScores: HTMLElement,
     last3Matches: HTMLElement,
     snakeStats: HTMLElement,
-    friendsList: HTMLElement | null,
-    requestsBox: HTMLElement | null,
+    friendsList: HTMLElement,
+    requestsBox: HTMLElement,
     viewedUsername: string
 ) {
     try {
@@ -213,26 +213,14 @@ async function loadProfileData(
         const lines: string[] = [];
         lines.push("Username: " + (user.username || "(inconnu)"));
         lines.push("Email: " + (user.email || "(privé)"));
-        lines.push(
-            "Créé le: " +
+        lines.push("Créé le: " +
                 (user.createdAt
                     ? new Date(user.createdAt).toLocaleString()
-                    : "(inconnu)")
-        );
-        lines.push(
-            "King Max Time: " +
-                (user.kingMaxTime != null ? `${user.kingMaxTime} secondes` : "(aucun)")
-        );
-        lines.push(
-            "King Max Rounds: " +
-                (user.kingMaxRounds != null ? user.kingMaxRounds : "(aucun)")
-        );
-        lines.push(
-            "Friends Count: " + (user.friendsCount ?? 0)
-        );
-        lines.push(
-            "Matches Won: " + (user.matchesWonCount ?? 0)
-        );
+                    : "(inconnu)"));
+        lines.push("King Max Time: " + (user.kingMaxTime != null ? `${user.kingMaxTime} secondes` : "(aucun)"));
+        lines.push("King Max Rounds: " + (user.kingMaxRounds != null ? user.kingMaxRounds : "(aucun)"));
+        lines.push("Friends Count: " + (user.friendsCount ?? 0));
+        lines.push("Matches Won: " + (user.matchesWonCount ?? 0));
 
         // Clear previous content and append each line as a <p>
         stats.innerHTML = "";
@@ -251,8 +239,6 @@ async function loadProfileData(
     } catch (err) {
         console.error("loadProfileData error:", err);
         titleEl.textContent = "Erreur";
-        loginLabel.textContent = "Erreur";
-        emailLabel.textContent = "Profil inaccessible";
         stats.innerHTML = "";
         const p = document.createElement("p");
         p.className = "article-base";

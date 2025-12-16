@@ -1,4 +1,4 @@
-import type { GamePhase } from "../game/types";
+import type { GamePhase } from "../game/uiTypes";
 
 export function setupCanvas(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
     const ctx = canvas.getContext("2d");

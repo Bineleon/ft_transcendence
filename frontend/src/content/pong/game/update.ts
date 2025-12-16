@@ -1,4 +1,4 @@
-import type { Ball, GameState, PlayerId, PlayersStats } from "./types";
+import type { Ball, GameState, PlayerId } from "./uiTypes";
 import { GameController } from "../controller";
 import { createPongStatsPanel } from "../ui/terminal";
 import type { Vec2 } from "./uiTypes";

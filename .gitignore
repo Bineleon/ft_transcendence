@@ -89,6 +89,13 @@ coverage/
 .jest/
 .mocha/
 .nyc_output/
+*.md
+
+# ─────────────────────────────
+# Documentation / Notes
+# ─────────────────────────────
+PONG_RESTART_FIX.md
+TODO.md
 
 # ─────────────────────────────
 # Misc
@@ -98,4 +105,3 @@ coverage/
 *.zip
 *.bak
 *.tmp
-.gitignore

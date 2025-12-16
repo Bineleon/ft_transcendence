@@ -1,10 +1,10 @@
 import { el, text }         from "../../home";
-import type { GameState } from "../game/types";
+import type { GameState, LiveMatchStats } from "../game/uiTypes";
+import type { Match, Tournament } from "../../tournament/uiTypes";
 import { runAuthBox } from "../../utils/alertBox";
-import { getLoggedName, getUserDatas, closeTournament } from "../../utils/todb";
-import type { PlayerId, PlayerInfo } from "../game/types";
+import { getLoggedName, getUserDatas } from "../../utils/todb";
+import type { PlayerId, PlayerInfo } from "../game/uiTypes";
 import { getTournamentDatas, notLoggedIn } from "../../utils/todb";
-import { matchFromApi } from "../../tournament/mapper";
 
 const currentPlayers: Record<PlayerId, PlayerInfo | null> = {
     p1: null,
@@ -78,7 +78,7 @@ function applyPlayerInfoToBox(box: HTMLDivElement, info: PlayerInfo, player: "p1
         box.append(userName, img);
     }
     
-    setPlayerInfo(player, { userName: info.userName, avatarUrl: info.avatarUrl });
+    setPlayerInfo(player, { id: info.id, userName: info.userName, avatarUrl: info.avatarUrl });
     if (player === "p1") {
         state.p1.id = info.id;
         state.p1.userName = info.userName;
@@ -153,22 +153,32 @@ function createPlayerInfosBox(player: PlayerId, state: GameState): HTMLDivElemen
         }
     }
 
-    syncProfileBtn.onclick = async () => { 
+syncProfileBtn.onclick = async () => { 
         const info = await runAuthBox("M_SYNC");
-        if (!info || !info.userName || !info.avatarUrl) return;
-        state.stats[player].name = info.userName;
-        state.stats[player].isGuest = false;
-        applyPlayerInfoToBox(PBox, info, player, state);
+        // guard: ensure the returned object actually contains the properties we need
+        if (!info || !("userName" in info) || !("avatarUrl" in info)) return;
 
+        const id = (info as any).id as string;
+        const userName = (info as any).userName as string;
+        const avatarUrl = ((info as any).avatarUrl as string) ?? "/imgs/avatar.png";
+
+        state.stats[player].name = userName;
+        state.stats[player].isGuest = false;
+        applyPlayerInfoToBox(PBox, { id, userName, avatarUrl }, player, state);
     };
+
     guestBtn.onclick = async () => { 
         const info = await runAuthBox("M_GUEST");
-        if (!info || !info.userName) return;
-        state.stats[player].name = info.userName;
-        state.stats[player].isGuest = true;
-        applyPlayerInfoToBox(PBox, info, player, state);
-    };
+        if (!info || !("userName" in info)) return;
 
+        const id = (info as any).id as string;
+        const userName = (info as any).userName as string;
+        const avatarUrl = ((info as any).avatarUrl as string) ?? "/imgs/avatar.png";
+
+        state.stats[player].name = userName;
+        state.stats[player].isGuest = true;
+        applyPlayerInfoToBox(PBox, { id, userName, avatarUrl }, player, state);
+    };
     return PBox;
 }
 
@@ -178,7 +188,7 @@ function createMatchTitle(state: GameState): HTMLDivElement {
     const tCode = el("div", `flex flex-col items-end justify-center font-arcade-italic`, text(`Code :`), el("br"), text(`${state.stats.tournamentCode}`));
 
     const middle = el("div", `flex flex-col items-center justify-center font-arcade`, 
-        el("h1", `text-4xl xl:text-6xl xxl:text-8xl`, `${state.stats.tournamentName}`), el("br"), el("h3", "text-sm", `A ${state.stats.tournamentMode} Tournament !`));
+        el("h1", `text-4xl xl:text-6xl xxl:text-8xl`, text(`${state.stats.tournamentName}`)), el("br"), el("h3", "text-sm", text(`A ${state.stats.tournamentMode} Tournament !`)));
 
     const status = el("div", `flex flex-col items-start text-right justify-center font-arcade-italic`, text(`ROUND : ${state.stats.matchRound}`), el("br"), text(`${state.stats.matchStatus}`));
 
@@ -189,7 +199,7 @@ function createMatchTitle(state: GameState): HTMLDivElement {
 function updateGameStateWithPlayersInfoFromMatch(state: GameState, match: Match): void {
     if (match.p1User && match.p1User.user) {
         const p1Info: PlayerInfo = {
-            id: match.p1User.user.id,
+            id: match.p1User.user.userId,
             userName: match.p1User.user.userName,
             avatarUrl: match.p1User.user.avatarUrl || "/imgs/avatar.png",
         };
@@ -198,7 +208,7 @@ function updateGameStateWithPlayersInfoFromMatch(state: GameState, match: Match)
     }
     if (match.p2User && match.p2User.user) {
         const p2Info: PlayerInfo = {
-            id: match.p2User.user.id,
+            id: match.p2User.user.userId,
             userName: match.p2User.user.userName,
             avatarUrl: match.p2User.user.avatarUrl || "/imgs/avatar.png",
         };
@@ -216,13 +226,14 @@ function updateTitle(state: GameState, t: Tournament, m: Match): void {
     state.stats.matchStatus = m.status;
 }
 
-function handleTournamentPlayersInfo(mainBox: HTMLDivElement, playersBox: HTMLDivElement, state: GameState): LiveMatchStats {
+function handleTournamentPlayersInfo(mainBox: HTMLDivElement, playersBox: HTMLDivElement, state: GameState): LiveMatchStats | undefined {
     if (!state) return;
 
-    if (state.stats.matchId) return;
+    if (state.matchId) return;
     /// Find Next Match (status = "schedueled")
 
-    getTournamentDatas(state.tournamentCode).then((t) => {
+    const tCode = state.tournamentCode || "";
+    getTournamentDatas(tCode).then((t) => {
         if (!t) {
             console.error("Tournament data not found for code:", state.tournamentCode);
             return;
@@ -232,11 +243,11 @@ function handleTournamentPlayersInfo(mainBox: HTMLDivElement, playersBox: HTMLDi
         if (!nextMatch) return;
 
 
-        state.stats.matchId = nextMatch.matchId;
+        state.matchId = nextMatch.matchId;
         state.stats.p1.isGuest = false;
         state.stats.p2.isGuest = false;
-        state.p1.userId = nextMatch.p1User?.user?.userId || "";
-        state.p2.userId = nextMatch.p2User?.user?.userId || "";
+        state.p1.id = nextMatch.p1User?.user?.userId || "";
+        state.p2.id = nextMatch.p2User?.user?.userId || "";
 
         updateTitle(state, t, nextMatch);
         updateGameStateWithPlayersInfoFromMatch(state, nextMatch);

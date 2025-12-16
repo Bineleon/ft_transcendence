@@ -67,7 +67,7 @@ export async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLEle
 
     // Title for friend requests
     const requestsTitle = document.createElement("h3");
-    requestsTitle.className = "font-oldprint text-3xl mb-4 text-right";
+    requestsTitle.className = "font-oldprint text-3xl lg:text-xl mb-4 text-right";
     requestsTitle.append("Requests");
     requestsBox.append(requestsTitle);
 
@@ -105,12 +105,10 @@ export async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLEle
 
                 // Remove button
                 const removeBtn = document.createElement("button") as HTMLButtonElement;
-                removeBtn.className = "btn-click ml-2";
+                removeBtn.className = "btn-click px-2 py-0";
                 removeBtn.textContent = "Remove";
                 removeBtn.onclick = async () => {
-                    const sure = confirm(
-                        `Supprimer ${friend.username} de votre liste d'amis ?`
-                    );
+                    const sure = confirm(`Supprimer ${friend.username} de votre liste d'amis ?`);
                     if (!sure) return;
                     try {
                         const res = await apiFetch(`/api/friends/${friend.id}`, {
@@ -153,7 +151,7 @@ export async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLEle
                 let avatar: HTMLElement;
                 if (req.avatarUrl) {
                     const img = document.createElement("img");
-                    img.className = "w-8 h-8 rounded-full object-cover";
+                    img.className = "w-8 h-8 rounded-full object-cover grayscale contrast-200";
                     img.src = req.avatarUrl;
                     img.alt = req.username;
                     avatar = img;
@@ -382,15 +380,14 @@ export function setupSelfMode(
 
     // Friends: Add friend input and button
     const addFriendBox = document.createElement("div");
-    addFriendBox.className = "mt-4 flex items-center";
+    addFriendBox.className = "mx-auto flex items-center";
     const addFriendInput = document.createElement("input") as HTMLInputElement;
-    addFriendInput.className = "border p-2 rounded flex-1 mr-2";
-    addFriendInput.placeholder = "Enter friend's username";
+    addFriendInput.className = "flex btn-input w-[70%] mr-2";
+    addFriendInput.placeholder = "";
 
     const addFriendBtn = document.createElement("button") as HTMLButtonElement;
-    addFriendBtn.className =
-        "text-black/60 hover:text-black/80 font-modern-type text-lg underline underline-offset-4 transition";
-    addFriendBtn.textContent = "Add Friend";
+    addFriendBtn.className = "btn-click px-2 py-0";
+    addFriendBtn.textContent = "Add";
     addFriendBtn.onclick = async () => {
         const friendUsername = addFriendInput.value.trim();
         if (!friendUsername) return;
@@ -451,7 +448,7 @@ export function setupOtherMode(
     if (viewedUsername) {
         const addFriendBtn = document.createElement("button") as HTMLButtonElement;
         addFriendBtn.className = "big-link mt-2";
-        addFriendBtn.append("Add as Friend");
+        addFriendBtn.append("Add");
         addFriendBtn.onclick = async () => {
             try {
                 const res = await apiFetch("/api/friends/request", {

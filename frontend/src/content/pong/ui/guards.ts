@@ -3,7 +3,7 @@
 // Empêche le scroll de la page, le context menu, les interactions hors canvas
 // Gère le curseur (visible / masqué / pointer lock)
 
-import type { Controls } from "../game/types";
+import type { Controls } from "../game/uiTypes";
 
 export type GameGuards = {
     enable(): void;

@@ -1,16 +1,15 @@
-// utils/mappers.ts
-
-import type { ApiTournament, ApiMatch, ApiMatchUser } from "./apiTypes";
+import type { ApiTournament, ApiMatch, ApiMatchUser,
+  ApiMatchStatsDTO, ApiPlayerStatsDTO } from "./apiTypes";
 import type { Tournament, Match, User, tStatus } from "./uiTypes";
 import type { tournamentMode } from "../tournament/tournament";
-import { pongAlert } from "../utils/alertBox"
+import type { MatchStats, PlayerMatchStats, LiveMatchStats } from "../pong/game/uiTypes";
 
 function userFromApi(apiUser: ApiMatchUser): User {
   return {
-    userId: apiUser.id,
+    userId: apiUser.userId,
     userName: apiUser.username,
     alias: undefined,
-    avatarUrl: apiUser.avatarUrl,
+    avatarUrl: apiUser.avatarUrl || null,
     createdAt: "",
     updatedAt: "",
     friendOf: [],
@@ -44,12 +43,10 @@ export function matchFromApi(apiM: ApiMatch): Match {
     tournamentId: apiM.tournamentId,
     p1User: matchUserFromApi(
         apiM.p1 ?? null,
-        apiM.p1UserName,
         apiM.p1Score ?? null, 
         apiM.winnerUserName === apiM.p1UserName),
     p2User: matchUserFromApi(
         apiM.p2 ?? null,
-        apiM.p2UserName,
         apiM.p2Score ?? null, 
         apiM.winnerUserName === apiM.p2UserName),
     status: apiM.status,
@@ -165,10 +162,10 @@ export function liveStatsToMatchStats(live: LiveMatchStats): MatchStats {
 
   let avgRallyTime = 0;
 
-if (live.rallyDurationsMs.length > 0) {
-    const totalRallyTimeMs = live.rallyDurationsMs.reduce((a: number, b: number) => a + b, 0);
-    avgRallyTime = (totalRallyTimeMs / live.rallyDurationsMs.length) / 1000; 
-}
+  if (live.rallyDurationsMs.length > 0) {
+      const totalRallyTimeMs = live.rallyDurationsMs.reduce((a: number, b: number) => a + b, 0);
+      avgRallyTime = (totalRallyTimeMs / live.rallyDurationsMs.length) / 1000; 
+  }
 
 
   // ----- Player Stats -----
@@ -179,6 +176,8 @@ if (live.rallyDurationsMs.length > 0) {
     totalBallSpins: p1.effects,
     maxBouncesInWonRally: p1.maxBounces,
     maxEffectsInWonRally: p1.maxEffects,
+    maxBallSpeedWon: p1.maxBallSpeedWon,
+    maxBallSpeedLost: p1.maxBallSpeedLost,
 
     fastestWonRally: 0,
     fastestLostRally: 0,
@@ -194,6 +193,8 @@ if (live.rallyDurationsMs.length > 0) {
     totalBallSpins: p2.effects,
     maxBouncesInWonRally: p2.maxBounces,
     maxEffectsInWonRally: p2.maxEffects,
+    maxBallSpeedWon: p2.maxBallSpeedWon,
+    maxBallSpeedLost: p2.maxBallSpeedLost,
 
     fastestWonRally: 0,
     fastestLostRally: 0,
@@ -203,6 +204,7 @@ if (live.rallyDurationsMs.length > 0) {
   };
 
   return {
+    matchId: "",
     totalPoints,
     winnerName,
     winnerUserId,
@@ -221,7 +223,6 @@ if (live.rallyDurationsMs.length > 0) {
 }
 
 export function fromMatchStatsToApiMatchStatsDTO(match: MatchStats): ApiMatchStatsDTO {
-  console.log("MatchStats :", match);
   return {
     p1Score: match.p1.score,
     p2Score: match.p2.score,

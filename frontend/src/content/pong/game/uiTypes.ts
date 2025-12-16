@@ -1,6 +1,6 @@
 // Un peu comme des structures en C
 
-import type { Tournament } from "../../tournament/uiTypes";
+// import type { Tournament } from "../../tournament/uiTypes";
 
 export interface GameViewHooks {
     onPlayerChange?: (id: PlayerId, info: PlayerInfo | null) => void;
@@ -75,11 +75,12 @@ export interface LiveMatchStats {
     pauseStartAt?: number;  
     totalPauseMs: number;
 
+    matchId?: string;
     tournamentCode?: string;
     tournamentId?: string;
     tournamentMode?: string;
     tournamentName?: string;
-    matchRound?: string;
+    matchRound?: number;
     matchStatus?: string;
 }
 

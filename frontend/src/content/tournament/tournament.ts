@@ -71,21 +71,6 @@ function generateTournamentCode(): string {
     return code;
 }
 
-// async function assignPlayersToTournament(tCode: string, userId: string): Promise<void> {
-//     const user = await getUserDatas(userId);
-//     if (!user) {
-//         console.error("Failed to assign user to tournament: User not found");
-//         return;
-//     }
-//     const tournament = getTournamentDatas(tCode);
-//     if (!tournament) {
-//         console.error("Failed to assign user to tournament: Tournament not found");
-//         return;
-//     }
-
-//     addUserAsPlayerToTournament(tournament, user);
-// }
-
 async function handleGenerateTournament(): Promise<void> {
     if (!formEls) return;
     
@@ -423,14 +408,10 @@ export function ChoseTournament(): HTMLElement {
 /********* HEADER SECTION *********/
     const header = el("div", "grid gap-4 grid-cols-[25%_50%_25%] w-fit mx-auto");
 // 1) Total Played Tournaments
-    const boxPlayed = el("div", `box-dark img-newspaper -mx-4 in-dark-box grid grid-cols-2
-        justify-items-center items-center -gap-1
-        flex-wrap p-0 flex-col`);
-    const number =  el("div", "font-modern-type text-6xl");
-    number.append(text("3000"));
-    const playedLabel = el("div", "text-sm uppercase self-center whitespace-pre-line");
-    playedLabel.append(text("Played\nTournaments\nSo Far"));
-    boxPlayed.append(number, playedLabel);
+    const boxKids = el("div", "img-newspaper flex items-center justify-center");
+    const photo = el("img", "");
+    photo.src = "imgs/pongBoys.jpg";
+    boxKids.append(photo);
 
     // 2) Top Player
     const best = el("div", "mix-blend-multiply relative grid grid-cols-3 gap-6 mb-6 items-center justify-items-center text-center");
@@ -466,7 +447,7 @@ export function ChoseTournament(): HTMLElement {
     tournamentCode.append(inputAndBtn);
     
     best.append(profilePic, bestPlayer, cupIcon);
-    header.append(boxPlayed, best, tournamentCode);
+    header.append(boxKids, best, tournamentCode);
 
 /********* SPACER *********/
     const spacer = el("div", "w-full border-b bg-black");

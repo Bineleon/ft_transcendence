@@ -1,5 +1,5 @@
 // game/geometry.ts
-import type { Ball, Paddle, GameState, Vec2, PlayerId } from "./types";
+import type { Ball, Paddle, GameState, Vec2, PlayerId } from "./uiTypes";
 
 export interface CardinalPoints {
   center: Vec2;
