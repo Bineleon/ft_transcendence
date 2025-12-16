@@ -1,4 +1,4 @@
-import type { GamePhase, GameState }        from "../game/types";
+import type { GamePhase, GameState }        from "../game/uiTypes";
 import { el, text }                         from "../../home";
 import { GameController }                   from "../controller";
 import { pongAlert }                        from "../../utils/alertBox.ts"
@@ -57,13 +57,22 @@ export class domOverlayManager {
                     e.stopPropagation();
                     this.gameController.setPhase("COUNTDOWN");
                 });
-                const b2 = el("button", "btn-click mt-2");
-                b2.textContent = "RESTART";
-                b2.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    this.gameController.setPhase("RESTART");
-                });
-                wrap.append(b1, b2);
+                
+                // Only show RESTART button for non-tournament matches
+                const isTournamentMatch = !!(state.tournamentCode || state.stats.tournamentCode);
+                
+                if (!isTournamentMatch) {
+                    const b2 = el("button", "btn-click mt-2");
+                    b2.textContent = "RESTART";
+                    b2.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        this.gameController.setPhase("RESTART");
+                    });
+                    wrap.append(b1, b2);
+                } else {
+                    wrap.append(b1);
+                }
+                
                 return wrap;
             }
             case "GAMEOVER": {
@@ -72,13 +81,22 @@ export class domOverlayManager {
                 score.append(
                     text(`${state.stats.p1.score} - ${state.stats.p2.score}`)
                 );
-                const b = el("button", "btn-click");
-                b.textContent = "RESTART";
-                b.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    this.gameController.setPhase("RESTART");
-                });
-                wrap.append(score, b);
+                
+                // Only show RESTART button for non-tournament matches
+                const isTournamentMatch = !!(state.tournamentCode || state.stats.tournamentCode);
+                
+                if (!isTournamentMatch) {
+                    const b = el("button", "btn-click");
+                    b.textContent = "RESTART";
+                    b.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        this.gameController.setPhase("RESTART");
+                    });
+                    wrap.append(score, b);
+                } else {
+                    wrap.append(score);
+                }
+                
                 return wrap;
             }
             case "SCORED": {
