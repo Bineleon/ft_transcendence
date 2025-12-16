@@ -42,17 +42,18 @@ async function logout(): Promise<void> {
  * Returns true if the deletion succeeded.
  */
 async function deleteAccount(): Promise<boolean> {
-    try {
-        const res = await apiFetch("/api/users/me", {
-            method: "DELETE",
-            credentials: "include",
-        });
-        return res.ok;
-    } catch (err) {
-        console.error("Delete account error:", err);
-        return false;
-    }
+  try {
+    const res = await apiFetch("/api/auth/delete-account", {
+      method: "DELETE",
+      credentials: "include",
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Delete account error:", err);
+    return false;
+  }
 }
+
 
 /**
  * Loads the current user's friends and friend requests and populates
