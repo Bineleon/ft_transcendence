@@ -203,4 +203,61 @@ export class SnakeService {
       },
     });
   }
+
+  // ==========================================
+  // DASHBOARD - Get recent Snake matches for user
+  // ==========================================
+  async getRecentSnakeMatchesForUser(userId: string): Promise<{
+    p1Username: string;
+    p2Username: string;
+    winnerUsername: string;
+    p1Score: number;
+    p2Score: number;
+    p1Collectibles: number;
+    p2Collectibles: number;
+    playedAt: string;
+  }[]> {
+    console.log('[SnakeService.getRecentSnakeMatchesForUser] Fetching matches for userId:', userId);
+    
+    const matches = await prisma.snakeMatch.findMany({
+      where: {
+        OR: [
+          { p1UserId: userId },
+          { p2UserId: userId },
+        ],
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 3,
+      select: {
+        createdAt: true,
+        p1Score: true,
+        p2Score: true,
+        p1Collectibles: true,
+        p2Collectibles: true,
+        p1: { select: { username: true } },
+        p2: { select: { username: true } },
+        winner: { select: { username: true } },
+      },
+    });
+
+    console.log('[SnakeService.getRecentSnakeMatchesForUser] Found', matches.length, 'matches');
+    console.log('[SnakeService.getRecentSnakeMatchesForUser] Raw matches from DB:', JSON.stringify(matches, null, 2));
+
+    const formattedMatches = matches.map((m) => ({
+      p1Username: m.p1?.username ?? 'Guest',
+      p2Username: m.p2?.username ?? 'Guest',
+      winnerUsername: m.winner?.username ?? 'Unknown',
+      p1Score: m.p1Score,
+      p2Score: m.p2Score,
+      p1Collectibles: m.p1Collectibles,
+      p2Collectibles: m.p2Collectibles,
+      playedAt: m.createdAt.toISOString(),
+    }));
+
+    console.log('[SnakeService.getRecentSnakeMatchesForUser] Formatted matches:', JSON.stringify(formattedMatches, null, 2));
+
+    return formattedMatches;
+  }
 }

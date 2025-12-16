@@ -279,25 +279,42 @@ export async function getTournamentDatas(code: string): Promise<Tournament> {
 
 export async function createSnakeMatchWithStats(payload: SnakeMatchDTO) {
     try {
+        console.log("=== SNAKE MATCH CREATION START ===");
+        console.log("[createSnakeMatchWithStats] Payload being sent:", JSON.stringify(payload, null, 2));
+        console.log("[createSnakeMatchWithStats] Player 1:", payload.p1Username, "- Is Guest:", payload.p1IsGuest);
+        console.log("[createSnakeMatchWithStats] Player 2:", payload.p2Username, "- Is Guest:", payload.p2IsGuest);
+        console.log("[createSnakeMatchWithStats] Scores:", payload.p1Score, "-", payload.p2Score);
+        console.log("[createSnakeMatchWithStats] Collectibles:", payload.p1Collectibles, "-", payload.p2Collectibles);
+        
         const resp = await apiFetch(`/api/snake/matches`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
             credentials: "include"
         });
-        console.log("Snake match payload", payload);
 
+        console.log("[createSnakeMatchWithStats] Response status:", resp.status);
+        
         const data = await resp.json();
+        console.log("[createSnakeMatchWithStats] Response data:", JSON.stringify(data, null, 2));
+        
         if (resp.ok) {
-            console.log("are guest :", payload.p1IsGuest, payload.p2IsGuest);
+            console.log("[createSnakeMatchWithStats] ✅ Match created successfully!");
+            console.log("[createSnakeMatchWithStats] Are guests:", payload.p1IsGuest, payload.p2IsGuest);
             if (payload.p1IsGuest === false || payload.p2IsGuest === false) {
+                console.log("[createSnakeMatchWithStats] At least one player is not a guest - showing success alert");
                 pongAlert("Snake match stats updated with synchronized accounts", "success");
+            } else {
+                console.log("[createSnakeMatchWithStats] Both players are guests - no alert shown");
             }
-        } else if (!resp.ok) {
+        } else {
+            console.error("[createSnakeMatchWithStats] ❌ Failed to create match");
             pongAlert(`Failed to create Snake Match Stats: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Snake Match Stats Creation Error" });
         }
+        console.log("=== SNAKE MATCH CREATION END ===");
     } catch (error) {
-        console.error("Failed to create and update Snake Match Stats");
+        console.error("[createSnakeMatchWithStats] ❌ Exception occurred:", error);
+        console.error("[createSnakeMatchWithStats] Error details:", error instanceof Error ? error.message : 'Unknown error');
         pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Snake Match Stats creation error'}`, "error");
     }
 }

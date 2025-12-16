@@ -3,6 +3,7 @@ import { SnakeService } from './snake.service.js';
 import type { CreateSnakeMatchDTO } from './snake.model.js';
 import { formatSuccess } from '../../shared/utils/formatters.js';
 import { formatGenericError } from '../../shared/errors/formatters.js';
+import { authenticate } from '../../shared/middleware/authentication.js';
 
 export function snakeController(
   app: FastifyInstance,
@@ -16,10 +17,14 @@ export function snakeController(
     '/api/snake/matches',
     async (request, reply) => {
       try {
+        console.log('[POST /api/snake/matches] ===== REQUEST START =====');
+        console.log('[POST /api/snake/matches] Request body:', JSON.stringify(request.body, null, 2));
+        
         const data = request.body;
 
         // Validation basique
         if (!data.p1Username || !data.p2Username) {
+          console.error('[POST /api/snake/matches] ❌ Missing usernames');
           return reply.code(400).send({
             error: {
               message: 'p1Username and p2Username are required',
@@ -28,16 +33,31 @@ export function snakeController(
           });
         }
 
+        console.log('[POST /api/snake/matches] Players:', {
+          p1: { username: data.p1Username, isGuest: data.p1IsGuest },
+          p2: { username: data.p2Username, isGuest: data.p2IsGuest }
+        });
+
         // Si les deux sont guests, ne rien enregistrer
         if (data.p1IsGuest && data.p2IsGuest) {
           console.log('[POST /api/snake/matches] Both players are guests, skipping DB record');
           return formatSuccess(null, 'Match not recorded (both players are guests)');
         }
 
+        console.log('[POST /api/snake/matches] Calling snakeService.create...');
         const match = await snakeService.create(data);
+        console.log('[POST /api/snake/matches] ✅ Match created successfully:', match.id);
+        console.log('[POST /api/snake/matches] ===== REQUEST END =====');
+        
         return formatSuccess(match, 'Snake match created successfully');
         
       } catch (error) {
+        console.error('[POST /api/snake/matches] ❌ ERROR occurred:');
+        console.error('[POST /api/snake/matches] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+        console.error('[POST /api/snake/matches] Error message:', error instanceof Error ? error.message : String(error));
+        console.error('[POST /api/snake/matches] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        console.error('[POST /api/snake/matches] ===== REQUEST END WITH ERROR =====');
+        
         const errorResponse = formatGenericError(
           error instanceof Error ? error : new Error('Failed to create snake match')
         );
@@ -103,6 +123,25 @@ export function snakeController(
         );
         return reply.status(errorResponse.error.statusCode).send(errorResponse);
       }
+    }
+  );
+
+  // ==========================================
+  // GET /api/profile/dashboard/recent-snake-matches - Dashboard recent Snake matches
+  // ==========================================
+  app.get(
+    '/api/profile/dashboard/recent-snake-matches',
+    { preHandler: authenticate },
+    async (request) => {
+      const userId = request.user!.userId;
+      console.log('[GET /api/profile/dashboard/recent-snake-matches] Request from userId:', userId);
+      
+      const matches = await snakeService.getRecentSnakeMatchesForUser(userId);
+      
+      console.log('[GET /api/profile/dashboard/recent-snake-matches] Returning', matches.length, 'matches');
+      console.log('[GET /api/profile/dashboard/recent-snake-matches] Response data:', JSON.stringify({ matches }, null, 2));
+      
+      return formatSuccess({ matches }, 'Recent snake matches loaded');
     }
   );
 }

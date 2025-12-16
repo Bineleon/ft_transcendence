@@ -49,9 +49,32 @@ private registerRow(pid: PlayerId): HTMLElement {
   const guestBtn = el("button", "border border-black px-2 py-1 font-modern-type hover:bg-black hover:text-white text-sm") as HTMLButtonElement;
   guestBtn.textContent = info.registered ? "Unregister" : "Guest";
 
-  guestBtn.onclick = () => {
-    if (this.snakeController.getPlayerInfo(pid).registered) this.snakeController.unregisterPlayer(pid);
-    else this.snakeController.registerGuest(pid);
+  guestBtn.onclick = async () => {
+    if (this.snakeController.getPlayerInfo(pid).registered) {
+      this.snakeController.unregisterPlayer(pid);
+      this.snakeController.refreshOverlay();
+      return;
+    }
+
+    // Utiliser le même système que Pong pour les guests
+    const res = await runAuthBox("M_GUEST");
+    if (!res) return;
+
+    const userId = (res as any).id || "";
+    const userName = (res as any).userName || (res as any).name || "Guest";
+    const avatarUrl = (res as any).avatarUrl || "/imgs/avatar.png";
+
+    // Enregistrer comme guest avec le nom choisi
+    const p = this.snakeController.state.players[pid];
+    p.profile = {
+      registered: true,
+      isGuest: true,
+      userId: userId,
+      userName: userName,
+      avatarUrl: avatarUrl,
+    };
+
+    console.log(`Player ${pid} registered as guest: ${userName}`);
     this.snakeController.refreshOverlay();
   };
 
