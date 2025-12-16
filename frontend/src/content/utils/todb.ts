@@ -201,7 +201,6 @@ export async function getLoggedID(): Promise<string> {
   return body?.data?.user?.id ?? "";
 }
 
-
 export async function getLoggedName(): Promise<string> {
   const res = await apiFetch("/api/auth/me", {
     method: "GET",
