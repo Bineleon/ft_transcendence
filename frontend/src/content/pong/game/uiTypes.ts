@@ -75,6 +75,7 @@ export interface LiveMatchStats {
     pauseStartAt?: number;  
     totalPauseMs: number;
 
+    matchId?: string;
     tournamentCode?: string;
     tournamentId?: string;
     tournamentMode?: string;

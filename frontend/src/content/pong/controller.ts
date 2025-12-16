@@ -1,26 +1,20 @@
 import type { GameViewWindow }           from "./ui/view";
 import { GameLoop }                      from "./core/loop";
-import { initState, initBoard, launchBall, initPlayersInfo } from "./game/state";
+import { initState, initBoard, launchBall, initPlayersInfo, resetGameStats } from "./game/state";
 import { update, type CardinalDirection }                    from "./game/update";
 import { render }                        from "./game/render";
-import type {
-    GamePhase,
-    GameState,
-    Controls,
-    PlayerInfo,
-    PlayerId,
-    PlayersStats, // 👈 ajouté
-} from "./game/types";
+import type { GamePhase, GameState,
+    Controls, PlayerInfo, PlayerId, MatchStats } from "./game/uiTypes";
+import type { ApiMatchStatsDTO, ApiFinishMatchDTO, ApiPlayedMatchDTO, ApiPlayerStatsDTO }         from "../tournament/apiTypes";
 import { domOverlayManager }             from "./ui/overlay";
 import { createGameGuards }              from "./ui/guards";
-import { setupCanvas }                   from "./core/canvas";
 import type { GameGuards }               from "./ui/guards";
 import { createPongStatsPanel }          from "./ui/terminal";
 import { createPlayersBox, resetPlayersCache } from "./ui/players";
-import type { Tournament }               from "../tournament/uiTypes";
-import type { ApiMatch } from "../tournament/apiTypes";
 import { finishMatch, createMatchWithStats }                    from "../utils/todb"
-import { liveStatsToMatchStats, playedMatchStatsToApi, fromMatchStatsToApiMatchStatsDTO, fromPlayerMatchStatsToApiPlayerStatsBase } from "../tournament/mapper";
+import { liveStatsToMatchStats, fromMatchStatsToApiMatchStatsDTO,
+    fromPlayerMatchStatsToApiPlayerStatsBase } from "../tournament/mapper";
+import { pongAlert }                    from "../utils/alertBox";
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
@@ -84,6 +78,13 @@ export class GameController {
                 );
             }
             if (this.state.ready.p1 && this.state.ready.p2) this.setPhase("COUNTDOWN");
+            break;
+
+        case "START":
+            if (code === c.escape.code) {
+                // Allow returning to home page from START screen
+                this.unwireControls();
+            }
             break;
 
         case "PLAYING":
@@ -182,7 +183,32 @@ export class GameController {
             break;
 
         case "RESTART":
+            // Clean up any running timers
+            if (this.domOverlay.countdownTimerId !== null) {
+                clearInterval(this.domOverlay.countdownTimerId);
+                this.domOverlay.countdownTimerId = null;
+            }
+
+            // Stop the game loop if running
+            if (this.loopCtrl && this.loopCtrl.running) {
+                this.loopCtrl.stop();
+            }
+
+            // Reset all game stats (scores, timers, ready states, etc.)
+            // This preserves tournament information (tournamentCode, matchId, etc.)
+            resetGameStats(this.state);
+
+            // Reset board (ball and paddles positions)
             initBoard(this.state);
+
+            // Launch ball for next game
+            launchBall(this.state, this.getNextServer(this.state), 1000);
+
+            // Refresh UI
+            this.refreshTerminal();
+            this.view.playersBox.replaceChildren(createPlayersBox(this.state));
+
+            // Go to WAITING phase
             this.setPhase("WAITING");
             break;
 
@@ -251,7 +277,10 @@ export class GameController {
 
     private stopRallyTime() {
         const now = performance.now();
-        const time = now - this.state.stats.rallyStartAt;
+        const rallyStart = this.state.stats.rallyStartAt;
+        if (rallyStart == null) return;
+        const time = now - rallyStart;
+
         this.state.stats.rallyDurationsMs.push(time);
         this.state.stats.rallyStartAt = undefined;
 
@@ -399,7 +428,7 @@ export class GameController {
     private async handleStats() {
         const stats: MatchStats = liveStatsToMatchStats(this.state.stats);
         const apiMatchStats: ApiMatchStatsDTO = fromMatchStatsToApiMatchStatsDTO(stats);
-        const tCode: string = this.state.stats.tournamentCode || undefined;
+        const tCode: string | undefined = this.state.stats.tournamentCode || undefined;
 
         const p1Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p1);
         const p2Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p2);
@@ -410,7 +439,7 @@ export class GameController {
         if (this.state.p2.id) {
             p2Base.userId = this.state.p2.id;
         }
-        if (tCode) {
+        if (tCode && this.state.stats.matchId) {
             const matchId = this.state.stats.matchId;
             const payload: ApiFinishMatchDTO = {
                 matchStats: apiMatchStats,
@@ -435,7 +464,7 @@ export class GameController {
                 p2Stats: p2Base as ApiPlayerStatsDTO,
             }
             console.log("Payload CreateMatchWithStats :", payload);
-            const resp = await createMatchWithStats(payload);
+            await createMatchWithStats(payload);
         }
     }
 
