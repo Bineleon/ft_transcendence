@@ -21,6 +21,9 @@ import * as Crossword from "./game/crossword";
 import * as Draw from "./game/draw";
 import { createPlayersHud } from "./ui/players";
 
+import { createSnakeMatchWithStats } from "../utils/todb";
+import type { SnakeMatchDTO } from "./game/apiTypes";
+
 type PlayerInfo = { registered: boolean; name: string };
 
 export class SnakeController {
@@ -62,11 +65,12 @@ export class SnakeController {
   }
 
   public setPhase(phase: SnakePhase): void {
+    const previousPhase = this.state.phase;
     this.state.phase = phase;
     this.refreshOverlay();
 
     // START / GAMEOVER : rien ne tourne + pas besoin de controls
-    if (phase === "START" || phase === "GAMEOVER") {
+    if (phase === "START") {
       this.stopLoop();
       this.unwireControls();
       this.clearControlsDown();
@@ -86,6 +90,69 @@ export class SnakeController {
       this.wireControls();
       this.startLoop();
     }
+
+	if (phase === "GAMEOVER" && previousPhase === "PLAYING") {
+      console.log("=== GAME OVER - Saving match to database ===");
+		this.saveMatchToDatabase();
+    }
+
+  }
+  private saveMatchToDatabase(): void {
+    const p1Info = this.getPlayerInfo("p1");
+    const p2Info = this.getPlayerInfo("p2");
+    
+    const p1 = this.state.players.p1;
+    const p2 = this.state.players.p2;
+
+    console.log("[SnakeController.saveMatchToDatabase] Player 1 info:", p1Info);
+    console.log("[SnakeController.saveMatchToDatabase] Player 2 info:", p2Info);
+    console.log("[SnakeController.saveMatchToDatabase] Player 1 state:", {
+      score: p1.score,
+      lives: p1.lives,
+      edibles: p1.edibles.length
+    });
+    console.log("[SnakeController.saveMatchToDatabase] Player 2 state:", {
+      score: p2.score,
+      lives: p2.lives,
+      edibles: p2.edibles.length
+    });
+
+    // Compter les collectibles (lettres placées sur le crossword par chaque joueur)
+    let p1Collectibles = 0;
+    let p2Collectibles = 0;
+    
+    for (const filledCell of this.state.crossword.filledCells.values()) {
+      if (filledCell.filledBy === "p1") {
+        p1Collectibles++;
+      } else if (filledCell.filledBy === "p2") {
+        p2Collectibles++;
+      }
+    }
+
+    console.log("[SnakeController.saveMatchToDatabase] Collectibles counted:", {
+      p1: p1Collectibles,
+      p2: p2Collectibles,
+      totalFilledCells: this.state.crossword.filledCells.size
+    });
+
+    const payload: SnakeMatchDTO = {
+      p1Username: p1Info.name || "Guest",
+      p2Username: p2Info.name || "Guest",
+      p1IsGuest: p1Info.isGuest,
+      p2IsGuest: p2Info.isGuest,
+      p1Score: p1.score,
+      p1Collectibles: p1Collectibles,
+      p2Score: p2.score,
+      p2Collectibles: p2Collectibles,
+    };
+
+    console.log("[SnakeController.saveMatchToDatabase] Final payload:", JSON.stringify(payload, null, 2));
+    console.log("[SnakeController.saveMatchToDatabase] Calling createSnakeMatchWithStats...");
+
+    // Appeler l'API pour sauvegarder
+    createSnakeMatchWithStats(payload).catch((err) => {
+      console.error("[SnakeController.saveMatchToDatabase] Error saving match:", err);
+    });
   }
 
   private clearControlsDown(): void {

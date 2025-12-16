@@ -44,12 +44,8 @@ export function updateBothPlayers(ctrl: SnakeController): void {
   const next2 = computeNextHead(p2);
 
   // auto-collisions (planifiées aussi)
-  console.log("Checking collisions for both players :", next1, next2);
   const dead1 = p1.snake.segments.some(seg => seg.x === next1.x && seg.y === next1.y);
   const dead2 = p2.snake.segments.some(seg => seg.x === next2.x && seg.y === next2.y);
-  console.log("seg.x/seg.y :", p1.snake.segments.map(seg => `(${seg.x},${seg.y})`));
-  console.log("seg.x/seg.y :", p2.snake.segments.map(seg => `(${seg.x},${seg.y})`));
-  console.log(`Player 1 dead: ${dead1}, Player 2 dead: ${dead2}`);
 
   if (dead1) ctrl.onPlayerDeath("p1");
   if (dead2) ctrl.onPlayerDeath("p2");
