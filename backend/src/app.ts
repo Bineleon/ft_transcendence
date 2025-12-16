@@ -12,7 +12,7 @@ import { setupErrorHandler } from './shared/middleware/index.js';
 import { getPrismaClient } from './shared/database/prisma.js';
 import { setupTournamentModule } from './modules/tournaments/index.js';
 import { setupMatchModule } from './modules/matches/index.js';
-// import { registerSnakeRoutes } from './modules/snake/index.js';
+import { registerSnakeRoutes } from './modules/snake/index.js';
 import { userController } from './modules/users/users.controller.js';
 import { UserService } from './modules/users/users.service.js';
 import metricsPlugin from "./monitoring/metrics.js";
@@ -58,7 +58,7 @@ export function createApp() {
   setupFriendsModule(app);
   setupTournamentModule(app);
   setupMatchModule(app);
-  // registerSnakeRoutes(app);
+  registerSnakeRoutes(app);
 
 	  // --- Users module ---
   	const userService = new UserService(prisma);
