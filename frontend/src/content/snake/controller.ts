@@ -256,7 +256,9 @@ export class SnakeController {
   }
 
   public canStart(): boolean {
-    return this.getPlayerInfo("p1").registered && this.getPlayerInfo("p2").registered;
+    const p1 = this.getPlayerInfo("p1").registered || this.getPlayerInfo("p1").isGuest;
+    const p2 = this.getPlayerInfo("p2").registered || this.getPlayerInfo("p2").isGuest;
+    return p1 && p2;
   }
 
   private updatePlayersBox(): void {
