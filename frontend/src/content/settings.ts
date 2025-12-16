@@ -89,6 +89,105 @@ export function Settings(): HTMLElement {
 
     main.append(currentInput, newInput, passBtn);
 
+// ========================
+// Section 2FA
+// ========================
+main.append(sectionTitle("Security"));
+
+const twoFaRow = el(
+  "div",
+  "flex items-center justify-between gap-4 border p-3 rounded bg-white/70"
+);
+
+const twoFaLabel = el("label", "font-modern-type text-lg");
+twoFaLabel.append(text("Enable Two-Factor Authentication (2FA)"));
+
+const twoFaToggle = el("input") as HTMLInputElement;
+twoFaToggle.type = "checkbox";
+twoFaToggle.className = "h-5 w-5";
+twoFaToggle.disabled = true;
+
+twoFaRow.append(twoFaLabel, twoFaToggle);
+main.append(twoFaRow);
+
+// 1) Charger l'état actuel depuis /api/auth/me
+// 1) Charger l'état actuel depuis /api/auth/me
+apiFetch("/api/auth/me", { credentials: "include" })
+  .then((res) =>
+    res.json().then((data) => ({
+      ok: res.ok,
+      status: res.status,
+      data,
+    }))
+  )
+  .then(({ ok, status, data }) => {
+    // Debug très utile : regarde le JSON exact
+    console.log("[/api/auth/me]", status, data);
+
+    if (!ok) {
+      if (status === 401) return; // Cas où l'utilisateur est déconnecté
+      pongAlert(data?.error?.message || "Failed to load 2FA status");
+      return;
+    }
+
+    // Récupérer la valeur du 2FA dans la réponse API
+    const enabled = data?.data?.user?.twoFactorEnabled === true;
+    console.log('2FA Enabled: ', enabled);  // Log pour vérifier la valeur
+
+    // Synchronisation UI <- DB
+    twoFaToggle.checked = enabled;
+  })
+  .catch((err) => {
+    console.error(err);
+    pongAlert("Network error while loading 2FA status");
+  })
+  .finally(() => {
+    // Activer le toggle après avoir récupéré les données
+    twoFaToggle.disabled = false;
+  });
+
+
+// 2) Quand l'utilisateur clique sur le toggle -> PATCH /api/users/me/2fa
+twoFaToggle.addEventListener("change", () => {
+  const desired = twoFaToggle.checked;
+  twoFaToggle.disabled = true;
+
+  apiFetch("/api/users/me/2fa", {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled: desired }),
+  })
+    .then((res) =>
+      res.json().then((data) => ({
+        ok: res.ok,
+        status: res.status,
+        data,
+      }))
+    )
+    .then(({ ok, data }) => {
+      console.log("[PATCH /api/users/me/2fa]", data);
+
+      if (!ok || !data?.success) {
+        // rollback si erreur
+        twoFaToggle.checked = !desired;
+        pongAlert(data?.error?.message || "Failed to update 2FA");
+        return;
+      }
+
+      pongAlert(desired ? "2FA enabled!" : "2FA disabled!");
+    })
+    .catch((err) => {
+      console.error(err);
+      twoFaToggle.checked = !desired;
+      pongAlert("Network error while updating 2FA");
+    })
+    .finally(() => {
+      twoFaToggle.disabled = false;
+    });
+});
+
+
     return main;
 }
 

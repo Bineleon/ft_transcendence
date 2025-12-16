@@ -163,4 +163,31 @@ export function userController(app: FastifyInstance, userService: UserService) {
 		return formatSuccess({ stats }, 'Daily match stats loaded');
 	}
   );
+ 
+  /** PATCH /api/users/me/2fa
+  * Patcher le 2FA
+  */
+
+app.patch<{ Body: { enabled: boolean } }>(
+  '/api/users/me/2fa',
+  { preHandler: authenticate },
+  async (request, reply) => {
+    const userId = request.user!.userId;
+    const { enabled } = request.body;
+
+    if (typeof enabled !== 'boolean') {
+      return reply.code(400).send({
+        error: {
+          code: 'INVALID_2FA_FLAG',
+          message: 'enabled must be a boolean',
+          statusCode: 400
+        }
+      });
+    }
+
+    const profile = await userService.setTwoFactorEnabled(userId, enabled);
+    return formatSuccess({ profile }, enabled ? '2FA enabled' : '2FA disabled');
+  }
+);
+
 }

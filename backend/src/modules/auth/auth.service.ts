@@ -10,7 +10,7 @@ import { ValidationError, ConflictError, AuthError } from '../../shared/errors/i
 import bcrypt from 'bcrypt';
 import { MailService } from '../../shared/services/mail.service.js';
 import { validateLoginFields } from './auth.validation.js';
-
+  
 export class AuthService {
   private mailService: MailService;
 
@@ -43,34 +43,59 @@ export class AuthService {
   /**
    * Login avec vérification du mot de passe.
    */
-  async login(data: LoginRequest): Promise<{ userId: string; message: string }> {
+  async login(
+    data: LoginRequest
+  ): Promise<
+    | { requires2FA: true; userId: string; message: string }
+    | { requires2FA: false; token: string; user: AuthResponse['user'] }
+  > {
     const errors = validateLoginFields(data);
 
     if (errors.length > 0) {
-      throw new ValidationError(errors.join(" | "));
+      throw new ValidationError(errors.join(' | '));
     }
 
     const user = await this.prisma.user.findUnique({ where: { username: data.username } });
     if (!user) throw new AuthError('Invalid username or password');
 
-    // 🔥 Correction : si pas de passwordHash → compte Google
+    // compte Google sans password
     if (!user.passwordHash) {
-      throw new AuthError("This account was created via Google OAuth and has no password. Please log in with Google.");
+      throw new AuthError(
+        'This account was created via Google OAuth and has no password. Please log in with Google.'
+      );
     }
 
     const isPasswordValid = await comparePassword(data.password, user.passwordHash);
     if (!isPasswordValid) throw new AuthError('Invalid username or password');
 
-    // Nettoyage anciens codes expirés
+    // ✅ NOUVEAU: si 2FA désactivé => login direct
+    if (!user.twoFactorEnabled) {
+      const token = generateToken({ userId: user.id, email: user.email });
+
+      return {
+        requires2FA: false,
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+          createdAt: user.createdAt.toISOString(),
+          updatedAt: user.updatedAt.toISOString(),
+        },
+      };
+    }
+
+    // Sinon: flow actuel 2FA
     await this.prisma.twoFactor.deleteMany({ where: { expiresAt: { lt: new Date() } } });
 
     const code = await this.generateAndStore2FACode(user.id);
-
     await this.mailService.send2FACode(user.email, code);
 
     return {
+      requires2FA: true,
       userId: user.id,
-      message: '2FA code sent to your email. Please verify to complete login.'
+      message: '2FA code sent to your email. Please verify to complete login.',
     };
   }
 
@@ -80,6 +105,10 @@ export class AuthService {
   async verify2FA(userId: string, code: string): Promise<AuthResponse> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new AuthError('User not found');
+	if (!user.twoFactorEnabled) {
+  		throw new AuthError('2FA is not enabled for this user');
+		}
+
 
     const record = await this.prisma.twoFactor.findFirst({
       where: { userId, used: false, expiresAt: { gte: new Date() } },

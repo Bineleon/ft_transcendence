@@ -37,22 +37,53 @@ export function authController(
     }
   );
 
+// auth.controller.ts
+
   // --- LOGIN ---
   app.post<{ Body: LoginRequest }>(
     '/api/auth/login',
     {
       config: {
-        rateLimit: {
-          max: 5,                // 5 tentatives...
-          timeWindow: '5 minutes', // ...par 5 minutes / IP
-        },
+        rateLimit: { max: 5, timeWindow: '5 minutes' },
       },
     },
-    async (request) => {
+    async (request, reply) => {
       const result = await authService.login(request.body);
-      return formatSuccess(result, '2FA code sent.');
+
+      // ✅ cas 2FA requis (comportement actuel)
+      if (result.requires2FA) {
+        return formatSuccess(
+          { userId: result.userId, requires2FA: true, message: result.message },
+          '2FA code sent.'
+        );
+      }
+
+      // ✅ cas 2FA désactivé => on connecte tout de suite
+      const refreshToken = await refreshService.createRefreshToken(result.user.id);
+
+      reply.setCookie('token', result.token, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60,
+        path: '/',
+      });
+
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      });
+
+      return formatSuccess(
+        { user: result.user, requires2FA: false },
+        'Login successful.'
+      );
     }
   );
+
 
   // --- VERIFY 2FA ---
   app.post(
@@ -151,6 +182,24 @@ export function authController(
     reply.clearCookie('refreshToken');
     return formatSuccess(undefined, 'Logout successful');
   });
+
+  // --- LOGIN --- NOLOG (ne touche pas aux cookies)
+	app.post<{ Body: LoginRequest }>(
+	"/api/auth/login/nolog",
+	{
+		config: { rateLimit: { max: 5, timeWindow: "5 minutes" } },
+	},
+	async (request) => {
+		const result = await authService.login(request.body);
+		// IMPORTANT: ne set jamais de cookies ici
+		return formatSuccess(
+		result,
+		result.requires2FA ? "2FA code sent." : "Login successful."
+		);
+	}
+	);
+
+
 
   // --- PROFILE (full) ---
 app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => {

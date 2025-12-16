@@ -491,6 +491,86 @@ export class TournamentService {
     return await this.findByCode(code) as TournamentResponse;
   }
 
+async joinByUserId(code: string, userId: string): Promise<TournamentResponse> {
+  const tournament = await prisma.tournament.findUnique({
+    where: { code },
+    include: {
+      matches: {
+        where: { round: 1 },
+        orderBy: { gameIndex: "asc" },
+      },
+    },
+  });
+
+  if (!tournament) throw new Error("Tournament not found");
+  if (tournament.status !== "OPEN") throw new Error("Tournament is not open for registration");
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error("User not found");
+
+  const alreadyJoined = tournament.matches.some(
+    (match) => match.p1UserId === user.id || match.p2UserId === user.id
+  );
+  if (alreadyJoined) throw new Error("User already joined this tournament");
+
+  const participants = new Set<string>();
+  tournament.matches.forEach((match) => {
+    if (match.p1UserId) participants.add(match.p1UserId);
+    if (match.p2UserId) participants.add(match.p2UserId);
+  });
+
+  if (participants.size >= tournament.maxParticipants) {
+    throw new Error("Tournament is full");
+  }
+
+  let assigned = false;
+  for (const match of tournament.matches) {
+    if (!match.p1UserId) {
+      await prisma.match.update({
+        where: { id: match.id },
+        data: { p1UserId: user.id },
+      });
+      assigned = true;
+      break;
+    } else if (!match.p2UserId) {
+      await prisma.match.update({
+        where: { id: match.id },
+        data: { p2UserId: user.id },
+      });
+      assigned = true;
+      break;
+    }
+  }
+
+  if (!assigned) throw new Error("Could not assign player to a match");
+
+  await prisma.tournament.update({
+    where: { code },
+    data: {
+      participants: {
+        connect: { id: user.id },
+      },
+    },
+  });
+
+  const updatedTournament = await prisma.tournament.findUnique({
+    where: { code },
+    include: { matches: { where: { round: 1 } } },
+  });
+
+  const allSlotsFilled = updatedTournament!.matches.every(
+    (match) => match.p1UserId && match.p2UserId
+  );
+
+  if (allSlotsFilled) {
+    await prisma.tournament.update({
+      where: { code },
+      data: { status: "RUNNING" },
+    });
+  }
+
+  return (await this.findByCode(code)) as TournamentResponse;
+}
 
 
     // ==========================================
