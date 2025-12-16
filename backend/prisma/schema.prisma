@@ -39,6 +39,7 @@ model User {
   username           String             @unique
   email              String             @unique
   passwordHash       String?
+  twoFactorEnabled   Boolean            @default(false) @map("two_factor_enabled")
   avatarUrl          String?            @map("avatar_url")
   playerRef          String?            @unique @map("player_ref")
   lastSeen           DateTime?          @default(now()) @map("last_seen")
