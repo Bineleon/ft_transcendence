@@ -9,6 +9,7 @@ export type SnakeViewWindow = {
   canvasP1: HTMLCanvasElement;
   frameP2: HTMLDivElement;
   canvasP2: HTMLCanvasElement;
+  hudLayer: HTMLDivElement;
   playersBox: HTMLDivElement;
   overlayRoot: HTMLDivElement;
   overlayBox: HTMLDivElement;
@@ -59,7 +60,7 @@ export function createSnakeView(): SnakeViewWindow {
   leftPanelContent.append(snakeTitle, subTitle, instructions);
   leftPanel.append(leftPanelContent);
 
-  const gameContainer = el("div", "relative flex-1 border border-black p-2") as HTMLDivElement;
+  const gameContainer = el("div", "relative flex-1 p-2") as HTMLDivElement;
 
   const ratio = el("div", "relative w-full") as HTMLDivElement;
   ratio.style.aspectRatio = `${WORLD_COLS} / ${WORLD_ROWS}`;
@@ -74,6 +75,10 @@ export function createSnakeView(): SnakeViewWindow {
   grid.style.gridTemplateColumns = `repeat(${WORLD_COLS}, 1fr)`;
   grid.style.gridTemplateRows = `repeat(${WORLD_ROWS}, 1fr)`;
 
+  const hudLayer = el("div", "absolute inset-0 grid pointer-events-none") as HTMLDivElement;
+  hudLayer.style.gridTemplateColumns = `repeat(${WORLD_COLS}, 1fr)`;
+  hudLayer.style.gridTemplateRows = `repeat(${WORLD_ROWS}, 1fr)`;
+
   const canvasWorld = el("canvas", "absolute inset-0 w-full h-full mix-blend-multiply") as HTMLCanvasElement;
   const canvasP1 = el("canvas", "absolute inset-0 w-full h-full mix-blend-multiply") as HTMLCanvasElement;
   const canvasP2 = el("canvas", "absolute inset-0 w-full h-full mix-blend-multiply") as HTMLCanvasElement;
@@ -86,9 +91,9 @@ export function createSnakeView(): SnakeViewWindow {
   overlayRoot.append(overlayBox);
 
   const playersBox = el("div", "absolute bottom-2 left-2 text-xs bg-white/80 border border-black px-2 py-1") as HTMLDivElement;
-  playersBox.textContent = "P1: —   P2: —";
 
-  ratio.append(grid, canvasWorld, canvasP1, canvasP2, overlayRoot, playersBox, frameP1, frameP2);
+
+  ratio.append(grid, canvasWorld, canvasP1, canvasP2, hudLayer, overlayRoot, playersBox, frameP1, frameP2);
   gameContainer.append(ratio);
 
   main.append(leftPanel, gameContainer);
@@ -102,6 +107,7 @@ export function createSnakeView(): SnakeViewWindow {
     canvasP1,
     frameP2,
     canvasP2,
+    hudLayer,
     playersBox,
     overlayRoot,
     overlayBox,

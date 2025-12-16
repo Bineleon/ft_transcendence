@@ -230,10 +230,16 @@ function register(): HTMLElement {
 
 /* Page complète LoginPage */
 export function LoginPage(): HTMLElement {
-    const main = el("main", "p-4");
+    const main = el("main", "p-4 flex flex-col grid grid-row-2 gap-6 items-center justify-center min-h-full");
+    const bornesBox = el("div", "");
+    const bornesPic = el("img", "img-newspaper object-contain mx-auto") as HTMLImageElement;
+    bornesPic.src = "/imgs/Bornes.png";
+    bornesPic.alt = "bornes";
+    bornesBox.append(bornesPic);
+
     const grid = el("section", "grid grid-cols-[30%_68%] gap-6");
 
     grid.append(login(), register());
-    main.append(grid);
+    main.append(bornesBox, grid);
     return main;
 }

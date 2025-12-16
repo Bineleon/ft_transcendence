@@ -1,4 +1,4 @@
-import { el } from "../../home";
+import { el, text } from "../../home";
 import { runAuthBox } from "../../utils/alertBox";
 import type { SnakeController } from "../controller";
 import type { PlayerId } from "../game/uiTypes";
@@ -109,3 +109,61 @@ export function createPlayerBox(ctrl: SnakeController, pid: PlayerId): HTMLDivEl
   wrap.append(top, btnRow);
   return wrap;
 }
+
+export function createPlayersHud(ctrl: SnakeController): HTMLElement {
+  const s = ctrl.state;
+  const root = el("div", "contents") as HTMLDivElement;
+
+  const p1 = s.players.p1;
+  const p2 = s.players.p2;
+
+  const p1Name = p1.profile?.userName?.trim() ? p1.profile!.userName : "P1";
+  const p2Name = p2.profile?.userName?.trim() ? p2.profile!.userName : "P2";
+  console.log(`Creating HUD for players: P1='${p1Name}', P2='${p2Name}'`);
+
+  // P1 : avatar (0,0), name à partir de (1,0), cœurs en dessous (0,1..3)
+  root.appendChild(placeInGrid(avatarPill(p1.profile?.avatarUrl || "/imgs/avatar.png", p1Name), 0, 0, 1, 1));
+  root.appendChild(placeInGrid(el("div",
+    "px-1 text-[10px] font-houston-sport leading-none self-center justify-self-start",
+    el("span", "bg-white/80 border border-black px-1 py-[1px] inline-block", text(p1Name))
+  ) as HTMLDivElement, 1, 0, 8, 1));
+
+  for (let i = 0; i < 3; i++) {
+    root.appendChild(placeInGrid(heart(p1.lives > i), 0, 1 + i, 1, 1));
+  }
+
+  // P2 : avatar (33,23), name à gauche (25..32,23), cœurs au-dessus (33,22..20)
+  root.appendChild(placeInGrid(avatarPill(p2.profile?.avatarUrl || "/imgs/avatar.png", p2Name), 33, 23, 1, 1));
+  root.appendChild(placeInGrid(el("div",
+    "px-1 text-[10px] font-houston-sport leading-none self-center justify-self-end text-right",
+    el("span", "bg-white/80 border border-black px-1 py-[1px] inline-block", text(p2Name))
+  ) as HTMLDivElement, 25, 23, 8, 1));
+
+  for (let i = 0; i < 3; i++) {
+    root.appendChild(placeInGrid(heart(p2.lives > i), 33, 22 - i, 1, 1));
+  }
+
+  return root;
+}
+
+function placeInGrid(node: HTMLElement, x: number, y: number, w = 1, h = 1): HTMLElement {
+  node.style.gridColumn = `${x + 1} / span ${w}`;
+  node.style.gridRow = `${y + 1} / span ${h}`;
+  return node;
+}
+
+function avatarPill(url: string, alt: string): HTMLImageElement {
+  const img = el("img", "w-full rounded-full object-cover grayscale contrast-200 border border-black") as HTMLImageElement;
+  img.src = url;
+  img.alt = alt;
+  return img;
+}
+
+function heart(isAlive: boolean): HTMLElement {
+  const h = el("img", `w-full flex items-center justify-center text-xs leading-none mix-blend-multiply
+    ${isAlive ? "" : "opacity-20"}`) as HTMLImageElement;
+  h.src = "/snake/coeur.png";
+  h.alt = "life";
+  return h;
+}
+

@@ -23,17 +23,6 @@ type RecentMatchSummary = {
   playedAt?: string;
 };
 
-type RecentSnakeMatchSummary = {
-  p1Username: string;
-  p2Username: string;
-  p1Score: number;
-  p2Score: number;
-  p1Collectibles: number;
-  p2Collectibles: number;
-  winnerUsername: string;
-  playedAt: string;
-};
-
 export async function loadDailyMatchesDashboard(dashboard: HTMLElement) {
   // 1) Graph 1 : daily matches
   const res = await apiFetch("/api/profile/dashboard/daily-matches", {
@@ -140,34 +129,18 @@ export async function loadProfileDashboardSections(
     console.error("Failed to load recent matches", resRecentMatches.status);
   }
 
-  // 4) Graph 4 : recent Snake matches
-  console.log('[Dashboard] Fetching recent Snake matches...');
-  const resSnakeMatches = await apiFetch(
-    "/api/profile/dashboard/recent-snake-matches",
-    {
-      credentials: "include",
-    }
-  );
-
-  let snakeMatches: RecentSnakeMatchSummary[] = [];
-  if (resSnakeMatches.ok) {
-    const bodySnakeMatches = await resSnakeMatches.json();
-    console.log('[Dashboard] Snake matches response body:', bodySnakeMatches);
-    console.log('[Dashboard] Snake matches data:', bodySnakeMatches.data);
-    console.log('[Dashboard] Snake matches array:', bodySnakeMatches.data?.matches);
-    snakeMatches = (bodySnakeMatches.data?.matches ?? []) as RecentSnakeMatchSummary[];
-    console.log('[Dashboard] Parsed Snake matches:', snakeMatches);
-    console.log('[Dashboard] Number of Snake matches:', snakeMatches.length);
-  } else {
-    console.error("[Dashboard] Failed to load recent snake matches. Status:", resSnakeMatches.status);
-    console.error("[Dashboard] Response:", await resSnakeMatches.text());
-  }
-
   // Render par section
   renderLast7DaysChart(last7days, stats);
   renderRecentRalliesChart(lastScores, rallies);
   renderRecentMatchesHistory(last3Matches, recentMatches);
-  renderRecentSnakeMatchesHistory(snakeStats, snakeMatches);
+
+  // SnakeStats : placeholder léger (tu pourras remplacer quand l'API existe)
+  snakeStats.innerHTML = "";
+  const t = el("h3", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
+  t.textContent = "Snake stats";
+  const p = el("p", "article-base");
+  p.textContent = "No snake stats yet.";
+  snakeStats.append(t, p);
 }
 
 export function renderLast7DaysChart(container: HTMLElement, stats: DailyMatchStat[]) {
@@ -388,58 +361,5 @@ export function renderRecentMatchesHistory(
     }
   }
 
-  container.append(title, list);
-}
-
-export function renderRecentSnakeMatchesHistory(
-  container: HTMLElement,
-  matches: RecentSnakeMatchSummary[]
-) {
-  console.log('[renderRecentSnakeMatchesHistory] Called with', matches.length, 'matches');
-  console.log('[renderRecentSnakeMatchesHistory] Matches data:', JSON.stringify(matches, null, 2));
-  
-  container.innerHTML = "";
-
-  const title = el("h3", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
-  title.textContent = "Snake - Last 3 matches";
-
-  const list = el("ul", "w-full space-y-2 font-modern-type text-sm") as HTMLUListElement;
-
-  if (!matches.length) {
-    console.log('[renderRecentSnakeMatchesHistory] No matches to display');
-    const li = document.createElement("li");
-    li.className = "italic text-stone-500";
-    li.textContent = "No recent snake matches.";
-    list.append(li);
-  } else {
-    console.log('[renderRecentSnakeMatchesHistory] Rendering', matches.length, 'matches');
-    for (const match of matches) {
-      console.log('[renderRecentSnakeMatchesHistory] Rendering match:', match);
-      
-      const li = document.createElement("li");
-      li.className =
-        "flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-stone-300 pb-1";
-
-      const players = el("div", "flex flex-wrap items-baseline gap-2");
-      const names = el("span", "font-semibold");
-      names.textContent = `${match.p1Username} vs ${match.p2Username}`;
-
-      const score = el("span", "text-xs text-stone-700");
-      score.textContent = `Score: ${match.p1Score} - ${match.p2Score}`;
-
-      const collectibles = el("span", "text-xs text-stone-500");
-      collectibles.textContent = `Collectibles: ${match.p1Collectibles} - ${match.p2Collectibles}`;
-
-      players.append(names, score, collectibles);
-
-      const meta = el("div", "text-xs text-stone-600 mt-1 sm:mt-0 text-right");
-      meta.textContent = `Winner: ${match.winnerUsername}`;
-
-      li.append(players, meta);
-      list.append(li);
-    }
-  }
-
-  console.log('[renderRecentSnakeMatchesHistory] Rendering complete');
   container.append(title, list);
 }

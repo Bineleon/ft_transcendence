@@ -672,7 +672,7 @@
   }
 
   .article-base {
-    @apply text-[0.95rem] lg:text-[0.75rem] xl:text-[0.95rem] xxl:text-[1.45rem];
+    @apply text-[0.95rem] lg:text-[0.95rem] xl:text-[0.95rem] xxl:text-[1.45rem];
   }
   .article2-base {
     @apply font-ocean-type text-justify leading-relaxed
@@ -795,6 +795,15 @@
   .big-link {
     @apply text-xl underline decoration-4 hover:text-red-800
     font-modern-type cursor-pointer text-right mr-4 mb-2;
+  }
+
+  .big-btn-click {
+    @apply bg-stone-200 text-white p-4 font-modern-type
+           hover:mix-blend-exclusion
+           bg-[url('/imgs/trame4.png')] bg-center 
+           transition-all duration-300 ease-in-out
+           text-2xl lg:text-3xl xl:text-4xl xxl:text-5xl
+           text-center;
   }
 
   .in-dark-box {

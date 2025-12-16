@@ -13,11 +13,11 @@ type Credit = {
 function creditHoverPortrait(src: string, hoverSrc: string, alt: string): HTMLElement {
   const wrap = el("div", "img-hover-wrapper mx-auto w-full");
 
-  const imgBase = el("img", "img-newspaper img-base") as HTMLImageElement;
+  const imgBase = el("img", "img-newspaper img-hover") as HTMLImageElement;
   imgBase.src = src;
   imgBase.alt = alt;
 
-  const imgHover = el("img", "img-newspaper img-hover") as HTMLImageElement;
+  const imgHover = el("img", "img-newspaper img-base") as HTMLImageElement;
   imgHover.src = hoverSrc;
   imgHover.alt = alt;
 

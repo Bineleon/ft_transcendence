@@ -13,26 +13,26 @@ export function Game(): HTMLElement {
   const box1a = el("aside", `grid gap-4 md:grid-rows-[auto_auto]`);
 
   /// TOURNAMENT BOX
-  const tournamentBox = el("a",
-    `img-newspaper p-4 -m-2 box-dark in-dark-box
-    whitespace-pre-line items-center text-2xl hover:contrast-125 focus:outline-none`
-  ) as HTMLAnchorElement;
+  const tournamentBox = el("section", `img-newspaper p-4 -m-2 big-btn-click
+    whitespace-pre-line items-center text-2xl`);
+  const tournamentLink = el("a", ``) as HTMLAnchorElement;
   const tournamentInfos = el("h2", `font-origin-athletic text-2xl -p-8 m-6`);
 
-  tournamentBox.href = `#/tournament`;
+  tournamentLink.href = `#/tournament`;
   tournamentBox.setAttribute("aria-label", "Go to Tournament page");
   tournamentInfos.append(text(`click here to know more about\n`));
   tournamentInfos.append(el("h1", `text-3xl underline`, text(`TOURNAMENTS`)));
-  tournamentBox.append(tournamentInfos);
+  tournamentLink.append(tournamentInfos);
+  tournamentBox.append(tournamentLink);
 
   /// SNAKE BOX
   const snakeBox = el("section", `px-6 pb-6`);
-  const snakeTitle = el("a", `font-jmh text-4xl mb-4`, text(`— games`), el("br"), el("p", "text-center", text("&")), el("p", "text-right", text(` puzzles —`))) as HTMLAnchorElement;
+  const snakeTitle = el("a", `font-jmh text-4xl mb-4 hover:underline decoration-4`, text(`— games`), el("br"), el("p", "text-center", text("&")), el("p", "text-right", text(` puzzles —`))) as HTMLAnchorElement;
   snakeTitle.href = `#/snake`;
   snakeTitle.setAttribute("aria-label", "Go to Snake games and puzzles page");
 
   const snakeLink = el("a",
-    `block border-9 font-superretro uppercase text-xl p-2 text-center mt-6
+    `block border-9 font-superretro uppercase text-2xl p-2 text-center mt-6
      hover:bg-black hover:underline hover:text-white`
   ) as HTMLAnchorElement;
   snakeLink.href = `#/snake`;
