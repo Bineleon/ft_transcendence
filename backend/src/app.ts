@@ -12,8 +12,8 @@ import { setupErrorHandler } from './shared/middleware/index.js';
 import { getPrismaClient } from './shared/database/prisma.js';
 import { setupTournamentModule } from './modules/tournaments/index.js';
 import { setupMatchModule } from './modules/matches/index.js';
-// import { userController } from './modules/users/users.controller.js';
-// import { UserService } from './modules/users/users.service.js';
+import { userController } from './modules/users/users.controller.js';
+import { UserService } from './modules/users/users.service.js';
 import metricsPlugin from "./monitoring/metrics.js";
 
 // Configuration
@@ -58,6 +58,10 @@ export function createApp() {
     console.log("Setting up Tournament Module...");
     setupTournamentModule(app);
     setupMatchModule(app);
+
+	  // --- Users module ---
+  	const userService = new UserService(prisma);
+  	userController(app, userService);
 
 //   // --- Modules ---
 //   setupAuthModule(app, prisma);
