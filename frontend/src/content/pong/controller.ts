@@ -439,8 +439,8 @@ export class GameController {
         if (this.state.p2.id) {
             p2Base.userId = this.state.p2.id;
         }
-        if (tCode && this.state.stats.matchId) {
-            const matchId = this.state.stats.matchId;
+        if (tCode && this.state.matchId) {
+            const matchId = this.state.matchId;
             const payload: ApiFinishMatchDTO = {
                 matchStats: apiMatchStats,
                 p1Stats: p1Base,
