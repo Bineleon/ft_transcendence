@@ -573,7 +573,6 @@ export class MatchService {
         p2Score: data.p2Score,
         winnerUserId: data.winnerUserId,
         onchainAt: data.onchainAt,
-        txHash: data.txHash,
         totalPoints: data.totalPoints,
         totalRallies: data.totalRallies,
         maxBounces: data.maxBounces,

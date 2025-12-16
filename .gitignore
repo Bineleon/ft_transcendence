@@ -37,7 +37,7 @@ frontend/.vite/
 frontend/.cache/
 # si vous générez des types API :
 frontend/src/__generated__/
-
+frontend/package-lock.json
 # ─────────────────────────────
 # Backend (Fastify)
 # # ─────────────────────────────
@@ -48,6 +48,7 @@ backend/logs/
 backend/*.log
 backend/node_modules
 backend/package-lock.json
+
 
 # DB locale (SQLite)
 backend/**/*.sqlite
@@ -88,6 +89,13 @@ coverage/
 .jest/
 .mocha/
 .nyc_output/
+*.md
+
+# ─────────────────────────────
+# Documentation / Notes
+# ─────────────────────────────
+PONG_RESTART_FIX.md
+TODO.md
 
 # ─────────────────────────────
 # Misc
@@ -97,4 +105,3 @@ coverage/
 *.zip
 *.bak
 *.tmp
-.gitignore

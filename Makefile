@@ -36,3 +36,19 @@ install-frontend:
 	cd frontend && npm install
 
 prod: install-backend install-frontend docker-prod
+
+# Voir les logs en prod
+logs-prod:
+	$(DC) -f docker-compose.prod.yaml logs -f
+
+# Voir les logs backend en prod
+logs-backend:
+	$(DC) -f docker-compose.prod.yaml logs -f backend
+
+# Voir les logs frontend en prod
+logs-frontend:
+	$(DC) -f docker-compose.prod.yaml logs -f frontend
+
+# Voir les logs en dev
+logs-dev:
+	$(DC) -f docker-compose.dev.yaml logs -f

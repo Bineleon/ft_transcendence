@@ -8,7 +8,6 @@ type Credit = {
   portraitHoverSrc: string;
   portraitAlt: string;
   blurb: string;
-  tags: string[];
 };
 
 function creditHoverPortrait(src: string, hoverSrc: string, alt: string): HTMLElement {

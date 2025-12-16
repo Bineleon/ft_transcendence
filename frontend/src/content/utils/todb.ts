@@ -1,4 +1,4 @@
-import { getRouteTail } from "../../router.ts";
+// import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
 import { apiFetch } from "./apiFetch";
 import { pongAlert } from "./alertBox.ts";
@@ -6,29 +6,28 @@ import type { Tournament, User } from "../tournament/uiTypes.ts";
 import type { ApiTournament, ApiFinishMatchDTO, ApiPlayedMatchDTO } from "../tournament/apiTypes.ts";
 import { tournamentFromApi } from "../tournament/mapper.ts";
 import { areAllMatchesClosed } from "../pong/ui/players.ts";
+import type { SnakeMatchDTO } from "../snake/game/apiTypes.ts";
 
 
 /// ------      CHECK CHECK CHECK       ------ ///
 export async function notLoggedIn(): Promise<boolean> {
-    try {
-        const resp = await fetch(`/api/auth/loggedIn`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include"
-        });
-        const data = await resp.json();
+  try {
+    const resp = await fetch(`/api/auth/loggedIn`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
 
-        if (resp.ok) {
-            return data as boolean;
-        } else {
-            return true;
-        }
-    } catch (error) {
-        console.error("Profile fetch error:", error);
-        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`);
-        throw error;
-    }
+    if (!resp.ok) return true;
+
+    const data = await resp.json();
+    return data as boolean;
+  } catch (error) {
+    console.warn("notLoggedIn: network error (treated as not logged)", error);
+    return true;
+  }
 }
+
 
 /// ------        ADD ADD ADD        ------ //
 export async function addUserAsPlayerToTournament(tCode: string, userName: string, t: Tournament): Promise<void> {
@@ -190,29 +189,31 @@ export function getUserNameByIdTEMP(id: string, users: User[]): string {
 }
 
 export async function getLoggedID(): Promise<string> {
-    const userDatas = await apiFetch ("/api/auth/me", {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" }
-    });
-    if (!userDatas.ok) {
-        return "";
-    }
-    return (await userDatas.json()).id;
+  const res = await apiFetch("/api/auth/me", {
+    method: "GET",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) return "";
+
+  const body = await res.json();
+  return body?.data?.user?.id ?? "";
 }
+
 
 export async function getLoggedName(): Promise<string> {
-    const userDatas = await apiFetch ("/api/auth/publicme", {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" }
-    });
-    if (!userDatas.ok) {
-        return "";
-    }
-    return (await userDatas.json()).username;
-}
+  const res = await apiFetch("/api/auth/me", {
+    method: "GET",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
 
+  if (!res.ok) return "";
+
+  const body = await res.json();
+  return body?.data?.user?.username ?? "";
+}
 
 // export async function getUserIdByName(userName: string): Promise<string | null> {
 //     try {
@@ -223,6 +224,7 @@ export async function getLoggedName(): Promise<string> {
 //         return null;
 //     }
 // }
+
 export async function getUserDatas(userName: string): Promise<User> {
     try {
         const resp = await apiFetch(`/api/profile/${userName}`, {
@@ -270,6 +272,33 @@ export async function getTournamentDatas(code: string): Promise<Tournament> {
             pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
         }
         throw error;
+    }
+}
+
+/// ------     SNAKE SNAKE SNAKE      ------ ///
+
+export async function createSnakeMatchWithStats(payload: SnakeMatchDTO) {
+    try {
+        const resp = await apiFetch(`/api/snake/matches`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            credentials: "include"
+        });
+        console.log("Snake match payload", payload);
+
+        const data = await resp.json();
+        if (resp.ok) {
+            console.log("are guest :", payload.p1IsGuest, payload.p2IsGuest);
+            if (payload.p1IsGuest === false || payload.p2IsGuest === false) {
+                pongAlert("Snake match stats updated with synchronized accounts", "success");
+            }
+        } else if (!resp.ok) {
+            pongAlert(`Failed to create Snake Match Stats: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Snake Match Stats Creation Error" });
+        }
+    } catch (error) {
+        console.error("Failed to create and update Snake Match Stats");
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Snake Match Stats creation error'}`, "error");
     }
 }
 

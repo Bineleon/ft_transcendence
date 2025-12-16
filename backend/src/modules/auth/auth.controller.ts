@@ -110,7 +110,7 @@ export function authController(
       const result = await authService.verify2FA(userId, code);
 
       return formatSuccess(result, '2FA verified. Login successful.');
-      // return formatSuccess('2FA verified. Login successful.');
+    //   return formatSuccess('2FA verified. Login successful.');
     }
   );
 
@@ -153,21 +153,42 @@ export function authController(
   });
 
   // --- PROFILE (full) ---
-  app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => {
-    try {
-      const profile = await userService.getFullProfile(request.user!.userId);
-      return formatSuccess({ user: profile }, 'Profile loaded successfully');
-    } catch (err) {
-      request.log.error(err, 'Failed to load profile');
-      return reply.code(500).send({
+app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => {
+  try {
+    const profile = await userService.getFullProfile(request.user!.userId);
+    return formatSuccess({ user: profile }, 'Profile loaded successfully');
+  } catch (err) {
+    request.log.error(err, 'Failed to load profile');
+
+    // ✅ Cas fréquent après make clean : user supprimé mais cookie encore là
+    const msg = err instanceof Error ? err.message : '';
+    const isNotFound =
+      msg.includes('not found') ||
+      msg.includes('Record to update not found') ||
+      msg.includes('No User found') ||
+      msg.includes('P2025'); // Prisma "Record not found"
+
+    if (isNotFound) {
+      return reply.code(401).send({
         error: {
-          code: 'PROFILE_LOAD_FAILED',
-          message: 'Failed to load profile',
-          statusCode: 500,
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
+          statusCode: 401,
         },
       });
     }
-  });
+
+    // sinon vraie erreur serveur
+    return reply.code(500).send({
+      error: {
+        code: 'PROFILE_LOAD_FAILED',
+        message: 'Failed to load profile',
+        statusCode: 500,
+      },
+    });
+  }
+});
+
 
   // --- PROFILE (public / minimal) ---
   app.get('/api/auth/publicme', { preHandler: authenticate }, async (request) => {

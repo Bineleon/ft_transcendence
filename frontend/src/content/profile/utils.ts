@@ -1,5 +1,6 @@
 import { pongAlert } from "../utils/alertBox.ts";
 import { apiFetch } from "../utils/apiFetch.ts";
+import { loadProfileDashboardSections } from "./dashboard.ts";
 
 // Maximum size for avatar uploads (2 MB)
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
@@ -42,17 +43,18 @@ async function logout(): Promise<void> {
  * Returns true if the deletion succeeded.
  */
 async function deleteAccount(): Promise<boolean> {
-    try {
-        const res = await apiFetch("/api/users/me", {
-            method: "DELETE",
-            credentials: "include",
-        });
-        return res.ok;
-    } catch (err) {
-        console.error("Delete account error:", err);
-        return false;
-    }
+  try {
+    const res = await apiFetch("/api/auth/delete-account", {
+      method: "DELETE",
+      credentials: "include",
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Delete account error:", err);
+    return false;
+  }
 }
+
 
 /**
  * Loads the current user's friends and friend requests and populates
@@ -425,7 +427,11 @@ export function setupOtherMode(
     picture: HTMLImageElement,
     hoverOverlay: HTMLElement,
     friendsContainer: HTMLElement,
-    editBox: HTMLElement
+    editBox: HTMLElement,
+	last7days : HTMLElement,
+    lastScores : HTMLElement,
+    last3Matches : HTMLElement,
+    snakeStats : HTMLElement
 ): void {
     // Disable avatar editing
     picture.style.pointerEvents = "none";
@@ -461,6 +467,7 @@ export function setupOtherMode(
                 pongAlert("Network error.", "error");
             }
         };
+		loadProfileDashboardSections(last7days, lastScores, last3Matches, snakeStats);
         friendsContainer.append(addFriendBtn);
     }
 }

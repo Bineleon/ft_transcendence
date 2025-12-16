@@ -28,6 +28,12 @@ export interface TournamentResponse {
     avatarUrl: string | null;
   } | null;                       
   matches?: MatchResponse[];
+
+  txHash?: string | null;
+  blockNumber?: number | null;
+  onchainAt?: Date | null;
+  blockchainError?: string | null;
+
   // _count?: {                      // AJOUTER pour findAll()
   //   matches: number;
   // };

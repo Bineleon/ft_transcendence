@@ -28,7 +28,7 @@ export function validateRegisterFields(data: Partial<RegisterRequest>): string[]
     errors.push('Username is required');
   } else if (username.length < 3) {
     errors.push('Username too short');
-  } else if (username.length > 20) {
+  } else if (username.length > 10) {
     errors.push('Username too long');
   } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
     // ⇧ ici tu mets la règle que tu veux garder : avec ou sans _ / -

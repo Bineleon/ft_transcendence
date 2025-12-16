@@ -1,6 +1,6 @@
 import type { GameViewWindow }           from "./ui/view";
 import { GameLoop }                      from "./core/loop";
-import { initState, initBoard, launchBall, initPlayersInfo } from "./game/state";
+import { initState, initBoard, launchBall, initPlayersInfo, resetGameStats } from "./game/state";
 import { update, type CardinalDirection }                    from "./game/update";
 import { render }                        from "./game/render";
 import type { GamePhase, GameState,
@@ -78,6 +78,13 @@ export class GameController {
                 );
             }
             if (this.state.ready.p1 && this.state.ready.p2) this.setPhase("COUNTDOWN");
+            break;
+
+        case "START":
+            if (code === c.escape.code) {
+                // Allow returning to home page from START screen
+                this.unwireControls();
+            }
             break;
 
         case "PLAYING":
@@ -176,7 +183,32 @@ export class GameController {
             break;
 
         case "RESTART":
+            // Clean up any running timers
+            if (this.domOverlay.countdownTimerId !== null) {
+                clearInterval(this.domOverlay.countdownTimerId);
+                this.domOverlay.countdownTimerId = null;
+            }
+
+            // Stop the game loop if running
+            if (this.loopCtrl && this.loopCtrl.running) {
+                this.loopCtrl.stop();
+            }
+
+            // Reset all game stats (scores, timers, ready states, etc.)
+            // This preserves tournament information (tournamentCode, matchId, etc.)
+            resetGameStats(this.state);
+
+            // Reset board (ball and paddles positions)
             initBoard(this.state);
+
+            // Launch ball for next game
+            launchBall(this.state, this.getNextServer(this.state), 1000);
+
+            // Refresh UI
+            this.refreshTerminal();
+            this.view.playersBox.replaceChildren(createPlayersBox(this.state));
+
+            // Go to WAITING phase
             this.setPhase("WAITING");
             break;
 
@@ -407,8 +439,8 @@ export class GameController {
         if (this.state.p2.id) {
             p2Base.userId = this.state.p2.id;
         }
-        if (tCode && this.state.matchId) {
-            const matchId = this.state.matchId;
+        if (tCode && this.state.stats.matchId) {
+            const matchId = this.state.stats.matchId;
             const payload: ApiFinishMatchDTO = {
                 matchStats: apiMatchStats,
                 p1Stats: p1Base,
