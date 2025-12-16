@@ -273,6 +273,37 @@ export class UserService {
     };
   }
 
+  // 
+
+async setTwoFactorEnabled(userId: string, enabled: boolean) {
+  if (enabled === false) {
+    await this.prisma.twoFactor.deleteMany({ where: { userId } });
+  }
+
+  const updated = await this.prisma.user.update({
+    where: { id: userId },
+    data: { twoFactorEnabled: enabled },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      avatarUrl: true,
+      twoFactorEnabled: true,
+      updatedAt: true,
+    },
+  });
+
+  return {
+    id: updated.id,
+    username: updated.username,
+    email: updated.email,
+    avatarUrl: updated.avatarUrl,
+    twoFactorEnabled: updated.twoFactorEnabled,
+    updatedAt: updated.updatedAt.toISOString(),
+  };
+}
+
+
   /**
    * Anonymise un utilisateur :
    * - remplace email / username / avatar / password / googleId / playerRef
@@ -407,6 +438,7 @@ async updateUsername(userId: string, newUsername: string) {
           email: true,
           createdAt: true,
           avatarUrl: true,
+          twoFactorEnabled: true,
           lastSeen: true,
           friends: {
             where: { status: 'accepted' },
@@ -472,6 +504,7 @@ async updateUsername(userId: string, newUsername: string) {
         id: user.id,
         username: user.username,
         email: user.email,
+		twoFactorEnabled: user.twoFactorEnabled,
         createdAt: user.createdAt,
         avatarUrl: user.avatarUrl,
         kingMaxTime,

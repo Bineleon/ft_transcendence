@@ -40,73 +40,91 @@ function login(): HTMLElement {
     });
 
     form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        inputSubmit.disabled = true;
+  event.preventDefault();
+  inputSubmit.disabled = true;
 
+  try {
+    // --- Phase 2: vérification du code 2FA ---
+    if (!input2FA.classList.contains("hidden")) {
+      const code = input2FA.value.trim();
+
+      const response = await apiFetch("/api/auth/verify-2fa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: input2FA.dataset.userId, code }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        pongAlert("2FA verified! Login successful.");
         try {
-            // --- Phase 2: envoi du code 2FA ---
-            if (!input2FA.classList.contains("hidden")) {
-                const code = input2FA.value;
-                const doToken = true;
-                const response = await apiFetch("/api/auth/verify-2fa", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: input2FA.dataset.userId, code, doToken }),
-                    credentials: "include",
-                });
-                const data = await response.json();
+          window.dispatchEvent(new Event("auth-changed"));
+        } catch (_e) {}
 
-                if (response.ok) {
-                    pongAlert("2FA verified! Login successful.");
-                    try {
-                        window.dispatchEvent(new Event("auth-changed"));
-                    } catch (_e) {}
+        window.location.hash = `#/profile`;
+      } else {
+        const errorMessage = data.error?.message || data.message || "Invalid 2FA code";
+        pongAlert(`2FA verification failed: ${errorMessage}`);
+        inputSubmit.disabled = false;
+      }
+      return;
+    }
 
-                    window.location.hash = `#/profile`;
-                } else {
-                    const errorMessage = data.error?.message || data.message || "Invalid 2FA code";
-                    pongAlert(`2FA verification failed: ${errorMessage}`);
-                    inputSubmit.disabled = false;
-                }
-                return;
-            }
+    // --- Phase login classique ---
+    if (!inputLogin.value || !inputPassword.value) {
+      pongAlert("Please fill in all fields.");
+      inputSubmit.disabled = false;
+      return;
+    }
 
-            // --- Phase login classique ---
-            if (!inputLogin.value || !inputPassword.value) {
-                pongAlert("Please fill in all fields.");
-                inputSubmit.disabled = false;
-                return;
-            }
-
-            const payload = { username: inputLogin.value, password: inputPassword.value };
-            const response = await apiFetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-                credentials: "include",
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                input2FA.classList.remove("hidden");
-                input2FA.dataset.userId = data.data.userId;
-                input2FA.focus();
-                pongAlert("Login successful! Please enter your 2FA code sent by email.");
-            } else {
-                const errorMessage = data.error?.message || data.message || "Login failed";
-                pongAlert(`Login failed: ${errorMessage}`);
-                inputSubmit.disabled = false;
-            }
-        } catch (error) {
-            console.error("Login error:", error);
-            pongAlert(
-                `An error occurred: ${
-                    error instanceof Error ? error.message : "Network error"
-                }`
-            );
-            inputSubmit.disabled = false;
-        }
+    const payload = { username: inputLogin.value, password: inputPassword.value };
+    const response = await apiFetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
     });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // ✅ NOUVEAU : backend renvoie requires2FA
+      const requires2FA = Boolean(data?.data?.requires2FA);
+
+      if (requires2FA) {
+        // comportement actuel (2FA requis)
+        input2FA.classList.remove("hidden");
+        input2FA.dataset.userId = data.data.userId;
+        input2FA.value = "";
+        input2FA.focus();
+        pongAlert("Login successful! Please enter your 2FA code sent by email.");
+        inputSubmit.disabled = false; // on réactive le bouton pour la phase 2
+        return;
+      }
+
+      // ✅ 2FA désactivé => login direct (cookies déjà posés par le backend)
+      pongAlert("Login successful!");
+      try {
+        window.dispatchEvent(new Event("auth-changed"));
+      } catch (_e) {}
+      window.location.hash = `#/profile`;
+      return;
+    } else {
+      const errorMessage = data.error?.message || data.message || "Login failed";
+      pongAlert(`Login failed: ${errorMessage}`);
+      inputSubmit.disabled = false;
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    pongAlert(
+      `An error occurred: ${error instanceof Error ? error.message : "Network error"}`
+    );
+    inputSubmit.disabled = false;
+  }
+});
+
 
     // --- Bouton Google OAuth ---
     const divider = el("div", "text-center text-sm text-gray-400 my-2");

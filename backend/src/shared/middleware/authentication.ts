@@ -7,11 +7,12 @@ import { UserService } from '../../modules/users/users.service.js';
 const userService = new UserService();
 
 export async function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const token =
-    request.cookies.token ||
-    (request.headers.authorization?.startsWith('Bearer ')
+  const bearerToken =
+    request.headers.authorization?.startsWith('Bearer ')
       ? request.headers.authorization.split(' ')[1]
-      : null);
+      : null;
+
+  const token = bearerToken ?? request.cookies.token ?? null;
 
   if (!token) {
     return reply.status(401).send({
@@ -29,10 +30,8 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     const decoded = verifyToken(token);
     request.user = decoded;
 
-    // ✅ NOUVEAU : vérifier que l'utilisateur existe encore en DB
-    // (après make clean, cookie reste mais user n'existe plus)
     if (decoded.userId) {
-      const exists = await userService.existsById(decoded.userId); // <-- on ajoute ça
+      const exists = await userService.existsById(decoded.userId);
       if (!exists) {
         return reply.status(401).send({
           error: {
@@ -45,7 +44,6 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
         });
       }
 
-      // Mise à jour lastSeen en "fire and forget"
       userService.updateLastSeen(decoded.userId).catch((err) => {
         request.log?.error({ err }, 'Failed to update lastSeen');
       });
@@ -62,4 +60,5 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     });
   }
 }
+
 

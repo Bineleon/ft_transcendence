@@ -6,6 +6,87 @@ import type { Tournament } from "./uiTypes";
 import { renderTournamentBrackets } from "./brackets";
 import { apiFetch } from "../utils/apiFetch";
 
+// --- 2FA / NOLOG helpers for "Join as New" ---
+// This flow MUST NOT touch cookies, otherwise it replaces the creator session in the same browser.
+type NoLogLoginResult =
+  | { requires2FA: true; userId: string; message?: string }
+  | { requires2FA: false; token: string; user: any };
+
+async function loginNoLog(username: string, password: string): Promise<NoLogLoginResult> {
+  const resp = await apiFetch("/api/auth/login/nolog", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+    credentials: "include",
+  });
+
+  const data = await resp.json().catch(() => null);
+  if (!resp.ok || !data?.success) {
+    throw new Error(data?.error?.message || data?.message || "Login failed");
+  }
+  return data.data as NoLogLoginResult;
+}
+
+async function verify2faNoLog(userId: string, code: string) {
+  const res = await apiFetch("/api/auth/verify-2fa/nolog", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, code }),
+    credentials: "include",
+  });
+
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json?.success) {
+    throw new Error(json?.error?.message || json?.message || "2FA verify failed");
+  }
+  return json.data; // { token, user }
+}
+
+async function joinTournamentWithBearer(tCode: string, bearerToken: string): Promise<void> {
+  const resp = await apiFetch(`/api/tournaments/${tCode}/join`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${bearerToken}`,
+    },
+    credentials: "include",
+  });
+
+  const data = await resp.json().catch(() => null);
+  if (!resp.ok || !data?.success) {
+    throw new Error(data?.error?.message || data?.message || "Failed to join tournament");
+  }
+}
+
+
+async function joinAsNewFlow(tCode: string): Promise<void> {
+  const username = window.prompt("Tournament login - username:");
+  if (!username) return;
+
+  const password = window.prompt("Tournament login - password:");
+  if (!password) return;
+
+  const login = await loginNoLog(username.trim(), password);
+
+  // ✅ 2FA disabled => backend returns token immediately => NO prompt 2FA
+  if (login.requires2FA === false) {
+    await joinTournamentWithBearer(tCode, login.token);
+    document.dispatchEvent(new CustomEvent("tournamentUpdated"));
+    pongAlert("You joined the tournament!");
+    return;
+  }
+
+  // ✅ 2FA required
+  const code = window.prompt("Enter the 2FA code sent by email:");
+  if (!code) return;
+
+  const verified = await verify2faNoLog(login.userId, code.trim());
+  await joinTournamentWithBearer(tCode, verified.token, verified.user?.username ?? username);
+
+  document.dispatchEvent(new CustomEvent("tournamentUpdated"));
+  pongAlert("You joined the tournament!");
+}
+
+
 
 
 /// --- HELPER ---- /// 
@@ -92,8 +173,13 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
 
         if (!alreadyInTournament) {
             joinTournamentAsNewBtn.classList.remove("hidden");
-            joinTournamentAsNewBtn.onclick = () => {
-                runAuthBox("JOIN", { tCode: t.tCode });
+            joinTournamentAsNewBtn.onclick = async () => {
+                try {
+                    await joinAsNewFlow(t.tCode);
+                } catch (error) {
+                    console.error("Join as New error:", error);
+                    pongAlert(`Failed to join as new: ${error instanceof Error ? error.message : "Unknown error"}`);
+                }
             };
 
             joinTournamentBtn.onclick = async () => {
@@ -126,8 +212,13 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
         } else {
             joinTournamentBtn.classList.add("hidden");
             joinTournamentAsNewBtn.classList.remove("hidden");
-            joinTournamentAsNewBtn.onclick = () => {
-                runAuthBox("JOIN", { tCode: t.tCode });
+            joinTournamentAsNewBtn.onclick = async () => {
+                try {
+                    await joinAsNewFlow(t.tCode);
+                } catch (error) {
+                    console.error("Join as New error:", error);
+                    pongAlert(`Failed to join as new: ${error instanceof Error ? error.message : "Unknown error"}`);
+                }
             };
         }
 

@@ -132,32 +132,31 @@ export function tournamentController(
   // ==========================================
   // POST /api/tournaments/:code/join - Rejoindre un tournoi
   // ==========================================
-  app.post<{ 
-    Params: { code: string };
-    Body: { userName: string };
-  }>(
-    '/api/tournaments/:code/join',
-    async (request, reply) => {
-      try {
-        const { code } = request.params;
-        const { userName } = request.body;
+app.post<{ Params: { code: string } }>(
+  "/api/tournaments/:code/join",
+  { preHandler: authenticate },
+  async (request, reply) => {
+    try {
+      const { code } = request.params;
 
-        if (!userName) {
-          const errorResponse = formatGenericError(new Error('userName is required'));
-          return reply.status(400).send(errorResponse);
-        }
-
-        const tournament = await tournamentService.join(code, userName);
-        return formatSuccess(tournament, 'Successfully joined tournament');
-        
-      } catch (error) {
-        const errorResponse = formatGenericError(
-          error instanceof Error ? error : new Error('Failed to join tournament')
-        );
-        return reply.status(errorResponse.error.statusCode).send(errorResponse);
+      const userId = request.user?.userId;
+      if (!userId) {
+        const errorResponse = formatGenericError(new Error("Missing userId in token"));
+        return reply.status(401).send(errorResponse);
       }
+
+      const tournament = await tournamentService.joinByUserId(code, userId);
+      return formatSuccess(tournament, "Successfully joined tournament");
+    } catch (error) {
+      const errorResponse = formatGenericError(
+        error instanceof Error ? error : new Error("Failed to join tournament")
+      );
+      return reply.status(errorResponse.error.statusCode).send(errorResponse);
     }
-  );
+  }
+);
+
+
 
   // ==========================================
   // DELETE /api/tournaments/:code/join - Se désinscrire du tournoi (alias ou user)
