@@ -64,7 +64,11 @@ export function updateProfileView(view: ProfileViewWindow, userName: string): vo
                     ui.picture,
                     ui.hoverOverlay,
                     view.friendsBox,
-                    ui.editBox
+                    ui.editBox,
+					view.last7days,
+        			view.lastScores,
+        			view.last3Matches,
+        			view.snakeStats
                 );
             }
         })
@@ -76,7 +80,11 @@ export function updateProfileView(view: ProfileViewWindow, userName: string): vo
                 ui.picture,
                 ui.hoverOverlay,
                 view.friendsBox,
-                ui.editBox
+                ui.editBox,
+				view.last7days,
+        		view.lastScores,
+        		view.last3Matches,
+        		view.snakeStats
             );
         });
 }

@@ -114,7 +114,7 @@ export class UserService {
     }
 
     if (data.username !== undefined) {
-      if (data.username.length < 3 || data.username.length > 20) {
+      if (data.username.length < 3 || data.username.length > 10) {
         throw new ValidationError('Username must be between 3 and 20 characters');
       }
       const usernameTaken = await this.prisma.user.findFirst({
@@ -374,7 +374,7 @@ export class UserService {
 
 
 async updateUsername(userId: string, newUsername: string) {
-  if (newUsername.length < 3 || newUsername.length > 20) {
+  if (newUsername.length < 3 || newUsername.length > 10) {
     throw new ValidationError('Username must be between 3 and 20 characters');
   }
 
