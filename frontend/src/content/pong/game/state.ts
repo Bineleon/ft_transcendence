@@ -1,5 +1,5 @@
-import type { Tournament } from "../../tournament/uiTypes";
-import { getTournamentDatas } from "../../utils/todb";
+// import type { Tournament } from "../../tournament/uiTypes";
+// import { getTournamentDatas } from "../../utils/todb";
 import type { GameState } from "./uiTypes";
 import type { CardinalDirection } from "./update";
 

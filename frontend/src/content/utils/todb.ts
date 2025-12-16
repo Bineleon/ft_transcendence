@@ -1,4 +1,4 @@
-import { getRouteTail } from "../../router.ts";
+// import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
 import { apiFetch } from "./apiFetch";
 import { pongAlert } from "./alertBox.ts";
@@ -6,6 +6,7 @@ import type { Tournament, User } from "../tournament/uiTypes.ts";
 import type { ApiTournament, ApiFinishMatchDTO, ApiPlayedMatchDTO } from "../tournament/apiTypes.ts";
 import { tournamentFromApi } from "../tournament/mapper.ts";
 import { areAllMatchesClosed } from "../pong/ui/players.ts";
+import type { SnakeMatchDTO } from "../snake/ui/uiTypes.ts";
 
 
 /// ------      CHECK CHECK CHECK       ------ ///
@@ -214,8 +215,6 @@ export async function getLoggedName(): Promise<string> {
   return body?.data?.user?.username ?? "";
 }
 
-
-
 // export async function getUserIdByName(userName: string): Promise<string | null> {
 //     try {
 //         const user = await getUserDatas(userName);
@@ -225,6 +224,7 @@ export async function getLoggedName(): Promise<string> {
 //         return null;
 //     }
 // }
+
 export async function getUserDatas(userName: string): Promise<User> {
     try {
         const resp = await apiFetch(`/api/profile/${userName}`, {
@@ -272,6 +272,33 @@ export async function getTournamentDatas(code: string): Promise<Tournament> {
             pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Network error'}`, "error", { title: "Tournament Fetch Error", onClose: () => { window.location.hash = "#/tournament"; } });    
         }
         throw error;
+    }
+}
+
+/// ------     SNAKE SNAKE SNAKE      ------ ///
+
+export async function createSnakeMatchWithStats(payload: SnakeMatchDTO) {
+    try {
+        const resp = await apiFetch(`/api/snake/matches`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            credentials: "include"
+        });
+        console.log("Snake match payload", payload);
+
+        const data = await resp.json();
+        if (resp.ok) {
+            console.log("are guest :", payload.p1IsGuest, payload.p2IsGuest);
+            if (payload.p1IsGuest === false || payload.p2IsGuest === false) {
+                pongAlert("Snake match stats updated with synchronized accounts", "success");
+            }
+        } else if (!resp.ok) {
+            pongAlert(`Failed to create Snake Match Stats: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Snake Match Stats Creation Error" });
+        }
+    } catch (error) {
+        console.error("Failed to create and update Snake Match Stats");
+        pongAlert(`An error occurred: ${error instanceof Error ? error.message : 'Snake Match Stats creation error'}`, "error");
     }
 }
 
