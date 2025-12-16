@@ -124,8 +124,8 @@ export function createPlayersHud(ctrl: SnakeController): HTMLElement {
   // P1 : avatar (0,0), name à partir de (1,0), cœurs en dessous (0,1..3)
   root.appendChild(placeInGrid(avatarPill(p1.profile?.avatarUrl || "/imgs/avatar.png", p1Name), 0, 0, 1, 1));
   root.appendChild(placeInGrid(el("div",
-    "px-1 text-[10px] font-houston-sport leading-none self-center justify-self-start",
-    el("span", "bg-white/80 border border-black px-1 py-[1px] inline-block", text(p1Name))
+    "px-1 text-[20px] font-lapresse tracking-widest leading-none self-center justify-self-start",
+    el("span", "px-1 py-[1px] inline-block", text(p1Name))
   ) as HTMLDivElement, 1, 0, 8, 1));
 
   for (let i = 0; i < 3; i++) {
@@ -135,8 +135,8 @@ export function createPlayersHud(ctrl: SnakeController): HTMLElement {
   // P2 : avatar (33,23), name à gauche (25..32,23), cœurs au-dessus (33,22..20)
   root.appendChild(placeInGrid(avatarPill(p2.profile?.avatarUrl || "/imgs/avatar.png", p2Name), 33, 23, 1, 1));
   root.appendChild(placeInGrid(el("div",
-    "px-1 text-[10px] font-houston-sport leading-none self-center justify-self-end text-right",
-    el("span", "bg-white/80 border border-black px-1 py-[1px] inline-block", text(p2Name))
+    "px-1 text-[20px] font-lapresse tracking-widest leading-none self-center justify-self-end text-right",
+    el("span", "px-1 py-[1px] inline-block", text(p2Name))
   ) as HTMLDivElement, 25, 23, 8, 1));
 
   for (let i = 0; i < 3; i++) {

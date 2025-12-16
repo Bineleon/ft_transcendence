@@ -4,7 +4,7 @@ import type { SnakePhase, PlayerId } from "../game/uiTypes";
 import { runAuthBox } from "../../utils/alertBox";
 
 function pill(label: string, ok: boolean): HTMLElement {
-  const s = el("span", `px-2 py-1 border border-black text-xs ${ok ? "bg-black text-white" : "bg-white text-black"}`);
+  const s = el("span", `px-1 py-1 border border-black rounded-full text-xs ${ok ? "bg-black text-white" : "bg-white text-black"}`);
   s.textContent = label;
   return s;
 }
@@ -16,50 +16,80 @@ export class domOverlayManager {
     this.snakeController = snakeController;
   }
 
-private registerRow(pid: PlayerId): HTMLElement {
-  const info = this.snakeController.getPlayerInfo(pid);
+  private registerRow(pid: PlayerId): HTMLElement {
+    const info = this.snakeController.getPlayerInfo(pid);
 
-  const row = el("div", "flex items-center justify-between font-modern-type gap-3 border border-black p-2") as HTMLDivElement;
+    const row = el("div", "flex items-center justify-between font-modern-type gap-3 border border-stone-400 rounded-md p-2") as HTMLDivElement;
 
-  const left = el("div", "flex items-center gap-2");
-  left.append(pill(pid.toUpperCase(), true), pill(info.registered ? (info.name || "Guesteuh") : " - - ", info.registered));
+    const left = el("div", "flex items-center gap-2");
+    left.append(pill(pid.toUpperCase(), true), pill(info.registered || info.isGuest ? (info.name || "Guest") : " - - ", info.registered));
 
-  const right = el("div", "flex items-center gap-2");
+    const right = el("div", "flex items-center gap-2");
 
-  const syncBtn = el("button", "border border-black px-2 py-1 font-modern-type hover:bg-black hover:text-white text-sm") as HTMLButtonElement;
-  syncBtn.textContent = "Sync";
-  syncBtn.disabled = info.registered && !info.isGuest; // déjà sync
-  syncBtn.classList.toggle("opacity-40", syncBtn.disabled);
+    const syncBtn = el("button", "btn-click text-xs px-2 py-1 h-[2rem]") as HTMLButtonElement;
+    syncBtn.textContent = info.registered ? "Sync" : "Sync";
 
-  syncBtn.onclick = async () => {
-    // même pattern que ton Pong : ouvre la box de login/sync
-    const res = await runAuthBox("M_SYNC");
-    if (!res) return;
+    syncBtn.disabled = info.registered || info.isGuest;
+    syncBtn.classList.toggle("opacity-40", syncBtn.disabled);
 
-    // adapte les clés selon ton Pong (je mets des fallbacks)
-    const userId = (res as any).id || (res as any).userId || "";
-    const name = (res as any).userName || (res as any).name || "Player";
-    const avatarUrl = (res as any).avatarUrl || (res as any).avatar || "/imgs/avatar.png";
+    syncBtn.onclick = async () => {
+      const info = await runAuthBox("M_SYNC");
+      if (!info || !("userName" in info)) return;
 
-    this.snakeController.registerSyncedPlayer(pid, { userId, name, avatarUrl });
-    console.log(`Player ${pid} synced as ${name} (${userId})`);
-    this.snakeController.refreshOverlay();
-  };
+      const id = (info as any).id as string;
+      const userName = (info as any).userName as string;
+      const avatarUrl = ((info as any).avatarUrl as string) || "/imgs/avatar.png";
 
-  const guestBtn = el("button", "border border-black px-2 py-1 font-modern-type hover:bg-black hover:text-white text-sm") as HTMLButtonElement;
-  guestBtn.textContent = info.registered ? "Unregister" : "Guest";
+      this.snakeController.state.players[pid].profile = {
+        registered: true,
+        isGuest: false,
+        userId: id,
+        userName: userName,
+        avatarUrl: avatarUrl,
+      };
 
-  guestBtn.onclick = () => {
-    if (this.snakeController.getPlayerInfo(pid).registered) this.snakeController.unregisterPlayer(pid);
-    else this.snakeController.registerGuest(pid);
-    this.snakeController.refreshOverlay();
-  };
+      this.snakeController.refreshOverlay(); // re-render overlay + players
+    };
 
-  right.append(syncBtn, guestBtn);
+    const guestBtn = el("button", "btn-click text-xs px-2 py-1 h-[2rem]") as HTMLButtonElement;
+    guestBtn.textContent = "Guest";
 
-  row.append(left, right);
-  return row;
-}
+    guestBtn.disabled = info.registered || info.isGuest;
+    guestBtn.classList.toggle("opacity-40", guestBtn.disabled);
+
+    guestBtn.onclick = async () => {
+      const info = await runAuthBox("M_GUEST");
+      if (!info || !("userName" in info)) return;
+
+      const userName = (info as any).userName as string;
+
+      this.snakeController.state.players[pid].profile = {
+        registered: false,
+        isGuest: true,
+        userId: "",
+        userName: userName,
+        avatarUrl: "/imgs/avatar.png",
+      };
+      console.log("Guest registered:", this.snakeController.state.players[pid].profile);
+
+      this.snakeController.refreshOverlay();
+    };
+
+    const unregisterBtn = el("button", "btn-click text-xs px-2 py-1 h-[2rem] rounded-full bg-white border-black border-b-2 border-r-2 text-stone-600 hover:bg-stone-200") as HTMLButtonElement;
+    unregisterBtn.textContent = "Clear";
+
+    unregisterBtn.onclick = () => {
+      this.snakeController.unregisterPlayer(pid);
+      unregisterBtn.disabled = true;
+      unregisterBtn.classList.add("opacity-40");
+      this.snakeController.refreshOverlay();
+    };
+
+    right.append(syncBtn, guestBtn, unregisterBtn);
+
+    row.append(left, right);
+    return row;
+  }
 
   public bindHTMLElement(phase: SnakePhase): HTMLElement {
     switch (phase) {
@@ -76,7 +106,7 @@ private registerRow(pid: PlayerId): HTMLElement {
         reg.append(this.registerRow("p1"), this.registerRow("p2"));
 
         const actions = el("div", "flex gap-2 justify-center");
-        const start = el("button", `border border-black px-3 py-2 text-sm items-center ${this.snakeController.canStart() ? "hover:bg-black hover:text-white" : "opacity-40 cursor-not-allowed"}`) as HTMLButtonElement;
+        const start = el("button", `btn-click px-3 py-2 text-xl mix-blend-multiply items-center ${this.snakeController.canStart() ? "hover:bg-black hover:text-white" : "opacity-40 cursor-not-allowed"}`) as HTMLButtonElement;
         start.textContent = "START";
         start.disabled = !this.snakeController.canStart();
         start.onclick = () => this.snakeController.startGame();
