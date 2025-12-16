@@ -3,24 +3,18 @@ import { GameLoop }                      from "./core/loop";
 import { initState, initBoard, launchBall, initPlayersInfo } from "./game/state";
 import { update, type CardinalDirection }                    from "./game/update";
 import { render }                        from "./game/render";
-import type {
-    GamePhase,
-    GameState,
-    Controls,
-    PlayerInfo,
-    PlayerId,
-    PlayersStats, // 👈 ajouté
-} from "./game/types";
+import type { GamePhase, GameState,
+    Controls, PlayerInfo, PlayerId, MatchStats } from "./game/uiTypes";
+import type { ApiMatchStatsDTO, ApiFinishMatchDTO, ApiPlayedMatchDTO, ApiPlayerStatsDTO }         from "../tournament/apiTypes";
 import { domOverlayManager }             from "./ui/overlay";
 import { createGameGuards }              from "./ui/guards";
-import { setupCanvas }                   from "./core/canvas";
 import type { GameGuards }               from "./ui/guards";
 import { createPongStatsPanel }          from "./ui/terminal";
 import { createPlayersBox, resetPlayersCache } from "./ui/players";
-import type { Tournament }               from "../tournament/uiTypes";
-import type { ApiMatch } from "../tournament/apiTypes";
 import { finishMatch, createMatchWithStats }                    from "../utils/todb"
-import { liveStatsToMatchStats, playedMatchStatsToApi, fromMatchStatsToApiMatchStatsDTO, fromPlayerMatchStatsToApiPlayerStatsBase } from "../tournament/mapper";
+import { liveStatsToMatchStats, fromMatchStatsToApiMatchStatsDTO,
+    fromPlayerMatchStatsToApiPlayerStatsBase } from "../tournament/mapper";
+import { pongAlert }                    from "../utils/alertBox";
 
 // On implement carrement une classe en Typescript
 // Meme principes qu'en C, sauf que les methodes sont directement dans la classe
@@ -251,7 +245,10 @@ export class GameController {
 
     private stopRallyTime() {
         const now = performance.now();
-        const time = now - this.state.stats.rallyStartAt;
+        const rallyStart = this.state.stats.rallyStartAt;
+        if (rallyStart == null) return;
+        const time = now - rallyStart;
+
         this.state.stats.rallyDurationsMs.push(time);
         this.state.stats.rallyStartAt = undefined;
 
@@ -399,7 +396,7 @@ export class GameController {
     private async handleStats() {
         const stats: MatchStats = liveStatsToMatchStats(this.state.stats);
         const apiMatchStats: ApiMatchStatsDTO = fromMatchStatsToApiMatchStatsDTO(stats);
-        const tCode: string = this.state.stats.tournamentCode || undefined;
+        const tCode: string | undefined = this.state.stats.tournamentCode || undefined;
 
         const p1Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p1);
         const p2Base = fromPlayerMatchStatsToApiPlayerStatsBase(stats.p2);
@@ -410,8 +407,8 @@ export class GameController {
         if (this.state.p2.id) {
             p2Base.userId = this.state.p2.id;
         }
-        if (tCode) {
-            const matchId = this.state.stats.matchId;
+        if (tCode && this.state.matchId) {
+            const matchId = this.state.matchId;
             const payload: ApiFinishMatchDTO = {
                 matchStats: apiMatchStats,
                 p1Stats: p1Base,
@@ -435,7 +432,7 @@ export class GameController {
                 p2Stats: p2Base as ApiPlayerStatsDTO,
             }
             console.log("Payload CreateMatchWithStats :", payload);
-            const resp = await createMatchWithStats(payload);
+            await createMatchWithStats(payload);
         }
     }
 

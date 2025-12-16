@@ -1,4 +1,4 @@
-import { el, text } from "../home";
+import { el, } from "../home";
 
 // root (conteneur global)
 //  └─ sections                         rows-3

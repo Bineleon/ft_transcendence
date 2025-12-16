@@ -1,5 +1,5 @@
 // game/metrics.ts
-import type { GameState, Vec2 } from "./types";
+import type { GameState, Vec2 } from "./uiTypes";
 import type { CardinalDirection } from "./update";
 import { getBallCardinalPoints, getPaddleFacePoints } from "./geometry";
 
@@ -102,8 +102,8 @@ export function makeFrameSnapshot(state: GameState, t: number, rallyIndex: numbe
       },
     },
     score: {
-      p1: state.stats.p1Score,
-      p2: state.stats.p2Score,
+      p1: state.stats.p1.score,
+      p2: state.stats.p2.score,
     },
     rallyIndex,
   };

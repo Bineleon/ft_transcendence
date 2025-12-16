@@ -1,6 +1,4 @@
-import type { Tournament } from "../../tournament/uiTypes";
-import { getTournamentDatas } from "../../utils/todb";
-import type { GameState } from "./types";
+import type { GameState } from "./uiTypes";
 import type { CardinalDirection } from "./update";
 
 export function launchBall(state: GameState, dir: CardinalDirection, speed: number) {
@@ -40,8 +38,8 @@ export function initBoard(state: GameState) {
 }
 
 export function initPlayersInfo(state: GameState) {
-    state.p1 = { userName: "P1", avatarUrl: "" };
-    state.p2 = { userName: "P2", avatarUrl: "" };
+    state.p1 = { id: "", userName: "P1", avatarUrl: "" };
+    state.p2 = { id: "", userName: "P2", avatarUrl: "" };
 }
 
 export function initState(tCode?: string): GameState {
@@ -75,12 +73,12 @@ export function initState(tCode?: string): GameState {
         effects: 0,
         maxEffects: 0,
         maxBounces: 0,
-        maxBallSpeedWon: 0,
-        maxBallSpeedLost: 0,
         fastestWonRally: Infinity,
         fastestLostRally: Infinity,
-        ralliesWon: 0,
-        ralliesLost: 0,
+        maxBallSpeedWon: 0,
+        maxBallSpeedLost: 0,
+        paddleHits: 0,
+        currentWins: 0,
       },
       p2: {
         name: "P2",
@@ -89,12 +87,12 @@ export function initState(tCode?: string): GameState {
         effects: 0,
         maxEffects: 0,
         maxBounces: 0,
-        maxBallSpeedWon: 0,
-        maxBallSpeedLost: 0,
         fastestWonRally: Infinity,
         fastestLostRally: Infinity,
-        ralliesWon: 0,
-        ralliesLost: 0,
+        maxBallSpeedWon: 0,
+        maxBallSpeedLost: 0,
+        paddleHits: 0,
+        currentWins: 0,
       },
       lastScorer: undefined,
       currentBounces: 0,
@@ -110,7 +108,8 @@ export function initState(tCode?: string): GameState {
       matchRound: undefined,
       matchStatus: undefined,
     },
-    p1: { userName: "P1", avatarUrl: "" }, p2: { userName: "P2", avatarUrl: "" },
+    p1: { id: "", userName: "P1", avatarUrl: "" },
+    p2: { id: "", userName: "P2", avatarUrl: "" },
     tournamentCode: tCode,
   } as GameState;
 }

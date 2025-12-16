@@ -1,4 +1,4 @@
-import type { GamePhase, GameState }        from "../game/types";
+import type { GamePhase, GameState }        from "../game/uiTypes";
 import { el, text }                         from "../../home";
 import { GameController }                   from "../controller";
 import { pongAlert }                        from "../../utils/alertBox.ts"

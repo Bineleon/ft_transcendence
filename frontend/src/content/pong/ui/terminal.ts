@@ -1,7 +1,7 @@
 import { el, text } from "../../home";
-import type { GameState, PlayerId, Vec2 } from "../game/types";
+import type { GameState, PlayerId, Vec2 } from "../game/uiTypes";
 import { getDirectionFromVec, type CardinalDirection } from "../game/update";
-import { areBothPlayersReady, arePlayersRegistered, areBothPlayersRegistered, arePlayersReady } from "./players";
+import { areBothPlayersReady, areBothPlayersRegistered, } from "./players";
 
 function arrowFromDirection(dir: CardinalDirection): string {
   switch (dir) {

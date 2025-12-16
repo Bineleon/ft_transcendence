@@ -1,7 +1,5 @@
 import { el }         from "../../home";
-import type { Tournament } from "../../tournament/uiTypes";
-import type { PlayerId } from "../game/metrics";
-import type { PlayerInfo, GameViewHooks } from "../game/types";
+import type { GameViewHooks } from "../game/uiTypes";
 
 //// Structure DOM minimale (fini les “multi-boîtes”)
 //  root (grid 2 colonnes, 1 colonne sur fenetre etroite)

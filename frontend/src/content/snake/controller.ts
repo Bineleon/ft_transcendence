@@ -1,213 +1,320 @@
 import type { SnakeViewWindow } from "./ui/view";
-import type { SnakeState, Controls, SnakePhase } from "./game/types";
+import type {
+  GameState,
+  PlayerId,
+  PlayerState,
+  Direction,
+  SnakePhase,
+  Controls,
+  Edible,
+} from "./game/uiTypes";
+
+import { createControls } from "./ui/guards";
+import { initState, initBoard } from "./game/state";
 import { domOverlayManager } from "./ui/overlay";
-import { GameLoop } from "../pong/core/loop";
-import { resizeSnake, COLS, ROWS, TILE } from "./core/canvas";
-import { randomLetter } from "./game/utils";
-import { stepSnake } from "./core/logic";
+
+import { startLoop as startTickLoop, stopLoop as stopTickLoop } from "./core/loop";
+
+import * as GUpdate from "./game/update";
+import * as Edibles from "./game/edibles";
+import * as Crossword from "./game/crossword";
+import * as Draw from "./game/draw";
+
+type PlayerInfo = { registered: boolean; name: string };
 
 export class SnakeController {
-    public view: SnakeViewWindow;
-    public contexts: CanvasRenderingContext2D[]; // ✅ 2 contexts
-    public state: SnakeState;
-    public overlay: domOverlayManager;
-    private loopCtrl: { stop: () => void } | null = null;
-    public snakeControls: Controls = {
-        up:    { code: "ArrowUp",    down: false },
-        down:  { code: "ArrowDown",  down: false },
-        left:  { code: "ArrowLeft",  down: false },
-        right: { code: "ArrowRight", down: false },
-        pause: { code: "Space",      down: false },
-        escape:{ code: "Escape",     down: false }
+  public view: SnakeViewWindow;
+  public state: GameState;
+  public overlay: domOverlayManager;
+  public controls: Controls;
+
+  // mots actifs par joueur (2 normal, 1 fin)
+  public activeWordIds: Record<PlayerId, string[]> = { p1: [], p2: [] };
+
+  private loopId: number | null = null;
+  private framesPerMove = 12;
+  private frameCounter = 0;
+
+  private playersInfo: Record<PlayerId, PlayerInfo> = {
+    p1: { registered: false, name: "" },
+    p2: { registered: false, name: "" },
+  };
+
+  constructor(
+    view: SnakeViewWindow,
+    wordDefs: { id: string; solution: string; cells: { x: number; y: number }[] }[]
+  ) {
+    this.view = view;
+    this.state = initState(wordDefs);
+
+    this.controls = createControls();
+    this.overlay = new domOverlayManager(this);
+
+    initBoard(this.state);
+  }
+
+  // =========================
+  //         LIFECYCLE
+  // =========================
+
+  public boot(): void {
+    this.setPhase("START");
+  }
+
+  public setPhase(phase: SnakePhase): void {
+    this.state.phase = phase;
+    this.refreshOverlay();
+
+    if (phase === "PLAYING") {
+      this.wireControls();
+      this.startLoop();
+    } else {
+      this.unwireControls();
+      this.stopLoop();
+    }
+  }
+
+  public startGame(): void {
+    initBoard(this.state);
+    // Remettre le compteur de frames à zéro
+    this.frameCounter = 0;
+    this.state.tick = 0;
+    this.setPhase("PLAYING");
+  }
+
+  public restartGame(): void {
+    initBoard(this.state);
+    this.frameCounter = 0;
+    this.state.tick = 0;
+    this.setPhase("PLAYING");
+  }
+
+  public tick(): void {
+    if (this.state.phase !== "PLAYING") return;
+
+    this.applyDirectionsFromControls();
+
+    this.frameCounter++;
+    if (this.frameCounter >= this.framesPerMove) {
+      this.frameCounter = 0;
+      this.state.tick += 1;
+
+      GUpdate.updateBothPlayers(this);
+
+      this.spawnEdiblesIfNeeded();
+      this.refreshWordCompletion("p1");
+      this.refreshWordCompletion("p2");
+      this.checkEndConditions();
+    }
+
+    this.render();
+  }
+
+  public startLoop(): void {
+    if (this.loopId != null) return;
+    startTickLoop(this, 30);
+    this.loopId = 1; // simple flag
+  }
+
+  public stopLoop(): void {
+    if (this.loopId == null) return;
+    stopTickLoop(this);
+    this.loopId = null;
+  }
+
+  // =========================
+  //        PLAYERS INFO
+  // =========================
+
+  public getPlayerInfo(pid: PlayerId) {
+    const p = this.state.players[pid];
+    const pr = p.profile;
+    return {
+      registered: !!pr?.registered,
+      name: pr?.userName || "",
+      avatarUrl: pr?.avatarUrl || "",
+      isGuest: !!pr?.isGuest,
     };
+  }
 
-    constructor(opts: { view: SnakeViewWindow }) {
-        this.view = opts.view;
-
-        this.contexts = [
-            opts.view.canvasP1.getContext("2d")!,
-            opts.view.canvasP2.getContext("2d")!,
-        ];
-
-        const startX = Math.floor(COLS / 2);
-        const startY = Math.floor(ROWS / 2);
-        this.state = {
-            world: { w: COLS, h: ROWS },
-            snake: [
-                { x: startX,     y: startY,     letter: "S" },
-                { x: startX - 1, y: startY,     letter: "N" },
-                { x: startX - 2, y: startY,     letter: "A" },
-            ],
-            dir: { x: 1, y: 0 },
-            eatable: { x: 5, y: 5, letter: randomLetter(), },
-            phase: "START"
-        };
-        this.overlay = new domOverlayManager(this);
-        
-        window.addEventListener("resize", () => {
-            resizeSnake(this.view.canvas, this.view.main, this.state);
-            this.draw();
-        });
-    }
-
-    private resizeAll() {
-        // On resize chaque canvas par rapport à son frame carré
-        resizeSnake(this.view.canvasP1, this.view.frameTL as any, this.state);
-        resizeSnake(this.view.canvasP2, this.view.frameBR as any, this.state);
-    }
-
-    private onKeyDown = (e: KeyboardEvent) => {
-        const { code } = e;
-        const c = this.snakeControls;
-
-        if (e.key === c.up.code)    c.up.down = true;
-        if (e.key === c.down.code)  c.down.down = true;
-        if (e.key === c.left.code)  c.left.down = true;
-        if (e.key === c.right.code) c.right.down = true;
-        if (code === c.pause.code)  c.pause.down = true;
-        if (code === c.escape.code) c.escape.down = true;
-
-        if (c.up.down && this.state.dir.y !== 1) this.state.dir = { x: 0, y: -1 };
-        if (c.down.down && this.state.dir.y !== -1) this.state.dir = { x: 0, y: 1 };
-        if (c.left.down && this.state.dir.x !== 1) this.state.dir = { x: -1, y: 0 };
-        if (c.right.down && this.state.dir.x !== -1) this.state.dir = { x: 1, y: 0 };
-
-        switch (this.state.phase) {
-            case "PLAYING":
-                if (code === c.pause.code || code === c.escape.code) {
-                    this.setPhase("PAUSED");
-                }
-                break;
-            case "PAUSED":
-                if (code === c.pause.code) {
-                    this.setPhase("PLAYING");
-                }
-                break;
-        }
+  public registerGuest(pid: PlayerId): void {
+    const p = this.state.players[pid];
+    p.profile = {
+      registered: true,
+      isGuest: true,
+      userId: "guest",
+      userName: "Guest",
+      avatarUrl: "/imgs/avatar.png",
     };
+  }
 
-    private onKeyUp = (e: KeyboardEvent) => {
-        const { code } = e;
-        const c = this.snakeControls;
-
-        if (code === c.up.code)    c.up.down = false;
-        if (code === c.down.code)  c.down.down = false;
-        if (code === c.left.code)  c.left.down = false;
-        if (code === c.right.code) c.right.down = false;
-        if (code === c.pause.code) c.pause.down = false;
-        if (code === c.escape.code)c.escape.down = false;
+  public unregisterPlayer(pid: PlayerId): void {
+    const p = this.state.players[pid];
+    p.profile = {
+      registered: false,
+      isGuest: false,
+      userId: "",
+      userName: "",
+      avatarUrl: "/imgs/avatar.png",
     };
+  }
 
-    private clearKeys() {
-        for (const k in this.snakeControls) (this.snakeControls as any)[k].down = false;
+  public registerSyncedPlayer(pid: PlayerId, payload: { userId: string; name: string; avatarUrl: string }): void {
+    const p = this.state.players[pid];
+    p.profile = {
+      registered: true,
+      isGuest: false,
+      userId: payload.userId,
+      userName: payload.name,
+      avatarUrl: payload.avatarUrl || "/imgs/avatar.png",
+    };
+  }
+
+  public canStart(): boolean {
+    return this.getPlayerInfo("p1").registered && this.getPlayerInfo("p2").registered;
+  }
+
+  private updatePlayersBox(): void {
+    const p1 = this.getPlayerInfo("p1").registered ? (this.getPlayerInfo("p1").name || "Invité") : "—";
+    const p2 = this.getPlayerInfo("p2").registered ? (this.getPlayerInfo("p2").name || "Invité") : "—";
+    this.view.playersBox.textContent = `P1: ${p1}   P2: ${p2}`;
+  }
+
+  public refreshOverlay(): void {
+    this.view.overlayBox.replaceChildren(this.overlay.bindHTMLElement(this.state.phase));
+    this.updatePlayersBox();
+  }
+
+  // =========================
+  //        GAME LOGIC
+  // =========================
+
+  public updatePlayer(pid: PlayerId): void {
+    const res = GUpdate.updatePlayer(this, pid);
+    if (res === "DEAD") this.onPlayerDeath(pid);
+  }
+
+  public onPlayerDeath(pid: PlayerId): void {
+    const p = this.state.players[pid];
+    p.lives = Math.max(0, p.lives - 1);
+
+    if (p.lives > 0) {
+      // respawn court, simple
+      GUpdate.respawnPlayer(this, pid, 25);
+      return;
     }
+    this.setPhase("GAMEOVER");
+  }
 
-    private wireControls() {
-        window.addEventListener("keydown", this.onKeyDown);
-        window.addEventListener("keyup", this.onKeyUp);
+  public onEatEdible(pid: PlayerId, edible: Edible): void {
+    Crossword.collectEdible(this.state, pid, edible);
+    this.state.players[pid].score += 10;
+    Crossword.updateWordCompletion(this.state, edible.wordId, pid);
+  }
+
+  public refreshWordCompletion(pid: PlayerId): void {
+    for (const wid of this.activeWordIds[pid]) {
+      Crossword.updateWordCompletion(this.state, wid, pid);
     }
+  }
 
-    private unwireControls() {
-        window.removeEventListener("keydown", this.onKeyDown);
-        window.removeEventListener("keyup", this.onKeyUp);
+  public spawnEdiblesIfNeeded(): void {
+    Edibles.spawnEdiblesIfNeeded(this);
+  }
+
+  public isOccupiedLocal(p: PlayerState, x: number, y: number): boolean {
+    for (const s of p.snake.segments) if (s.x === x && s.y === y) return true;
+    for (const e of p.edibles) if (e.x === x && e.y === y) return true;
+    return false;
+  }
+
+  public checkEndConditions(): void {
+    if (this.state.crossword.remainingWords <= 0) {
+      this.setPhase("GAMEOVER");
+      return;
     }
-
-    public setPhase(phase: SnakePhase) {
-        this.state.phase = phase;
-        
-        switch (phase) {
-            case "START":
-                this.view.overlay.replaceChildren(this.overlay.bindHTMLElement(phase));
-                this.unwireControls();
-                break;
-            case "PLAYING":
-                this.resizeAll();
-                this.wireControls();
-                this.startGame();
-                this.view.overlay.replaceChildren(this.overlay.bindHTMLElement(phase));
-                break;
-            case "PAUSED":
-                this.pauseGame();
-                this.view.overlay.replaceChildren(this.overlay.bindHTMLElement(phase));
-                break;
-            case "GAMEOVER":
-                this.view.overlay.replaceChildren(this.overlay.bindHTMLElement(phase));
-                this.unwireControls();
-                this.resetGame();
-                break;
-        }
+    if (this.state.players.p1.lives <= 0 || this.state.players.p2.lives <= 0) {
+      this.setPhase("GAMEOVER");
     }
+  }
 
-    private draw() {
-        const { snake, eatable, world } = this.state;
+  public render(): void {
+    Draw.renderAll(this);
+  }
 
-        for (const ctx of this.contexts) {
-            ctx.fillStyle = "transparent";
-            ctx.clearRect(0, 0, world.w * TILE, world.h * TILE);
+  // =========================
+  //    CONTROLS (pour guards)
+  // =========================
 
-            // (optionnel) fond du canvas: transparent pour voir le papier
-            // si tu veux un fond blanc dans les frames, garde fillRect en blanc.
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, world.w * TILE, world.h * TILE);
+  public wireControls(): void {
+    window.addEventListener("keydown", this.onKeyDown, { passive: false });
+    window.addEventListener("keyup", this.onKeyUp, { passive: false });
+  }
 
-            // draw eatable
-            ctx.fillStyle = "gray";
-            ctx.font = `${TILE}px monospace`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(
-                eatable.letter,
-                (eatable.x + 0.5) * TILE,
-                (eatable.y + 0.5) * TILE
-            );
+  public unwireControls(): void {
+    window.removeEventListener("keydown", this.onKeyDown as any);
+    window.removeEventListener("keyup", this.onKeyUp as any);
+  }
 
-            // snake
-            ctx.fillStyle = "black";
-            for (const seg of snake) {
-                ctx.fillText(seg.letter, (seg.x + 0.5) * TILE, (seg.y + 0.5) * TILE);
-            }
-        }
+  private onKeyDown = (e: KeyboardEvent): void => {
+    // block scroll on arrows/space
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
+
+    const keys = Object.values(this.controls);
+    for (const k of keys) if (k.code === e.code) k.down = true;
+
+    // pause toggle (sur press)
+    if (e.code === this.controls.pause.code) {
+      if (this.state.phase === "PLAYING") this.setPhase("PAUSED");
+      else if (this.state.phase === "PAUSED") this.setPhase("PLAYING");
     }
+  };
 
-    private startGame() {
-        if (this.loopCtrl) return;
+  private onKeyUp = (e: KeyboardEvent): void => {
+    const keys = Object.values(this.controls);
+    for (const k of keys) if (k.code === e.code) k.down = false;
+  };
 
-        this.loopCtrl = GameLoop(
-            (_dt: number) => {
-                if (this.state.phase === "PLAYING") {
-                stepSnake(this); // 1 case par tick
-                }
-            },
-            (_alpha: number) => {
-                this.draw();
-            },
-            2,
-        );
-    }
+  public enableArrowGuard(e: KeyboardEvent): void {
+    // garde simple, déjà géré par preventDefault plus haut
+    void e;
+  }
+  public disableArrowGuard(): void {}
 
-    private pauseGame() {
-        if (this.loopCtrl) {
-            this.loopCtrl.stop();
-            this.loopCtrl = null;
-        }
-    }
+  public applyDirectionsFromControls(): void {
+    const p1 = this.state.players.p1.snake;
+    const p2 = this.state.players.p2.snake;
 
-    private resetGame() {
-        if (this.loopCtrl) {
-            this.loopCtrl.stop();
-            this.loopCtrl = null;
-        }
-        this.state.snake = [
-            { x: Math.floor(COLS / 2), y: Math.floor(ROWS / 2), letter: "S" },
-            { x: Math.floor(COLS / 2) - 1, y: Math.floor(ROWS / 2), letter: "N" },
-            { x: Math.floor(COLS / 2) - 2, y: Math.floor(ROWS / 2), letter: "A" },
-        ];
-        this.state.dir = { x: 1, y: 0 };
-        this.state.eatable = { x: 5, y: 5, letter: randomLetter() };
-        this.clearKeys();
-    }
+    const d1 = this.pickDirFrom4(
+      this.controls.p1Up.down,
+      this.controls.p1Down.down,
+      this.controls.p1Left.down,
+      this.controls.p1Right.down
+    );
+    const d2 = this.pickDirFrom4(
+      this.controls.p2Up.down,
+      this.controls.p2Down.down,
+      this.controls.p2Left.down,
+      this.controls.p2Right.down
+    );
 
-    public boot() {
-        this.setPhase("START");
-    }
+    if (d1) p1.nextDirection = preventUTurn(p1.direction, d1);
+    if (d2) p2.nextDirection = preventUTurn(p2.direction, d2);
+  }
+
+  public pickDirFrom4(up: boolean, down: boolean, left: boolean, right: boolean): Direction | null {
+    if (up) return "UP";
+    if (down) return "DOWN";
+    if (left) return "LEFT";
+    if (right) return "RIGHT";
+    return null;
+  }
+}
+
+function preventUTurn(cur: Direction, next: Direction): Direction {
+  if (cur === "UP" && next === "DOWN") return cur;
+  if (cur === "DOWN" && next === "UP") return cur;
+  if (cur === "LEFT" && next === "RIGHT") return cur;
+  if (cur === "RIGHT" && next === "LEFT") return cur;
+  return next;
 }

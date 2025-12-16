@@ -1,6 +1,6 @@
-import { el, text } from "../home";
-import type { PlayerInfo } from "../pong/game/types";
-import { addUserAsPlayerToTournament, getLoggedName, getUserDatas } from "./todb";
+import { el } from "../home";
+import type { PlayerInfo } from "../pong/game/uiTypes";
+import { addUserAsPlayerToTournament, getUserDatas } from "./todb";
 import type { Tournament } from "../tournament/uiTypes";
 import { apiFetch } from "./apiFetch";
 
@@ -13,19 +13,27 @@ export const closeOverlay = (overlay: HTMLDivElement) => {
 export async function matchAlert(mode: "sync" | "guest"): Promise<PlayerInfo | null> {
     if (mode === "guest") {
         const res = await runAuthBox("M_GUEST");
-        if (res.kind === "guest") {
-            return { userName: res.userName, avatarUrl: "/imgs/avatar.png" };
+        if (res && res.kind === "guest") {
+            // guard with 'in' so TS sait que userName est présent, fallback to nested shapes
+            const userName =
+                ("userName" in res && typeof (res as any).userName === "string")
+                    ? (res as any).userName
+                    : (res as any).user?.username ?? (res as any).user?.userName;
+            if (userName) return { userName, avatarUrl: "/imgs/avatar.png" };
         }
         return null;
     }
 
     const res = await runAuthBox("M_SYNC");
-    if (res.kind === "logged") {
-        return { userName: res.userName, avatarUrl: res.avatarUrl };
+    if (res && res.kind === "logged") {
+        const userName =
+            ("userName" in res && typeof (res as any).userName === "string")
+                ? (res as any).userName
+                : (res as any).user?.username ?? (res as any).user?.userName;
+        if (userName) return { userName };
     }
     return null;
 }
-
 // ---------------------------------------------------- //
 //              Simple PONG ALERT                       //
 // ---------------------------------------------------- //

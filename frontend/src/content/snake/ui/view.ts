@@ -1,66 +1,109 @@
-import { el } from "../../home";
-import { createSnakeCanvas } from "../core/canvas";
-import { LAYOUT } from "./layoutMap";
+import { el, text } from "../../home";
 
-export interface SnakeViewWindow {
+export type SnakeViewWindow = {
   main: HTMLElement;
+  leftPanel: HTMLDivElement;
+  gameContainer: HTMLDivElement;
+  canvasWorld: HTMLCanvasElement;
   frameP1: HTMLDivElement;
-  frameP2: HTMLDivElement;
   canvasP1: HTMLCanvasElement;
+  frameP2: HTMLDivElement;
   canvasP2: HTMLCanvasElement;
-  overlay: HTMLElement;
+  playersBox: HTMLDivElement;
+  overlayRoot: HTMLDivElement;
+  overlayBox: HTMLDivElement;
+};
+
+const WORLD_COLS = 34;
+const WORLD_ROWS = 24;
+
+const P1 = { x: 1, y: 1, w: 10, h: 10 };
+const P2 = { x: 23, y: 13, w: 10, h: 10 };
+
+function slotFromGrid(b: { x: number; y: number; w: number; h: number }): string {
+  return `col-start-${b.x + 1} col-end-${b.x + b.w + 1} row-start-${b.y + 1} row-end-${b.y + b.h + 1}`;
 }
 
 export function createSnakeView(): SnakeViewWindow {
-const main = el("div", "relative w-full max-w-[1100px] mx-auto overflow-hidden mix-blend-multiply");
-(main as HTMLDivElement).style.aspectRatio = "1536 / 1024";
+  const main = el("div", "w-full h-full p-4 flex gap-4");
 
-  // ✅ Background image (ton background.png)
-  // Mets le fichier dans /public/imgs/background.png par ex.
-  main.classList.add(
-    "bg-[url('/imgs/snake/layout.png')]",
-    "bg-cover",          // ou bg-contain si tu veux absolument zéro crop
-    "bg-center",
-    "bg-no-repeat"
+
+  /// LES RGLES DU JEU ///
+  const leftPanel = el("div", "w-[320px] shrink-0 border border-black p-3", el("h2", "font-bold mb-2"),
+    el("div", "text-sm leading-tight")) as HTMLDivElement;
+  const leftPanelContent = el("div", "flex flex-col gap-4");
+  const snakeTitle = el("h3", "font-lapresse text-4xl text-center", text("CrossWord Snake"));
+  const subTitle = el("div", "font-vintage text-xl italic", text("How to Play"));
+  const instructions = el(
+    "ul",
+    "list-disc list-inside article-xs",
+    el("li", "", text(
+      "Goal: Complete the crossword before your opponent, or make them lose all 3 lives."
+    )),
+    el("li", "", text(
+      "Controls: Player 1 uses W/A/S/D. Player 2 uses arrow keys. No U-turns allowed. Space pauses the game."
+    )),
+    el("li", "", text(
+      "Lives: Each player starts with 3 lives. Hitting your own body costs 1 life. The opponent’s snake is harmless."
+    )),
+    el("li", "", text(
+      "Playfield: Each player moves inside their own 10×10 area within a shared 34×24 grid. Letters spawn only in your area."
+    )),
+    el("li", "", text(
+      "Crossword: Eating a letter fills a shared crossword cell. Completing a word locks it in your color (P1: white on black, P2: black on white)."
+    )),
+    el("li", "", text(
+      "Game flow: START → PLAYING → PAUSED → GAME OVER. Win by finishing the crossword or eliminating your opponent."
+    ))
   );
+  leftPanelContent.append(snakeTitle, subTitle, instructions);
+  leftPanel.append(leftPanelContent);
 
-  // slots (cadres)
-  const frameP1 = slotDiv(LAYOUT.topLeft);
-  const frameP2 = slotDiv(LAYOUT.botRight);
+  const gameContainer = el("div", "relative flex-1 border border-black p-2") as HTMLDivElement;
 
-  // canvases
-  const canvasP1 = createSnakeCanvas();
-  canvasP1.className = "absolute inset-0 w-full h-full";
-  frameP1.appendChild(canvasP1);
+  const ratio = el("div", "relative w-full") as HTMLDivElement;
+  ratio.style.aspectRatio = `${WORLD_COLS} / ${WORLD_ROWS}`;
+  const layout = el("img", "absolute inset-0 w-full h-full pointer-events-none mix-blend-multiply") as HTMLImageElement;
+  layout.src = "/snake/Layout.png";
+  layout.alt = "layout";
+  layout.style.objectFit = "fill";
+  layout.style.opacity = "1"; // ajuste si besoin
+  ratio.append(layout);
 
-  const canvasP2 = createSnakeCanvas();
-  canvasP2.className = "absolute inset-0 w-full h-full";
-  frameP2.appendChild(canvasP2);
+  const grid = el("div", "absolute inset-0 grid") as HTMLDivElement;
+  grid.style.gridTemplateColumns = `repeat(${WORLD_COLS}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${WORLD_ROWS}, 1fr)`;
 
-  // overlay global
-  const overlayRoot = el("div", "absolute inset-0 grid place-items-center pointer-events-none");
-  const overlayBox = el("div", "pointer-events-auto");
-  overlayRoot.appendChild(overlayBox);
+  const canvasWorld = el("canvas", "absolute inset-0 w-full h-full mix-blend-multiply") as HTMLCanvasElement;
+  const canvasP1 = el("canvas", "absolute inset-0 w-full h-full mix-blend-multiply") as HTMLCanvasElement;
+  const canvasP2 = el("canvas", "absolute inset-0 w-full h-full mix-blend-multiply") as HTMLCanvasElement;
 
-  // assemble
-  main.append(frameP1, frameP2, overlayRoot);
+  const frameP1 = el("div", `relative ${slotFromGrid(P1)} pointer-events-none`) as HTMLDivElement;
+  const frameP2 = el("div", `relative ${slotFromGrid(P2)} pointer-events-none`) as HTMLDivElement;
 
-  return { main, frameP1, frameP2, canvasP1, canvasP2, overlay: overlayBox };
-}
+  const overlayRoot = el("div", "absolute inset-0 pointer-events-none") as HTMLDivElement;
+  const overlayBox = el("div", "absolute inset-0 flex items-center justify-center pointer-events-auto") as HTMLDivElement;
+  overlayRoot.append(overlayBox);
 
-function slotDiv(b: { x:number; y:number; w:number; h:number }): HTMLDivElement {
-  const d = document.createElement("div");
-  d.className = "absolute";
-  d.style.left = `${b.x * 100}%`;
-  d.style.top  = `${b.y * 100}%`;
-  d.style.width  = `${b.w * 100}%`;
-  d.style.height = `${b.h * 100}%`;
+  const playersBox = el("div", "absolute bottom-2 left-2 text-xs bg-white/80 border border-black px-2 py-1") as HTMLDivElement;
+  playersBox.textContent = "P1: —   P2: —";
 
-  // Optionnel: si tu veux “bloquer” le slot en carré exact
-  // d.classList.add("aspect-square");
+  ratio.append(grid, canvasWorld, canvasP1, canvasP2, overlayRoot, playersBox, frameP1, frameP2);
+  gameContainer.append(ratio);
 
-  // Optionnel: debug (à enlever ensuite)
-  // d.classList.add("ouP1ine", "ouP1ine-1", "ouP1ine-red-500/50");
+  main.append(leftPanel, gameContainer);
 
-  return d;
+  return {
+    main,
+    leftPanel,
+    gameContainer,
+    canvasWorld,
+    frameP1,
+    canvasP1,
+    frameP2,
+    canvasP2,
+    playersBox,
+    overlayRoot,
+    overlayBox,
+  };
 }

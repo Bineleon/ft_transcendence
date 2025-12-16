@@ -41,8 +41,8 @@ export interface MatchUser {
 
 export interface Match {
     matchId: string;
-    round: number | null;
-    tournamentId: string | null;
+    round: number | undefined;
+    tournamentId: string | undefined;
     p1User: MatchUser | null;
     p2User: MatchUser | null;
     status: MatchStatus;

@@ -1,5 +1,5 @@
 // game/render.ts
-import type { GameState } from "./types";
+import type { GameState } from "./uiTypes";
 
 export function render(context: CanvasRenderingContext2D, s: GameState, alpha: number) {
   void alpha;

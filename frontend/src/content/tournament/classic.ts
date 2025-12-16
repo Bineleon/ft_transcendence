@@ -3,7 +3,6 @@ import { el, text } from "../home";
 import { pongAlert, runAuthBox} from "../utils/alertBox";
 import { addUserAsPlayerToTournament, getLoggedName, getTournamentDatas } from "../utils/todb";
 import type { Tournament } from "./uiTypes";
-import { tournamentFromApi } from "./mapper";
 import { renderTournamentBrackets } from "./brackets";
 import { apiFetch } from "../utils/apiFetch";
 
