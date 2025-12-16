@@ -1,5 +1,6 @@
 import { pongAlert } from "../utils/alertBox.ts";
 import { apiFetch } from "../utils/apiFetch.ts";
+import { loadProfileDashboardSections } from "./dashboard.ts";
 
 // Maximum size for avatar uploads (2 MB)
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
@@ -429,7 +430,11 @@ export function setupOtherMode(
     picture: HTMLImageElement,
     hoverOverlay: HTMLElement,
     friendsContainer: HTMLElement,
-    editBox: HTMLElement
+    editBox: HTMLElement,
+	last7days : HTMLElement,
+    lastScores : HTMLElement,
+    last3Matches : HTMLElement,
+    snakeStats : HTMLElement
 ): void {
     // Disable avatar editing
     picture.style.pointerEvents = "none";
@@ -465,6 +470,7 @@ export function setupOtherMode(
                 pongAlert("Network error.", "error");
             }
         };
+		loadProfileDashboardSections(last7days, lastScores, last3Matches, snakeStats);
         friendsContainer.append(addFriendBtn);
     }
 }
