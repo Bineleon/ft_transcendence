@@ -1,8 +1,7 @@
 import { el, text } from "../home.ts";
 import { makeP, injectWrapBox } from "../utils/editing.ts";
 import { pongAlert, runAuthBox } from "../utils/alertBox.ts";
-import { createDBTournament, getLoggedID, notLoggedIn, getTournamentDatas, getUserDatas, addUserAsPlayerToTournament, getLoggedName } from "../utils/todb.ts";
-import type { Tournament } from "./uiTypes.ts";
+import { createDBTournament, notLoggedIn, getLoggedName } from "../utils/todb.ts";
 
 
 export type tournamentMode = "KING" | "CLASSIC" | "GAUNTLET";
@@ -337,32 +336,41 @@ function buildTournamentForm(subscriptionSection: HTMLElement): void {
     submitButton,
   };
 
-  setTournamentMode("KING");
+  setTournamentMode("CLASSIC");
   setupKingTimeSelector();
   setupKingRoundsSelector();
 }
 
-export function TournamentForm(subscriptionSection: HTMLElement) : void {
-    const modes: { label: string; value: tournamentMode }[] = [
-        { label: "King", value: "KING" },
-        { label: "Classic", value: "CLASSIC" },
-        { label: "Gauntlet", value: "GAUNTLET" },
-    ];
+export function TournamentForm(subscriptionSection: HTMLElement): void {
+  const modes: { label: string; value: tournamentMode }[] = [
+    { label: "King", value: "KING" },
+    { label: "Classic", value: "CLASSIC" },
+    { label: "Gauntlet", value: "GAUNTLET" },
+  ];
 
-    const buttons: HTMLButtonElement[] = modes.map(mode => {
-        const button = el("button", "btn-tournament m-2 mt-8");
-        button.append(text(mode.label));
-        button.type = "button";
-        button.dataset.mode = mode.value;
+  const buttons: HTMLButtonElement[] = modes.map(mode => {
+    const isEnabled = mode.value === "CLASSIC";
 
-        button.addEventListener("click", () => {
-            setTournamentMode(mode.value);
-        });
-        
-        return button;
-    });
+    const button = el(
+      "button",
+      `btn-tournament m-2 mt-8 ${!isEnabled ? "opacity-40 cursor-not-allowed" : ""}`
+    );
 
-    subscriptionSection.append(...buttons);
+    button.append(text(mode.label));
+    button.type = "button";
+    button.dataset.mode = mode.value;
+    button.disabled = !isEnabled;
+
+    if (isEnabled) {
+      button.addEventListener("click", () => {
+        setTournamentMode(mode.value);
+      });
+    }
+
+    return button;
+  });
+
+  subscriptionSection.append(...buttons);
 }
 
 export function setTournamentMode(mode: tournamentMode): void {
@@ -414,7 +422,12 @@ export function ChoseTournament(): HTMLElement {
     boxKids.append(photo);
 
     // 2) Top Player
-    const best = el("div", "mix-blend-multiply relative grid grid-cols-3 gap-6 mb-6 items-center justify-items-center text-center");
+    const tCodeBox = el("div", "mix-blend-multiply relative grid grid-cols-3 gap-6 mb-6 items-center justify-items-center text-center");
+    const picBox = el("div", "img-newspaper flex items-center justify-center");
+    const creators = el("img", "");
+    creators.src = "/imgs/creators.jpg";
+    picBox.append(creators);
+
     const bestPlayer = el("div", "whitespace-pre-line font-jmh");
     bestPlayer.append(text(`Best Tournament Player is :
 
@@ -446,8 +459,8 @@ export function ChoseTournament(): HTMLElement {
 
     tournamentCode.append(inputAndBtn);
     
-    best.append(profilePic, bestPlayer, cupIcon);
-    header.append(boxKids, best, tournamentCode);
+    tCodeBox.append(profilePic, tournamentCode, cupIcon);
+    header.append(boxKids, tCodeBox, picBox);
 
 /********* SPACER *********/
     const spacer = el("div", "w-full border-b bg-black");

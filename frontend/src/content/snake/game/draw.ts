@@ -58,7 +58,7 @@ function renderWorld(ctrl: SnakeController): void {
   }
 
   // ghosts (mots actifs)
-  ctx.font = `${Math.floor(Math.min(cellW, cellH) * 0.55)}px serif`;
+  ctx.font = `${Math.floor(Math.min(cellW, cellH) * 0.55)}px Modern_Type`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "rgba(0,0,0,0.25)";
@@ -121,19 +121,44 @@ function renderPlayer(ctrl: SnakeController, pid: PlayerId): void {
   ctx.fillStyle = pid === "p1" ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.03)";
   ctx.fillRect(zx, zy, zw, zh);
 
-  ctx.font = `${Math.floor(Math.min(cellW, cellH) * 0.65)}px monospace`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   // edibles
   ctx.fillStyle = "black";
   for (const e of p.edibles) {
+    ctx.font = `${Math.floor(Math.min(cellW, cellH) * 0.75)}px Modern_Type`;
     ctx.fillText(e.displayChar, (zone.x + e.x + 0.5) * cellW, (zone.y + e.y + 0.5) * cellH);
   }
 
   // snake
-  ctx.fillStyle = "black";
-  for (const seg of p.snake.segments) {
-    ctx.fillText(seg.char, (zone.x + seg.x + 0.5) * cellW, (zone.y + seg.y + 0.5) * cellH);
-  }
+    ctx.fillStyle = "black";
+    const segments = p.snake.segments;
+    const lastIndex = Math.max(0, segments.length - 1);
+    ctx.font = `${Math.floor(Math.min(cellW, cellH) * 1)}px Omegle`;
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      const x = (zone.x + seg.x) * cellW;
+      const y = (zone.y + seg.y) * cellH;
+      const isHead = i === 0;
+      const isTail = i === lastIndex;
+
+      // La tete plus sombre
+      ctx.fillStyle = isHead
+        ? "rgba(0,0,0,0.12)"
+        : "rgba(0,0,0,0.06)";
+      ctx.fillStyle = isTail
+        ? "rgba(0,0,0,0.02)"
+        : "rgba(0,0,0,0.06)";
+      ctx.fillRect(x, y, cellW, cellH);
+
+      // lettre
+      ctx.fillStyle = "black";
+      ctx.fillText(seg.char, x + cellW * 0.5, y + cellH * 0.5);
+
+      // bordure façon impression
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+    }
 }

@@ -32,9 +32,9 @@ export function Credits(): HTMLElement {
   // Header
   const header = el("header", `mb-6 p-4`);
   const h1 = el("h1", `font-lapresse text-6xl tracking-wide text-center md:text-7xl leading-tight underline decoration-4`);
-  h1.append(text(`CREDITS — THE CREW BEHIND THE MACHINE`));
+  h1.append(text(`THE CREW BEHIND THE MACHINE`));
 
-  const sub = el("p", `article-base mt-3`);
+  const sub = el("p", `article-base mt-3 text-center`);
   sub.append(
     text(
       `Four career-changers from the Nov 2023 intake. Two months in. Built for our three evaluators — and yes, we really hope you like it.`

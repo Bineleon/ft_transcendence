@@ -77,7 +77,7 @@ function spacer(char: string): HTMLElement {
     return span;
 }
 
-function techList(title: string, contents: string): HTMLElement {
+export function techList(title: string, contents: string): HTMLElement {
     const section = el("section", "space-y-2");
     const secTitle = el("h3", `font-arcade-narrow text-sm xxl:text-lg uppercase -ml-1`, text(title));
     const secContent = el("p", "font-ocean-type text-sm xxl:text-lg", text(contents));
