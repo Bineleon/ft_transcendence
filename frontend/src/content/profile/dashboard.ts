@@ -174,51 +174,109 @@ export async function loadProfileDashboardSections(
   renderRecentSnakeMatchesHistory(snakeStats, snakeMatches);
 }
 
-export function renderLast7DaysChart(container: HTMLElement, stats: DailyMatchStat[]) {
+// export function renderLast7DaysChart(container: HTMLElement, stats: DailyMatchStat[]) {
+//   container.innerHTML = "";
+
+//   const title = el("h2", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
+//   title.textContent = "Matches (Last 7 days)";
+
+//   const MAX_HEIGHT = 120;
+//   const bars = el("div", "flex items-end gap-2 w-full mt-4") as HTMLDivElement;
+//   bars.style.height = "170px";
+
+//   container.append(title, bars);
+
+//   const maxMatches = stats.reduce(
+//     (max, day) => (day.totalMatches > max ? day.totalMatches : max),
+//     0
+//   );
+
+//   if (maxMatches === 0) {
+//     const msg = el("p", "article-base mt-2");
+//     msg.textContent = "No matches played in the last 7 days.";
+//     container.append(msg);
+//     return;
+//   }
+
+//   for (const day of stats) {
+//     const heightPx = (day.totalMatches / maxMatches) * MAX_HEIGHT;
+
+//     const col = el("div", "flex flex-col items-center gap-1 flex-1");
+//     const bar = el(
+//       "div",
+//       "w-full bg-black/60 rounded-t-md transition-all duration-300"
+//     ) as HTMLDivElement;
+//     bar.style.height = `${heightPx}px`;
+//     bar.title = `Matches: ${day.totalMatches} | Wins: ${day.wins}`;
+
+//     const dateLabel = el("span", "text-xs font-modern-type");
+//     dateLabel.textContent = day.date.slice(5);
+
+//     const statsLabel = el("span", "text-[10px] font-modern-type text-stone-600");
+//     statsLabel.textContent = `${day.totalMatches} M / ${day.wins} W`;
+
+//     col.append(bar, dateLabel, statsLabel);
+//     bars.append(col);
+//   }
+// }
+
+function renderLast7DaysChart(container: HTMLElement, stats: DailyMatchStat[]) {
   container.innerHTML = "";
 
   const title = el("h2", "font-minecraft tracking-widest text-2xl mt-6 mb-3");
   title.textContent = "Matches (Last 7 days)";
 
   const MAX_HEIGHT = 120;
-  const bars = el("div", "flex items-end gap-2 w-full mt-4") as HTMLDivElement;
-  bars.style.height = "170px";
 
-  container.append(title, bars);
+  // Wrapper qui autorise le scroll horizontal si l'écran devient trop petit
+  const scrollWrap = el("div", "w-full overflow-x-auto") as HTMLDivElement;
+
+  // Le graphe : on empêche l'écrasement en autorisant un min-width total
+  const bars = el("div", "flex items-end gap-2 w-full mt-4 min-w-[420px]") as HTMLDivElement;
+
+  scrollWrap.append(bars);
+  container.append(title, scrollWrap);
 
   const maxMatches = stats.reduce(
     (max, day) => (day.totalMatches > max ? day.totalMatches : max),
     0
   );
 
-  if (maxMatches === 0) {
-    const msg = el("p", "article-base mt-2");
-    msg.textContent = "No matches played in the last 7 days.";
-    container.append(msg);
-    return;
-  }
-
   for (const day of stats) {
-    const heightPx = (day.totalMatches / maxMatches) * MAX_HEIGHT;
+    const heightPx =
+      maxMatches === 0 ? 0 : Math.round((day.totalMatches / maxMatches) * MAX_HEIGHT);
 
-    const col = el("div", "flex flex-col items-center gap-1 flex-1");
+    // IMPORTANT :
+    // - flex-1 => partage l'espace
+    // - min-w-[52px] => garde assez de place pour les labels
+    const col = el(
+      "div",
+      "flex flex-col items-center gap-1 flex-1 min-w-[52px]"
+    ) as HTMLDivElement;
+
     const bar = el(
       "div",
       "w-full bg-black/60 rounded-t-md transition-all duration-300"
     ) as HTMLDivElement;
+
     bar.style.height = `${heightPx}px`;
     bar.title = `Matches: ${day.totalMatches} | Wins: ${day.wins}`;
 
-    const dateLabel = el("span", "text-xs font-modern-type");
+    // Labels lisibles : pas de truncate, on garde du nowrap
+    const dateLabel = el("span", "text-xs font-modern-type whitespace-nowrap leading-tight");
     dateLabel.textContent = day.date.slice(5);
 
-    const statsLabel = el("span", "text-[10px] font-modern-type text-stone-600");
+    const statsLabel = el(
+      "span",
+      "text-[10px] font-modern-type text-stone-600 whitespace-nowrap leading-tight"
+    );
     statsLabel.textContent = `${day.totalMatches} M / ${day.wins} W`;
 
     col.append(bar, dateLabel, statsLabel);
     bars.append(col);
   }
 }
+
 
 export function renderDailyMatchesChart(
   dashboard: HTMLElement,
