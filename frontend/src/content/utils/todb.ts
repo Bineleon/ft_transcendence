@@ -152,6 +152,7 @@ export async function closeTournament(tCode: string): Promise<void> {
     }
 }
 
+
 /// ------        CREATE CREATE CREATE        ------ //
 export async function createDBTournament(code: string, datas: TournamentFormDatas): Promise<void> {
     const payload = {

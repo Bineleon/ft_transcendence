@@ -60,12 +60,12 @@ let pongAlertDOM: PongAlertDOM | null = null;
 function createPongAlertDOM(): PongAlertDOM {
   if (pongAlertDOM) return pongAlertDOM;
 
-  const overlay = el("div", "alert-overlay hidden") as HTMLDivElement;
-  const box = el("div", "alert-box") as HTMLDivElement;
-  const title = el("div", "alert-title") as HTMLDivElement;
-  const message = el("p", "alert-message") as HTMLParagraphElement;
-  const button = el("button", "alert-button") as HTMLButtonElement;
-  const closeBtn = el("button", "alert-close-button") as HTMLButtonElement;
+  const overlay = el("div", "alert-overlay hidden z-index-10") as HTMLDivElement;
+  const box = el("div", "alert-box z-index-10") as HTMLDivElement;
+  const title = el("div", "alert-title z-index-10") as HTMLDivElement;
+  const message = el("p", "alert-message z-index-10") as HTMLParagraphElement;
+  const button = el("button", "alert-button z-index-10") as HTMLButtonElement;
+  const closeBtn = el("button", "alert-close-button z-index-10") as HTMLButtonElement;
   closeBtn.textContent = "✕";
   button.textContent = "OK";
   closeBtn.onclick = () => { closeOverlay(overlay); };
@@ -375,6 +375,7 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
             const msg = data.error?.message || data.message || "Login failed";
             pongAlert(msg, "error");
             dom.submitBtn.disabled = false;
+			closeOverlay(dom.overlay);
             return;
           }
 
@@ -383,7 +384,8 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
           console.log("Sync profile for logged user:", currentLogin);
           const user = await getUserDatas(currentLogin).catch(() => null);
           const avatarUrl = user?.data.user.avatarUrl || "/imgs/avatar.png";
-          finish({ kind: "sync", userName, avatarUrl });
+		  const id = user?.data.user.id || "";
+          finish({ kind: "sync", id, userName, avatarUrl });
           return;
         }
 
@@ -576,7 +578,6 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
             );
             dom.submitBtn.disabled = false;
           }
-          finish({ kind: "logged", userName: currentLogin || "Player" });
           return;
         }
 
