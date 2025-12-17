@@ -35,6 +35,58 @@ export function Settings(): HTMLElement {
 
     main.append(usernameInput, usernameBtn);
 
+    // Section Alias (Tournament Display Name)
+    main.append(sectionTitle("Tournament Alias"));
+
+    const aliasInfo = el("p", "font-modern-type text-sm text-stone-600 mb-2 italic");
+    aliasInfo.append(text("Set a custom name to display during tournaments. Leave empty to use your username."));
+
+    const aliasInput = labeledInput("Tournament alias (optional)");
+    const aliasBtn = actionButton("Update alias");
+    const clearAliasBtn = actionButton("Clear alias");
+    clearAliasBtn.className = "big-link my-2 text-center opacity-70";
+
+    aliasBtn.onclick = async () => {
+        const value = aliasInput.value.trim();
+        if (!value) return pongAlert("Alias required (or use Clear button to remove it)");
+
+        const res = await apiFetch("/api/users/me/alias", {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ alias: value })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            pongAlert("Alias updated!");
+            aliasInput.value = "";
+        } else {
+            pongAlert(data?.error?.message || "Update failed");
+        }
+    };
+
+    clearAliasBtn.onclick = async () => {
+        const res = await apiFetch("/api/users/me/alias", {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ alias: null })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            pongAlert("Alias cleared!");
+            aliasInput.value = "";
+        } else {
+            pongAlert(data?.error?.message || "Clear failed");
+        }
+    };
+
+    main.append(aliasInfo, aliasInput, aliasBtn, clearAliasBtn);
+
     // Section Email
     main.append(sectionTitle("Email"));
 
