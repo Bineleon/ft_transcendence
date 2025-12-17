@@ -33,21 +33,21 @@ export function unwireControls(ctrl: SnakeController): void {
   ctrl.unwireControls();
 }
 
-export function enableArrowGuard(ctrl: SnakeController): void {
-  ctrl.enableArrowGuard();
-}
+// export function enableArrowGuard(ctrl: SnakeController): void {
+//   ctrl.enableArrowGuard();
+// }
 
 export function disableArrowGuard(ctrl: SnakeController): void {
   ctrl.disableArrowGuard();
 }
 
-export function onKeyDown(ctrl: SnakeController, e: KeyboardEvent): void {
-  ctrl.onKeyDown(e);
-}
+// export function onKeyDown(ctrl: SnakeController, e: KeyboardEvent): void {
+//   ctrl.onKeyDown(e);
+// }
 
-export function onKeyUp(ctrl: SnakeController, e: KeyboardEvent): void {
-  ctrl.onKeyUp(e);
-}
+// export function onKeyUp(ctrl: SnakeController, e: KeyboardEvent): void {
+//   ctrl.onKeyUp(e);
+// }
 
 export function applyDirectionsFromControls(ctrl: SnakeController): void {
   ctrl.applyDirectionsFromControls();

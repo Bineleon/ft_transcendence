@@ -1,12 +1,19 @@
 import type { SnakeController } from "../controller";
 import type { PlayerId, Edible } from "./uiTypes";
+import type { LetterCase } from "./uiTypes";
+
 
 function randInt(max: number): number {
   return Math.floor(Math.random() * max);
 }
 
-function displayCharFor(pid: PlayerId, base: string): string {
-  return pid === "p1" ? base.toUpperCase() : base.toLowerCase();
+function makeEdibleDisplay(baseChar: string): { displayChar: string; letterCase: LetterCase } {
+  const base = baseChar.toUpperCase();
+  const letterCase: LetterCase = Math.random() < 0.5 ? "upper" : "lower";
+  return {
+    letterCase,
+    displayChar: letterCase === "upper" ? base : base.toLowerCase(),
+  };
 }
 
 function isCellFilled(ctrl: SnakeController, wordId: string, index: number): boolean {
@@ -57,7 +64,8 @@ function spawnOne(ctrl: SnakeController, pid: PlayerId, wordId: string): Edible 
       wordId,
       index,
       baseChar,
-      displayChar: displayCharFor(pid, baseChar),
+      ...makeEdibleDisplay(baseChar),
+
       x,
       y,
     };

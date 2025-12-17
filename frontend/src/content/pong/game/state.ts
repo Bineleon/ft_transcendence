@@ -35,8 +35,9 @@ export function initBoard(state: GameState) {
         speed: 1000
     };
     state.stats.totalBounces += state.stats.currentBounces;
-	state.stats.currentBounces = 0;
-
+    state.stats.currentBounces = 0;
+    state.ball.velIncrement.x = 50;
+    state.ball.velIncrement.y = 50;
 }
 
 export function initPlayersInfo(state: GameState) {

@@ -23,7 +23,7 @@ export function drawPlayerCanvas(
   ctx.fillStyle = options.bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.font = "24px monospace";
+  ctx.font = "24px LaPresse";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 

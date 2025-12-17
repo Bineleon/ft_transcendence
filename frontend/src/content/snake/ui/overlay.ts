@@ -106,7 +106,7 @@ export class domOverlayManager {
         reg.append(this.registerRow("p1"), this.registerRow("p2"));
 
         const actions = el("div", "flex gap-2 justify-center");
-        const start = el("button", `btn-click px-3 py-2 text-xl mix-blend-multiply items-center ${this.snakeController.canStart() ? "hover:bg-black hover:text-white" : "opacity-40 cursor-not-allowed"}`) as HTMLButtonElement;
+        const start = el("button", `btn-click px-3 py-2 text-lg mix-blend-multiply items-center ${this.snakeController.canStart() ? "hover:bg-black hover:text-white" : "opacity-40 cursor-not-allowed"}`) as HTMLButtonElement;
         start.textContent = "START";
         start.disabled = !this.snakeController.canStart();
         start.onclick = () => this.snakeController.startGame();
@@ -118,40 +118,48 @@ export class domOverlayManager {
       }
 
       case "PAUSED": {
-        const wrap = el("div", "w-[420px] bg-white border-2 border-black p-4 shadow");
-        const title = el("div", "font-bold text-lg mb-3");
+        const wrap = el("div", "w-[520px] bg-[url('/imgs/papier.jpg')] border-6 border-black p-4 mx-8 rounded-full shadow-xl") as HTMLDivElement;
+
+        const title = el("div", "alert-title text-center");
         title.textContent = "PAUSED";
 
-        const actions = el("div", "flex gap-2 justify-end");
-        const resume = el("button", "border border-black px-3 py-2 text-sm hover:bg-black hover:text-white") as HTMLButtonElement;
+        const sub = el("div", "alert-message text-sm mb-4 text-center");
+        sub.textContent = "Game is paused — take a break";
+
+        const actions = el("div", "flex gap-2 justify-center");
+        const resume = el("button", "btn-click px-3 py-2 text-lg mix-blend-multiply") as HTMLButtonElement;
         resume.textContent = "RESUME";
         resume.onclick = () => this.snakeController.setPhase("PLAYING");
 
-        const restart = el("button", "border border-black px-3 py-2 text-sm hover:bg-black hover:text-white") as HTMLButtonElement;
+        const restart = el("button", "btn-click px-3 py-2 text-lg mix-blend-multiply") as HTMLButtonElement;
         restart.textContent = "RESTART";
         restart.onclick = () => this.snakeController.restartGame();
 
         actions.append(resume, restart);
-        wrap.append(title, actions);
+        wrap.append(title, sub, actions);
         return wrap;
       }
 
       case "GAMEOVER": {
-        const wrap = el("div", "w-[520px] bg-white border-2 border-black p-4 shadow");
-        const title = el("div", "font-bold text-lg mb-2");
+        const wrap = el("div", "w-[520px] bg-[url('/imgs/papier.jpg')] border-6 border-black p-4 mx-8 rounded-full shadow-xl") as HTMLDivElement;
+
+        const title = el("div", "alert-title text-center");
         title.textContent = "GAME OVER";
 
+        const sub = el("div", "alert-message text-sm mb-2 text-center");
+        sub.textContent = "Merci d'avoir joué";
+
         const s = this.snakeController.state;
-        const score = el("div", "text-sm mb-3");
+        const score = el("div", "text-sm mb-3 text-center font-modern-type");
         score.textContent = `P1 score=${s.players.p1.score} lives=${s.players.p1.lives} | P2 score=${s.players.p2.score} lives=${s.players.p2.lives} | remainingWords=${s.crossword.remainingWords}`;
 
-        const actions = el("div", "flex gap-2 justify-end");
-        const restart = el("button", "border border-black px-3 py-2 text-sm hover:bg-black hover:text-white") as HTMLButtonElement;
+        const actions = el("div", "flex gap-2 justify-center");
+        const restart = el("button", "btn-click px-3 py-2 text-lg mix-blend-multiply") as HTMLButtonElement;
         restart.textContent = "RESTART";
         restart.onclick = () => this.snakeController.restartGame();
 
         actions.append(restart);
-        wrap.append(title, score, actions);
+        wrap.append(title, sub, score, actions);
         return wrap;
       }
 

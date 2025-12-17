@@ -1,4 +1,4 @@
-import { el, text } from "../../home";
+import { el, text, techList } from "../../home";
 
 export type SnakeViewWindow = {
   main: HTMLElement;
@@ -25,42 +25,33 @@ function slotFromGrid(b: { x: number; y: number; w: number; h: number }): string
   return `col-start-${b.x + 1} col-end-${b.x + b.w + 1} row-start-${b.y + 1} row-end-${b.y + b.h + 1}`;
 }
 
+export function rules(title: string, contents: string): HTMLElement {
+    const section = el("section", "space-y-2");
+    const secTitle = el("h3", `font-royalvogue bg-black text-white pl-2 text-sm xxl:text-lg uppercase `, text(title));
+    const secContent = el("p", "font-arcade text-sm xxl:text-lg text-center", text(contents));
+    section.append(secTitle, secContent);
+    return section;
+}
+
 export function createSnakeView(): SnakeViewWindow {
   const main = el("div", "w-full h-full p-4 flex gap-4");
 
 
   /// LES RGLES DU JEU ///
-  const leftPanel = el("div", "w-[320px] shrink-0 border border-black p-3", el("h2", "font-bold mb-2"),
+  const leftPanel = el("div", "w-[320px] pr-6 mt-2", el("h2", "font-bold mb-2"),
     el("div", "text-sm leading-tight")) as HTMLDivElement;
   const leftPanelContent = el("div", "flex flex-col gap-4");
-  const snakeTitle = el("h3", "font-lapresse text-4xl text-center", text("CrossWord Snake"));
-  const subTitle = el("div", "font-vintage text-xl italic", text("How to Play"));
-  const instructions = el(
-    "ul",
-    "list-disc list-inside article-xs",
-    el("li", "", text(
-      "Goal: Complete the crossword before your opponent, or make them lose all 3 lives."
-    )),
-    el("li", "", text(
-      "Controls: Player 1 uses W/A/S/D. Player 2 uses arrow keys. No U-turns allowed. Space pauses the game."
-    )),
-    el("li", "", text(
-      "Lives: Each player starts with 3 lives. Hitting your own body costs 1 life. The opponent’s snake is harmless."
-    )),
-    el("li", "", text(
-      "Playfield: Each player moves inside their own 10×10 area within a shared 34×24 grid. Letters spawn only in your area."
-    )),
-    el("li", "", text(
-      "Crossword: Eating a letter fills a shared crossword cell. Completing a word locks it in your color (P1: white on black, P2: black on white)."
-    )),
-    el("li", "", text(
-      "Game flow: START → PLAYING → PAUSED → GAME OVER. Win by finishing the crossword or eliminating your opponent."
-    ))
-  );
-  leftPanelContent.append(snakeTitle, subTitle, instructions);
+  const snakeTitle = el("h3", "font-omegle text-6xl text-center", text("CrossWord Snake"));
+  const instructions1 = rules("Goal", `Complete the crossword before your opponent, or make them lose all 3 lives.`);
+  const instructions2 = rules("Controls", `Player 1 uses W/A/S/D. Player 2 uses arrow keys. No U-turns allowed. Space pauses the game.`);
+  const instructions3 = rules("Lives", `Each player starts with 3 lives. Hitting your own body costs 1 life. The opponent’s snake is harmless.`);
+  const instructions4 = rules("Playfield", `Each player moves inside their own 10×10 area within a shared 34×24 grid. Letters spawn only in your area.`);
+  const instructions5 = rules("Crossword", `Eating a letter fills a shared crossword cell. Completing a word locks it in your color (P1: white on black, P2: black on white).`);
+  const instructions6 = rules("Game flow", `START → PLAYING → PAUSED → GAME OVER. Win by finishing the crossword or eliminating your opponent.`);
+  leftPanelContent.append(snakeTitle, instructions1, instructions2, instructions3, instructions4, instructions5, instructions6);
   leftPanel.append(leftPanelContent);
 
-  const gameContainer = el("div", "relative flex-1 p-2") as HTMLDivElement;
+  const gameContainer = el("div", "relative flex-1 p-1 m-5 my-auto border-[20px] border-black") as HTMLDivElement;
 
   const ratio = el("div", "relative w-full") as HTMLDivElement;
   ratio.style.aspectRatio = `${WORLD_COLS} / ${WORLD_ROWS}`;

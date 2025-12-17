@@ -47,6 +47,7 @@ export function initState(
 }
 
 export function resetPlayersInfos(state: GameState): void {
+  if (!state.players) return;
   state.players.p1.profile = { registered: false, isGuest: false,
     userId: "", userName: "", avatarUrl: "/imgs/avatar.png" };
 
@@ -69,34 +70,12 @@ export function initBoard(state: GameState): void {
   state.players.p1.snake.respawnTicks = 0;
   state.players.p1.edibles = [];
   
-  // Ne réinitialiser le profil que s'il n'est pas déjà enregistré
-  if (!state.players.p1.profile || !state.players.p1.profile.registered) {
-    state.players.p1.profile = { 
-      registered: false, 
-      isGuest: false,
-      userId: "", 
-      userName: "", 
-      avatarUrl: "/imgs/avatar.png" 
-    };
-  }
-
   state.players.p2.snake.segments = makeSnakeInitial("LEFT");
   state.players.p2.snake.direction = "LEFT";
   state.players.p2.snake.nextDirection = "LEFT";
   state.players.p2.snake.respawnTicks = 0;
   state.players.p2.edibles = [];
-  
-  // Ne réinitialiser le profil que s'il n'est pas déjà enregistré
-  if (!state.players.p2.profile || !state.players.p2.profile.registered) {
-    state.players.p2.profile = { 
-      registered: false, 
-      isGuest: false,
-      userId: "", 
-      userName: "", 
-      avatarUrl: "/imgs/avatar.png" 
-    };
-  }
-  
+    
   state.crossword.filledCells.clear();
   for (const w of state.crossword.words) {
     w.completed = false;

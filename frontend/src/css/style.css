@@ -514,6 +514,42 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Hominis";
+  src: url("/fonts/HOMINIS.TTF") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lead";
+  src: url("/fonts/Lead.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MysteresParis";
+  src: url("/fonts/Les_Mysteres_de_Paris.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Omegle";
+  src: url("/fonts/Omegle.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gorilaz";
+  src: url("/fonts/Gorilaz.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 
 
@@ -594,6 +630,12 @@
   --font-sans-base: ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
   --font-mono-base: ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace;
 
+  /* Les dernieres */
+  --font-hominis: "Hominis", ui-serif, Georgia, "Times New Roman", serif;
+  --font-lead: "Lead", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mysteres-paris: "MysteresParis", "Vintage", ui-serif, Georgia, serif;
+  --font-omegle: "Omegle", ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-gorilaz: "Gorilaz", ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
 
   /**************** BREAKPOINTS ****************/
   /* Remets les valeurs qui te conviennent (en rem = tri fiable) */

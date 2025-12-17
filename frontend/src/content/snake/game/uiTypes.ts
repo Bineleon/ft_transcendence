@@ -7,10 +7,13 @@ export type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
 
 export type Vec2 = { x: number; y: number };
 
+export type LetterCase = "upper" | "lower";
+
 export interface ControlsKey {
   code: string;
   down: boolean;
 }
+
 
 export interface Controls {
   p1Up: ControlsKey;
@@ -66,6 +69,7 @@ export interface Edible {
   index: number;      // index dans le mot
   baseChar: string;   // lettre "vraie" à poser (souvent uppercase)
   displayChar: string; // lettre affichée dans le snake (A uppercase / B lowercase)
+  letterCase: LetterCase;
   x: number;          // local 0..9 dans la zone snake
   y: number;          // local 0..9
 }
