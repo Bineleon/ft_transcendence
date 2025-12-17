@@ -38,7 +38,7 @@ model User {
   id                 String             @id @default(cuid())
   username           String             @unique
   email              String             @unique
-  alias              String?            
+  alias              String?
   passwordHash       String?
   twoFactorEnabled   Boolean            @default(false) @map("two_factor_enabled")
   avatarUrl          String?            @map("avatar_url")

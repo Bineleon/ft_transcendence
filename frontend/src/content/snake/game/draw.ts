@@ -143,13 +143,15 @@ function renderPlayer(ctrl: SnakeController, pid: PlayerId): void {
       const isHead = i === 0;
       const isTail = i === lastIndex;
 
-      // La tete plus sombre
-      ctx.fillStyle = isHead
-        ? "rgba(0,0,0,0.12)"
-        : "rgba(0,0,0,0.06)";
-      ctx.fillStyle = isTail
-        ? "rgba(0,0,0,0.02)"
-        : "rgba(0,0,0,0.06)";
+      let alpha = 0.10; // corps par défaut
+
+      if (isHead) {
+        alpha = 0.20;   // tête plus sombre
+      } else if (isTail) {
+        alpha = 0.04;   // queue plus claire
+      }
+
+      ctx.fillStyle = `rgba(0,0,0,${alpha})`;
       ctx.fillRect(x, y, cellW, cellH);
 
       // lettre

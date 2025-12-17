@@ -5,6 +5,7 @@ import { addUserAsPlayerToTournament, getLoggedName, getTournamentDatas } from "
 import type { Tournament } from "./uiTypes";
 import { renderTournamentBrackets } from "./brackets";
 import { apiFetch } from "../utils/apiFetch";
+import { aliasBox } from "../utils/alertBox";
 
 /// --- HELPER ---- ///
 function isUserInTournament(t: Tournament, userName: string): boolean {
@@ -139,7 +140,7 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
 
           if (resp.ok) {
             document.dispatchEvent(new CustomEvent("tournamentUpdated"));
-            pongAlert("You joined the tournament!");
+            aliasBox(`You have been added to the tournament, you may choose an Alias now.`, "success", { title: "Player Added" });
           } else {
             pongAlert(
               `Failed to join tournament: ${

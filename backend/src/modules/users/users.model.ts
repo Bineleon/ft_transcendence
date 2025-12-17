@@ -12,6 +12,7 @@ export interface UpdateProfileRequest {
   username?: string;
   password?: string;
   avatarUrl?: string | null;
+  alias?: string | null;
 }
 
 /**

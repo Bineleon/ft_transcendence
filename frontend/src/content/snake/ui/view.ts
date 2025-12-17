@@ -40,15 +40,20 @@ export function createSnakeView(): SnakeViewWindow {
   /// LES RGLES DU JEU ///
   const leftPanel = el("div", "w-[320px] pr-6 mt-2", el("h2", "font-bold mb-2"),
     el("div", "text-sm leading-tight")) as HTMLDivElement;
-  const leftPanelContent = el("div", "flex flex-col gap-4");
+  const leftPanelContent = el("div", "flex flex-col gap-4 whitespace-pre-line");
   const snakeTitle = el("h3", "font-omegle text-6xl text-center", text("CrossWord Snake"));
-  const instructions1 = rules("Goal", `Complete the crossword before your opponent, or make them lose all 3 lives.`);
-  const instructions2 = rules("Controls", `Player 1 uses W/A/S/D. Player 2 uses arrow keys. No U-turns allowed. Space pauses the game.`);
+  const instructions1 = rules("Goal", `Finish the most words or make your opponent lose all 3 lives.`);
+  const instructions2 = el("section", "space-y-2");
+  const secTitle = el("h3", `font-royalvogue bg-black text-white pl-2 text-sm xxl:text-lg uppercase `, text("Controls"));
+  const secContent = el("img", "img-newspaper");
+  secContent.src = "imgs/controls.png";
+  instructions2.append(secTitle, secContent);
   const instructions3 = rules("Lives", `Each player starts with 3 lives. Hitting your own body costs 1 life. The opponent’s snake is harmless.`);
-  const instructions4 = rules("Playfield", `Each player moves inside their own 10×10 area within a shared 34×24 grid. Letters spawn only in your area.`);
   const instructions5 = rules("Crossword", `Eating a letter fills a shared crossword cell. Completing a word locks it in your color (P1: white on black, P2: black on white).`);
-  const instructions6 = rules("Game flow", `START → PLAYING → PAUSED → GAME OVER. Win by finishing the crossword or eliminating your opponent.`);
-  leftPanelContent.append(snakeTitle, instructions1, instructions2, instructions3, instructions4, instructions5, instructions6);
+  const instructions6 = rules("Game flow", `START → 2sec. → PLAYING
+
+    DEATH → RESPAWN → 2sec. → PLAYING`);
+  leftPanelContent.append(snakeTitle, instructions1, instructions2, instructions3, instructions5, instructions6);
   leftPanel.append(leftPanelContent);
 
   const gameContainer = el("div", "relative flex-1 p-1 m-5 my-auto border-[20px] border-black") as HTMLDivElement;

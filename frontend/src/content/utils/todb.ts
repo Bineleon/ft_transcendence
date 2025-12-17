@@ -1,7 +1,7 @@
 // import { getRouteTail } from "../../router.ts";
 import type { TournamentFormDatas } from "../tournament/tournament.ts";
 import { apiFetch } from "./apiFetch";
-import { pongAlert } from "./alertBox.ts";
+import { aliasBox, pongAlert, runAuthBox } from "./alertBox.ts";
 import type { Tournament, User } from "../tournament/uiTypes.ts";
 import type { ApiTournament, ApiFinishMatchDTO, ApiPlayedMatchDTO } from "../tournament/apiTypes.ts";
 import { tournamentFromApi } from "../tournament/mapper.ts";
@@ -46,8 +46,10 @@ export async function addUserAsPlayerToTournament(tCode: string, userName: strin
         if (!resp.ok) {
             pongAlert(`Failed to add player to tournament: ${data.error?.message || data.message || 'Unknown error'}`, "error", { title: "Add Player Error" });
         } else {
-            pongAlert(`You have been added to the tournament.`, "success");
-            document.dispatchEvent(new CustomEvent("tournamentUpdated"));
+            const alias = aliasBox(`You have been added to the tournament, you may choose an Alias now.`, "success", { title: "Player Added" });
+            if (alias) {
+                localStorage.setItem(userName, alias);
+            }
         }
     }
     catch (error) {

@@ -35,9 +35,10 @@ export function updateBothPlayers(ctrl: SnakeController): void {
   const p1 = ctrl.state.players.p1;
   const p2 = ctrl.state.players.p2;
 
+  console.log("p1 RT", p1.snake.respawnTicks, "p2 RT", p1.snake.respawnTicks);
   // respawn ticks
-  if (p1.snake.respawnTicks > 0) { p1.snake.respawnTicks--; return; }
-  if (p2.snake.respawnTicks > 0) { p2.snake.respawnTicks--; return; }
+  if (p1.snake.respawnTicks > 0) { p1.snake.respawnTicks--; }
+  if (p2.snake.respawnTicks > 0) { p2.snake.respawnTicks--; }
 
   // 1) PLAN (ne modifie rien)
   const next1 = computeNextHead(p1);
@@ -63,6 +64,7 @@ function applyMoveAndEat(ctrl: SnakeController, pid: PlayerId, next: {x:number;y
   const tailPrev = { ...s.segments[s.segments.length - 1] };
 
   // déplace (une seule fois)
+  if (ctrl.state.players[pid].snake.respawnTicks > 0) return ;
   moveSnake(p, next);
 
   // mange ?

@@ -1,12 +1,16 @@
 import type { GameState, Direction, SnakeSegment, CrosswordWord } from "./uiTypes";
 
 function makeSnakeInitial(direction: Direction): SnakeSegment[] {
-  const letters = ["S", "N", "A", "K", "E"];
-  const startX = 4;
-  const startY = 5;
-  return letters.map((ch, i) => ({ x: startX - i, y: startY, char: ch }));
-}
+  const letters = ["S","N","A","K","E"];
 
+  if (direction === "RIGHT") {
+    const headX = 4, y = 5;
+    return letters.map((ch, i) => ({ x: headX - i, y, char: ch }));
+  } else { // LEFT
+    const headX = 5, y = 4;
+    return letters.map((ch, i) => ({ x: headX + i, y, char: ch }));
+  }
+}
 export function initState(
   wordDefs: { id: string; solution: string; cells: { x: number; y: number }[] }[]
 ): GameState {
