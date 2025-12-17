@@ -90,10 +90,14 @@ export async function loadProfileDashboardSections(
   last7days: HTMLElement,
   lastScores: HTMLElement,
   last3Matches: HTMLElement,
-  snakeStats: HTMLElement
+  snakeStats: HTMLElement,
+  username?: string
 ) {
+  // Build query string if username is provided
+  const queryParam = username ? `?username=${encodeURIComponent(username)}` : '';
+  
   // 1) Graph 1 : daily matches
-  const res = await apiFetch("/api/profile/dashboard/daily-matches", {
+  const res = await apiFetch(`/api/profile/dashboard/daily-matches${queryParam}`, {
     credentials: "include",
   });
 
@@ -112,7 +116,7 @@ export async function loadProfileDashboardSections(
   const stats = (body.data?.stats ?? []) as DailyMatchStat[];
 
   // 2) Graph 2 : recent rallies
-  const resRallies = await apiFetch("/api/profile/dashboard/recent-rallies", {
+  const resRallies = await apiFetch(`/api/profile/dashboard/recent-rallies${queryParam}`, {
     credentials: "include",
   });
 
@@ -126,7 +130,7 @@ export async function loadProfileDashboardSections(
 
   // 3) Graph 3 : recent matches history
   const resRecentMatches = await apiFetch(
-    "/api/profile/dashboard/recent-matches",
+    `/api/profile/dashboard/recent-matches${queryParam}`,
     {
       credentials: "include",
     }
@@ -143,7 +147,7 @@ export async function loadProfileDashboardSections(
   // 4) Graph 4 : recent Snake matches
   console.log('[Dashboard] Fetching recent Snake matches...');
   const resSnakeMatches = await apiFetch(
-    "/api/profile/dashboard/recent-snake-matches",
+    `/api/profile/dashboard/recent-snake-matches${queryParam}`,
     {
       credentials: "include",
     }

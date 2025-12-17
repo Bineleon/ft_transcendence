@@ -153,12 +153,30 @@ export function userController(app: FastifyInstance, userService: UserService) {
 
 /** GET /api/profile/dashboard/daily-matches 
  * Récupérer les matchs des 7 derniers jours pour le dashboard d'un user.
+ * Query param: username (optional) - if provided, get stats for that user instead of logged-in user
 */
-  app.get(
+  app.get<{ Querystring: { username?: string } }>(
 	'/api/profile/dashboard/daily-matches',
 	{ preHandler : authenticate },
-	async (request) => {
-		const userId = request.user!.userId;
+	async (request, reply) => {
+		let userId = request.user!.userId;
+		
+		// If username is provided, get that user's stats instead
+		if (request.query.username) {
+			try {
+				const targetUser = await userService.getPublicProfileByUsername(request.query.username);
+				userId = targetUser.id;
+			} catch (err) {
+				return reply.code(404).send({
+					error: {
+						code: 'USER_NOT_FOUND',
+						message: 'User not found',
+						statusCode: 404
+					}
+				});
+			}
+		}
+		
 		const stats = await userService.getDailyMatchStats(userId);
 		return formatSuccess({ stats }, 'Daily match stats loaded');
 	}

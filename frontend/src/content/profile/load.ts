@@ -203,6 +203,13 @@ async function loadProfileData(
         const data = await res.json();
         const user = data.data.user;
 
+        // Debug: Log the user data to see what we're getting
+        console.log('[loadProfileData] User data received:', user);
+        console.log('[loadProfileData] viewedUsername:', viewedUsername);
+        console.log('[loadProfileData] kingMaxTime:', user.kingMaxTime);
+        console.log('[loadProfileData] friendsCount:', user.friendsCount);
+        console.log('[loadProfileData] matchesWonCount:', user.matchesWonCount);
+
         // Populate avatar
         picture.src = user.avatarUrl || "/imgs/avatar.png";
 
@@ -231,10 +238,8 @@ async function loadProfileData(
             stats.append(p);
         });
 
-        // 👉 Charger le dashboard SEULEMENT si c'est *ton* propre profil
-        if (!viewedUsername) {
-            await loadProfileDashboardSections(last7days, lastScores, last3Matches, snakeStats);
-        }
+        //  Charger le dashboard pour le profil consulté (propre profil ou celui d'un ami)
+        await loadProfileDashboardSections(last7days, lastScores, last3Matches, snakeStats, viewedUsername);
 
     } catch (err) {
         console.error("loadProfileData error:", err);

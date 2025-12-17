@@ -4,10 +4,12 @@ import type { CreateSnakeMatchDTO } from './snake.model.js';
 import { formatSuccess } from '../../shared/utils/formatters.js';
 import { formatGenericError } from '../../shared/errors/formatters.js';
 import { authenticate } from '../../shared/middleware/authentication.js';
+import type { UserService } from '../users/users.service.js';
 
 export function snakeController(
   app: FastifyInstance,
-  snakeService: SnakeService
+  snakeService: SnakeService,
+  userService: UserService
 ) {
   
   // ==========================================
@@ -128,12 +130,30 @@ export function snakeController(
 
   // ==========================================
   // GET /api/profile/dashboard/recent-snake-matches - Dashboard recent Snake matches
+  // Query param: username (optional) - if provided, get stats for that user instead of logged-in user
   // ==========================================
-  app.get(
+  app.get<{ Querystring: { username?: string } }>(
     '/api/profile/dashboard/recent-snake-matches',
     { preHandler: authenticate },
-    async (request) => {
-      const userId = request.user!.userId;
+    async (request, reply) => {
+      let userId = request.user!.userId;
+      
+      // If username is provided, get that user's stats instead
+      if (request.query.username) {
+        try {
+          const targetUser = await userService.getPublicProfileByUsername(request.query.username);
+          userId = targetUser.id;
+        } catch (err) {
+          return reply.code(404).send({
+            error: {
+              code: 'USER_NOT_FOUND',
+              message: 'User not found',
+              statusCode: 404
+            }
+          });
+        }
+      }
+      
       console.log('[GET /api/profile/dashboard/recent-snake-matches] Request from userId:', userId);
       
       const matches = await snakeService.getRecentSnakeMatchesForUser(userId);

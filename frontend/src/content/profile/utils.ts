@@ -1,6 +1,5 @@
 import { pongAlert } from "../utils/alertBox.ts";
 import { apiFetch } from "../utils/apiFetch.ts";
-import { loadProfileDashboardSections } from "./dashboard.ts";
 
 // Maximum size for avatar uploads (2 MB)
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
@@ -68,7 +67,7 @@ export async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLEle
     // Title for friend requests
     const requestsTitle = document.createElement("h3");
     requestsTitle.className = "font-oldprint text-3xl lg:text-xl mb-4 text-right";
-    requestsTitle.append("Requests");
+    requestsTitle.textContent = "Requests";
     requestsBox.append(requestsTitle);
 
     try {
@@ -148,24 +147,24 @@ export async function loadFriends(friendsList: HTMLElement, requestsBox: HTMLEle
                 const left = document.createElement("div");
                 left.className = "flex items-center gap-2 flex-1";
 
-                let avatar: HTMLElement;
+                // Create avatar element
                 if (req.avatarUrl) {
                     const img = document.createElement("img");
                     img.className = "w-8 h-8 rounded-full object-cover grayscale contrast-200";
                     img.src = req.avatarUrl;
                     img.alt = req.username;
-                    avatar = img;
+                    left.appendChild(img);
                 } else {
-                    const div = document.createElement("div");
-                    div.className = "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center";
-                    avatar = div;
+                    const avatarPlaceholder = document.createElement("div");
+                    avatarPlaceholder.className = "w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center";
+                    left.appendChild(avatarPlaceholder);
                 }
 
+                // Create name span
                 const nameSpan = document.createElement("span");
                 nameSpan.className = "font-modern-type text-lg";
                 nameSpan.textContent = req.username;
-
-                left.append(avatar, nameSpan);
+                left.appendChild(nameSpan);
 
                 const acceptBtn = document.createElement("button") as HTMLButtonElement;
                 acceptBtn.className = "btn-click mr-2";
@@ -276,18 +275,18 @@ export function setupSelfMode(
     const settingsBtn = document.createElement("a") as HTMLAnchorElement;
     settingsBtn.className = "big-link cursor-pointer";
     settingsBtn.href = "#/settings";
-    settingsBtn.append("Edit Profile");
+    settingsBtn.textContent = "Edit Profile";
 
     const logoutBtn = document.createElement("button") as HTMLButtonElement;
     logoutBtn.className = "big-link";
-    logoutBtn.append("Logout");
+    logoutBtn.textContent = "Logout";
     logoutBtn.onclick = () => {
         logout();
     };
 
     const deleteButton = document.createElement("button") as HTMLButtonElement;
     deleteButton.className = "big-link";
-    deleteButton.append("Supprimer mon compte");
+    deleteButton.textContent = "Supprimer mon compte";
     deleteButton.onclick = async () => {
         const sure = confirm(
             "This action is a one way ticket out. Are you sure ?"
@@ -448,7 +447,7 @@ export function setupOtherMode(
     if (viewedUsername) {
         const addFriendBtn = document.createElement("button") as HTMLButtonElement;
         addFriendBtn.className = "big-link mt-2";
-        addFriendBtn.append("Add");
+        addFriendBtn.textContent = "Add";
         addFriendBtn.onclick = async () => {
             try {
                 const res = await apiFetch("/api/friends/request", {
@@ -467,7 +466,6 @@ export function setupOtherMode(
                 pongAlert("Network error.", "error");
             }
         };
-		loadProfileDashboardSections(last7days, lastScores, last3Matches, snakeStats);
         friendsContainer.append(addFriendBtn);
     }
 }

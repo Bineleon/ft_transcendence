@@ -1,13 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import { MatchService } from './match.service.js';
 import { matchController } from './match.controller.js';
+import { UserService } from '../users/users.service.js';
 
 /**
  * Configuration et initialisation du module Match
  */
 export function setupMatchModule(app: FastifyInstance) {
   const matchService = new MatchService();
-  matchController(app, matchService);
+  const userService = new UserService();
+  matchController(app, matchService, userService);
 }
 
 // Exporter les types publics
