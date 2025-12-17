@@ -208,4 +208,29 @@ app.patch<{ Body: { enabled: boolean } }>(
   }
 );
 
+  /**
+   * GET /api/users/me/blockchain-stats
+   * Get blockchain stats from user's last tournament
+   */
+  app.get(
+    '/api/users/me/blockchain-stats',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      try {
+        const userId = request.user!.userId;
+        const stats = await userService.getLastTournamentBlockchainStats(userId);
+        return formatSuccess(stats, 'Blockchain stats retrieved successfully');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to retrieve blockchain stats';
+        return reply.code(404).send({
+          error: {
+            code: 'BLOCKCHAIN_STATS_NOT_FOUND',
+            message,
+            statusCode: 404
+          }
+        });
+      }
+    }
+  );
+
 }

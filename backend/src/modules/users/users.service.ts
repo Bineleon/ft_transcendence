@@ -527,6 +527,90 @@ async updateUsername(userId: string, newUsername: string) {
   return !!user;
 }
 
+  /**
+   * Get blockchain stats from user's last tournament
+   */
+  async getLastTournamentBlockchainStats(userId: string) {
+    console.log('🔍 Searching blockchain tournaments for user:', userId);
+    
+    // Find user's last closed tournament with blockchain data
+    // Check both participants relation AND matches where user played
+    const tournament = await this.prisma.tournament.findFirst({
+      where: {
+        OR: [
+          {
+            participants: {
+              some: { id: userId }
+            }
+          },
+          {
+            matches: {
+              some: {
+                OR: [
+                  { p1UserId: userId },
+                  { p2UserId: userId }
+                ]
+              }
+            }
+          }
+        ],
+        status: 'CLOSED',
+        txHash: { not: null }
+      },
+      orderBy: { onchainAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        txHash: true,
+        blockNumber: true,
+        onchainAt: true
+      }
+    });
+
+    if (!tournament) {
+      console.log('❌ No tournament found for user');
+      throw new NotFoundError('No tournament with blockchain data found for this user');
+    }
+    
+    console.log('✅ Found tournament:', tournament.name);
+
+    // Import blockchain service dynamically to avoid circular dependencies
+    const { BlockchainService } = await import('../blockchain/blockchain.service.js');
+    const blockchainService = new BlockchainService();
+
+    // Get tournament ID as number for blockchain
+    const tournamentId = parseInt(tournament.id.replace(/\D/g, '').slice(0, 10));
+    
+    // Retrieve data from blockchain
+    const blockchainData = await blockchainService.getTournament(tournamentId);
+
+    return {
+      tournament: {
+        id: tournament.id,
+        name: tournament.name,
+        txHash: tournament.txHash,
+        blockNumber: tournament.blockNumber,
+        onchainAt: tournament.onchainAt,
+        explorerUrl: blockchainService.getExplorerUrl(tournament.txHash!)
+      },
+      blockchainData: {
+        id: blockchainData.id,
+        winner: blockchainData.winner,
+        players: blockchainData.players,
+        timestamp: new Date(blockchainData.timestamp * 1000).toISOString(),
+        matches: blockchainData.matches.map(m => ({
+          matchId: m.matchId,
+          player1: m.player1,
+          player2: m.player2,
+          scorePlayer1: m.scorePlayer1,
+          scorePlayer2: m.scorePlayer2,
+          winner: m.winner,
+          timestamp: new Date(m.timestamp * 1000).toISOString()
+        }))
+      }
+    };
+  }
+
   // ==========================================
   // READ - Récupérer les stats globales d'un joueur
   // ==========================================

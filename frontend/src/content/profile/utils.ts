@@ -307,6 +307,68 @@ export function setupSelfMode(
     privacyTitle.className = "font-royalvogue text-2xl";
     privacyTitle.textContent = "Privacy / My Datas";
 
+    // Blockchain stats button
+    const getBlockchainBtn = document.createElement("button") as HTMLButtonElement;
+    getBlockchainBtn.className = "big-link";
+    getBlockchainBtn.textContent = "Stats from Blockchain";
+    getBlockchainBtn.onclick = async () => {
+        try {
+            const res = await apiFetch("/api/users/me/blockchain-stats", {
+                credentials: "include",
+            });
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                const errorMsg = errorData.error?.message || "Impossible de charger les stats blockchain.";
+                pongAlert(errorMsg, "error");
+                return;
+            }
+            const body = await res.json();
+            const data = body.data;
+            
+            // Format the blockchain data for display
+            let message = `Tournament name: ${data.tournament.name}\n`;
+            message += `Date: ${new Date(data.tournament.onchainAt).toLocaleString()}\n\n`;
+            message += `Winner: ${data.blockchainData.winner}\n`;
+            message += `Players: ${data.blockchainData.players.join(", ")}\n`;
+            message += `Timestamp: ${new Date(data.blockchainData.timestamp).toLocaleString()}\n\n`;
+            message += `Matches (${data.blockchainData.matches.length}):\n`;
+            
+            data.blockchainData.matches.forEach((match: any, i: number) => {
+                message += `\nMatch ${i + 1}:\n`;
+                message += `  ${match.player1} vs ${match.player2}\n`;
+                message += `  Score: ${match.scorePlayer1} - ${match.scorePlayer2}\n`;
+                message += `  Winner: ${match.winner}\n`;
+            });
+            
+            // Use pongAlert and add whitespace-pre-line class to message element
+            pongAlert(message, "info", { title: "Blockchain" });
+            
+            // Add CSS to preserve line breaks and add clickable link
+            const alertMessage = document.querySelector('.alert-message');
+            if (alertMessage) {
+                (alertMessage as HTMLElement).style.whiteSpace = 'pre-line';
+                
+                // Add clickable link to Snowtrace
+                const linkElement = document.createElement('a');
+                linkElement.href = data.tournament.explorerUrl;
+                linkElement.target = '_blank';
+                linkElement.rel = 'noopener noreferrer';
+                linkElement.textContent = 'Verify transaction on Snowtrace';
+                linkElement.style.display = 'block';
+                linkElement.style.marginTop = '10px';
+                linkElement.style.color = '#3b82f6';
+                linkElement.style.textDecoration = 'underline';
+                linkElement.style.cursor = 'pointer';
+                
+                alertMessage.appendChild(linkElement);
+            }
+			
+        } catch (err) {
+            console.error(err);
+            pongAlert("Erreur réseau lors de la récupération des stats blockchain.", "error");
+        }
+    };
+
     // View personal data
     const viewDataBtn = document.createElement("button") as HTMLButtonElement;
     viewDataBtn.className = "big-link";
@@ -370,7 +432,7 @@ export function setupSelfMode(
         pongAlert("localStorage / sessionStorage cleaned.", "info");
     };
 
-    privacyBox.append(privacyTitle, viewDataBtn, anonymizeBtn, clearLocalBtn);
+    privacyBox.append(privacyTitle, getBlockchainBtn, viewDataBtn, anonymizeBtn, clearLocalBtn);
     // Insert the action buttons and privacy controls into the editBox.
     // Clear previous content and make the box visible
     editBox.innerHTML = "";
