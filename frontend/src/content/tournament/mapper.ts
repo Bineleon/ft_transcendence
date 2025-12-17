@@ -27,12 +27,19 @@ function matchUserFromApi(apiMUser: ApiMatchUser | null, score: number | null, i
   }
   const user: User = userFromApi(apiMUser);
 
+  let win: boolean;
+  if (score === 3) {
+	win = true;
+  } else {
+	win = false;
+  }
+
   return {
     user: user,
     score: score,
     maxSpeed: null,
     maxEffects: null,
-    winner: isWinner,
+    winner: win,
   };
 }
 

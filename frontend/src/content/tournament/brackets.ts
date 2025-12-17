@@ -73,7 +73,9 @@ function renderNextRoundsColumns(
     let border = "";
 
     if (prev && prev.status === "CLOSED") {
+		console.log("prev :", prev);
       userName = getWinnerNameFromMatch(prev);
+		console.log("winnerName : ", userName);
 
       // Le match suivant correspondant à ce slot:
       const next = nextMatches[Math.floor(i / 2)];
