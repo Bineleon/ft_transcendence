@@ -48,7 +48,7 @@ backend/logs/
 backend/*.log
 backend/node_modules
 backend/package-lock.json
-
+package-lock.json
 
 # DB locale (SQLite)
 backend/**/*.sqlite
