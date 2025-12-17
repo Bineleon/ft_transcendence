@@ -72,7 +72,7 @@ function renderRegisterButtons(t: Tournament): HTMLElement {
           title: "Delete",
           onClose: async () => {
             try {
-              const response = await apiFetch(`/api/tournaments/${t.tCode}/join`, {
+              const response = await apiFetch(`/api/tournaments/${t.tCode}/close`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

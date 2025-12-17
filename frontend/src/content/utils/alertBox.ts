@@ -362,7 +362,7 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
             return;
           }
 
-          const resp = await apiFetch("/api/auth/login", {
+          const resp = await apiFetch("/api/auth/login/nolog", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: userName, password }),
@@ -576,6 +576,7 @@ export function runAuthBox(mode: AuthMode, options?: RunAuthBoxOptions): Promise
             );
             dom.submitBtn.disabled = false;
           }
+          finish({ kind: "logged", userName: currentLogin || "Player" });
           return;
         }
 
