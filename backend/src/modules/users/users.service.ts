@@ -427,6 +427,35 @@ async updateUsername(userId: string, newUsername: string) {
   return formatUser(updated);
 }
 
+  async updateAlias(userId: string, newAlias: string | null) {
+    // Si l'alias est null ou vide, on le supprime
+    if (!newAlias || newAlias.trim().length === 0) {
+      const updated = await this.prisma.user.update({
+        where: { id: userId },
+        data: { alias: null }
+      });
+      return formatUser(updated);
+    }
+
+    const trimmedAlias = newAlias.trim();
+
+    // Validation de l'alias (même règles que username)
+    if (trimmedAlias.length < 3 || trimmedAlias.length > 10) {
+      throw new ValidationError('Alias must be between 3 and 10 characters');
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedAlias)) {
+      throw new ValidationError('Alias can only contain letters, numbers, underscores and hyphens');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { alias: trimmedAlias }
+    });
+
+    return formatUser(updated);
+  }
+
   // Récupère les infos étendues pour le profil
   async getFullProfile(userId: string) {
     try {
@@ -435,6 +464,7 @@ async updateUsername(userId: string, newUsername: string) {
         select: {
           id: true,
           username: true,
+          alias: true,
           email: true,
           createdAt: true,
           avatarUrl: true,
@@ -503,6 +533,7 @@ async updateUsername(userId: string, newUsername: string) {
       return {
         id: user.id,
         username: user.username,
+        alias: user.alias ?? undefined,
         email: user.email,
 		twoFactorEnabled: user.twoFactorEnabled,
         createdAt: user.createdAt,

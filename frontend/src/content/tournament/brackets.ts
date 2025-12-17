@@ -110,9 +110,11 @@ function getWinnerNameFromMatch(m: any): string {
     if (m.status !== "CLOSED") return "soon";
 
     if ((m.p1User?.winner ?? 0) > (m.p2User?.winner ?? 0)) {
-        return m.p1User?.user?.userName ?? "soon";
+        // userName contient déjà l'alias grâce au mapper
+        return m.p1User?.user?.userName || "soon";
     } else {
-        return m.p2User?.user?.userName ?? "soon";
+        // userName contient déjà l'alias grâce au mapper
+        return m.p2User?.user?.userName || "soon";
     }
 }
 
@@ -127,8 +129,11 @@ function renderFirstRoundColumn(t: Tournament, roundId: string, playersCount: nu
     const slots: string[] = [];
 
     for (const match of firstRoundMatches) {
-        slots.push(match.p1User?.user?.userName ?? "Unassigned");
-        slots.push(match.p2User?.user?.userName ?? "Unassigned");
+        // userName contient déjà l'alias grâce au mapper
+        const p1User = match.p1User?.user;
+        const p2User = match.p2User?.user;
+        slots.push(p1User?.userName || "Unassigned");
+        slots.push(p2User?.userName || "Unassigned");
     }
 
     // Si on n’a pas assez de slots, on complète

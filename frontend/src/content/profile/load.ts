@@ -219,6 +219,9 @@ async function loadProfileData(
         // Build stats as a series of paragraphs for a more article-like feel
         const lines: string[] = [];
         lines.push("Username: " + (user.username || "(inconnu)"));
+        if (user.alias) {
+            lines.push("Tournament Alias: " + user.alias);
+        }
         lines.push("Email: " + (user.email || "(privé)"));
         lines.push("Créé le: " +
                 (user.createdAt

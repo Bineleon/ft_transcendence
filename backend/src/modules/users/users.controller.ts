@@ -65,6 +65,33 @@ export function userController(app: FastifyInstance, userService: UserService) {
   );
 
   /**
+   * PATCH /api/users/me/alias
+   * Changer son alias pour les tournois
+   */
+  app.patch<{ Body: { alias: string | null } }>(
+    '/api/users/me/alias',
+    { preHandler: authenticate },
+    async (request, reply) => {
+      const userId = request.user!.userId;
+      const { alias } = request.body;
+
+      try {
+        const profile = await userService.updateAlias(userId, alias);
+        return formatSuccess({ profile }, alias ? 'Alias updated successfully' : 'Alias removed successfully');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to update alias';
+        return reply.code(400).send({
+          error: {
+            code: 'ALIAS_UPDATE_FAILED',
+            message,
+            statusCode: 400
+          }
+        });
+      }
+    }
+  );
+
+  /**
    * PUT /api/users/me
    * Mettre à jour son propre profil (email, avatar, etc.)
    */
