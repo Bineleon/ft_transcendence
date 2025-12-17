@@ -255,8 +255,11 @@ app.get('/api/auth/me', { preHandler: authenticate }, async (request, reply) => 
     const { username } = request.params as { username: string };
 
     try {
-      const profile = await userService.getPublicProfileByUsername(username);
-      return formatSuccess({ user: profile });
+      // First get the user ID from username
+      const publicProfile = await userService.getPublicProfileByUsername(username);
+      // Then get the full profile with all stats
+      const fullProfile = await userService.getFullProfile(publicProfile.id);
+      return formatSuccess({ user: fullProfile });
     } catch (err) {
       return reply.code(404).send({
         error: {
