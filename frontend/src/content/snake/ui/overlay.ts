@@ -146,11 +146,11 @@ export class domOverlayManager {
         const title = el("div", "alert-title text-center");
         title.textContent = "GAME OVER";
 
-        const sub = el("div", "alert-message text-sm mb-2 text-center");
-        sub.textContent = "Merci d'avoir joué";
+        const sub = el("div", "alert-message text-base text-bold mb-2 text-center");
+        sub.textContent = "Thanks For Playin'";
 
         const s = this.snakeController.state;
-        const score = el("div", "text-sm mb-3 text-center font-modern-type");
+        const score = el("div", "text-base mb-3 text-center font-modern-type");
         score.textContent = `P1 score=${s.players.p1.score} lives=${s.players.p1.lives} | P2 score=${s.players.p2.score} lives=${s.players.p2.lives} | remainingWords=${s.crossword.remainingWords}`;
 
         const actions = el("div", "flex gap-2 justify-center");

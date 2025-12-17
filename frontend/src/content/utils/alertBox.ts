@@ -57,6 +57,17 @@ type PongAlertDOM = {
 };
 let pongAlertDOM: PongAlertDOM | null = null;
 
+type AliasAlertDOM = {
+  overlay: HTMLDivElement;
+  box: HTMLDivElement;
+  title: HTMLDivElement;
+  message: HTMLParagraphElement;
+  inputAlias: HTMLInputElement;
+  button: HTMLButtonElement;
+  closeBtn?: HTMLButtonElement;
+};
+let aliasAlertDOM: AliasAlertDOM | null = null;
+
 function createPongAlertDOM(): PongAlertDOM {
   if (pongAlertDOM) return pongAlertDOM;
 
@@ -77,9 +88,37 @@ function createPongAlertDOM(): PongAlertDOM {
   return pongAlertDOM;
 }
 
+function createAliasAlertDOM(): AliasAlertDOM {
+  if (aliasAlertDOM) return aliasAlertDOM;
+
+  const overlay = el("div", "alert-overlay hidden z-index-10") as HTMLDivElement;
+  const box = el("div", "alert-box z-index-10") as HTMLDivElement;
+  const title = el("div", "alert-title z-index-10") as HTMLDivElement;
+  const message = el("p", "alert-message z-index-10") as HTMLParagraphElement;
+  const inputAlias = el("input", "btn-input mt-4") as HTMLInputElement;
+  const button = el("button", "alert-button z-index-10") as HTMLButtonElement;
+  const closeBtn = el("button", "alert-close-button z-index-10") as HTMLButtonElement;
+  closeBtn.textContent = "✕";
+  button.textContent = "OK";
+
+  inputAlias.type = "text";
+  inputAlias.placeholder = "Enter your alias";
+  inputAlias.value = "";
+  inputAlias.classList.remove("hidden");
+
+
+  closeBtn.onclick = () => { closeOverlay(overlay); };
+  box.append(closeBtn, title, message, inputAlias, button);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  aliasAlertDOM = { overlay, box, title, message, inputAlias, button, closeBtn };
+  return aliasAlertDOM;
+}
+
 export function pongAlert(mess: string, kind?: AlertKind, options?: AlertOptions): void {
   const { overlay, title, message, button } = createPongAlertDOM();
-
+  
   title.textContent = kind ?? "- Pong Alert -";
   message.textContent = mess;
 
@@ -95,6 +134,28 @@ export function pongAlert(mess: string, kind?: AlertKind, options?: AlertOptions
     }
   };
 }
+
+export function aliasBox(mess: string, kind?: AlertKind, options?: AlertOptions): string | void {
+  const { overlay, title, message, inputAlias, button } = createAliasAlertDOM();
+
+  title.textContent = kind ?? "- Pong Alert -";
+  message.textContent = mess;
+
+  inputAlias.classList.remove("hidden");
+  overlay.classList.remove("hidden");
+
+  button.onclick = () => {
+    closeOverlay(overlay);
+    if (options?.where) {
+      window.location.hash = options.where;
+    }
+    if (options?.onClose) {
+      options.onClose();
+    }
+  };
+  return inputAlias.value;
+}
+
 
 // ---------------------------------------------------- //
 //              Auth Multi Modes AlertBOX               //

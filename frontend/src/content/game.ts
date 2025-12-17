@@ -87,9 +87,10 @@ Either way, you will start “just one round” too many.`));
   const pongArticle = el("article", `p-4 border-4`);
   const pongArticleH2 = el("h2", `font-minecraft text-3xl mb-3 text-justify whitespace-pre-line`);
 
-  const pongArticleLink = el("a", `hover:bg-black hover:text-white`) as HTMLAnchorElement;
+  const pongArticleLink = el("a", `block border-9 font-superretro uppercase text-2xl p-2 text-center mt-6
+     hover:bg-black hover:underline hover:text-white`) as HTMLAnchorElement;
   pongArticleLink.href = `#/playpong`;
-  pongArticleLink.append(text(`PONG — \nTHE GAME THAT STARTED IT ALL`));
+  pongArticleLink.append(text(`GO PLAY PONG`));
 
   pongArticleH2.append(pongArticleLink);
 

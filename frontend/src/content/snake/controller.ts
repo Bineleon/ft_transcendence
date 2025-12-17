@@ -289,7 +289,7 @@ export class SnakeController {
 
     this.refreshOverlay();
     if (p.lives > 0) {
-      GUpdate.respawnPlayer(this, pid, 25);
+      GUpdate.respawnPlayer(this, pid, 5);
       return;
     }
     this.setPhase("GAMEOVER");
